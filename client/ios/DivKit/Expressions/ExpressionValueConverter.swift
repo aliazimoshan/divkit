@@ -61,6 +61,66 @@ enum ExpressionValueConverter {
   }
 }
 
+extension AnyHashable {
+  var isBool: Bool {
+    if let number = self as? NSNumber {
+      return UnicodeScalar(UInt8(number.objCType.pointee)) == "c"
+    }
+    return false
+  }
+}
+
+func formatArgForError(_ value: Any) -> String {
+  switch value {
+  case is String:
+    "'\(value)'".replacingOccurrences(of: "\\", with: "\\\\")
+  case is [Any]:
+    "<array>"
+  case is [String: Any]:
+    "<dict>"
+  default:
+    ExpressionValueConverter.stringify(value)
+  }
+}
+
+func formatTypeForError(_ type: Any.Type) -> String {
+  switch type {
+  case is String.Type:
+    "String"
+  case is Bool.Type:
+    "Boolean"
+  case is Int.Type:
+    "Integer"
+  case is Double.Type:
+    "Number"
+  case is RGBAColor.Type:
+    "Color"
+  case is Date.Type:
+    "DateTime"
+  case is [AnyHashable].Type:
+    "Array"
+  case is [String: AnyHashable].Type, is [AnyHashable: AnyHashable].Type:
+    "Dict"
+  default:
+    String(describing: type)
+  }
+}
+
+func formatTypeForError(_ value: Any) -> String {
+  let valueType = type(of: value)
+  if valueType is AnyHashable.Type, let hashableValue = value as? AnyHashable {
+    switch type(of: hashableValue.base) {
+    case is Double.Type, is Int.Type, is Int64.Type:
+      return "Number"
+    case is NSNull.Type:
+      return "Null"
+    default:
+      return formatTypeForError(hashableValue.base)
+    }
+  }
+  return formatTypeForError(valueType)
+}
+
 private func formatValue(_ value: Any) -> String {
   switch value {
   case is String:

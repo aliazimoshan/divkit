@@ -53,15 +53,13 @@ public struct GalleryViewLayout: GalleryViewLayouting, Equatable {
 
     let page = blockPages[integralIndex]
     let fractionalIndex = pageIndex.truncatingRemainder(dividingBy: 1)
-    let inset = model.metrics.axialInsetMode
-      .insets(forSize: boundsSize.dimension(in: model.direction)).leading
     let maxOffset: CGFloat = switch model.direction {
     case .horizontal:
       max(0, contentSize.width - boundsSize.width)
     case .vertical:
       max(0, contentSize.height - boundsSize.height)
     }
-    return min(maxOffset, page.origin - inset + page.size * fractionalIndex)
+    return min(maxOffset, page.origin + page.size * fractionalIndex)
   }
 
   public func pageIndex(forContentOffset contentOffset: CGFloat) -> CGFloat {
@@ -99,23 +97,24 @@ extension GalleryViewModel {
   }
 
   fileprivate func pages(for frames: [CGRect], fitting size: CGSize?) -> [GalleryViewLayout.Page] {
-    guard let lastFrame = frames.last else {
+    guard let firstFrame = frames.first, let lastFrame = frames.last else {
       return []
     }
 
-    let lastOrigin = lastFrame.origin.dimension(in: direction)
-    let lastSize = lastFrame.size.dimension(in: direction)
-    let lastEdge = lastOrigin + lastSize + lastGap(forSize: size)
+    let firstFrameOrigin = firstFrame.origin.dimension(in: direction)
+    let lastFrameOrigin = lastFrame.origin.dimension(in: direction)
+    let lastFrameSize = lastFrame.size.dimension(in: direction)
+    let lastEdge = lastFrameOrigin + lastFrameSize + lastGap(forSize: size)
     let pageSize = self.pageSize(fitting: size)
 
     let origins = frames.map { frame -> CGFloat in
-      let origin = frame.origin.dimension(in: direction)
+      let frameOrigin = frame.origin.dimension(in: direction)
       switch scrollMode {
       case .default:
-        return origin
+        return frameOrigin - firstFrameOrigin
       case .autoPaging, .fixedPaging:
         let size = frame.size.dimension(in: direction)
-        return max(0, origin - (pageSize - size) / 2)
+        return max(0, frameOrigin - (pageSize - size) / 2)
       }
     }
 

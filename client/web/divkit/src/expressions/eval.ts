@@ -100,6 +100,7 @@ export interface EvalContext {
     warnings: WrappedError[];
     safeIntegerOverflow: boolean;
     store?: Store;
+    weekStartDay: number;
 }
 
 register();
@@ -449,11 +450,11 @@ function evalCallExpression(ctx: EvalContext, expr: CallExpression): EvalValue {
             const prefix = `${funcName}(${argsToStr(args)})`;
 
             if (findRes.type === 'few' && args.length === 0) {
-                evalError(prefix, `Non empty argument list is required for function '${funcName}'.`);
+                evalError(prefix, 'Function requires non empty argument list.');
             } else if (findRes.type === 'many') {
-                evalError(prefix, `Function '${funcName}' has no matching override for given argument types: ${argsType}.`);
+                evalError(prefix, `Function has no matching overload for given argument types: ${argsType}.`);
             } else if (findRes.type === 'few' || findRes.type === 'mismatch') {
-                evalError(prefix, `Function '${funcName}' has no matching override for given argument types: ${argsType}.`);
+                evalError(prefix, `Function has no matching overload for given argument types: ${argsType}.`);
             } else {
                 evalError(prefix, `Unknown function name: ${funcName}.`);
             }
@@ -496,11 +497,11 @@ function evalMethodExpression(ctx: EvalContext, expr: MethodExpression): EvalVal
             const prefix = `${methodName}(${argsToStr(args.slice(1))})`;
 
             if (findRes.type === 'few' && args.length === 1) {
-                evalError(prefix, `Non empty argument list is required for method '${methodName}'.`);
+                evalError(prefix, 'Method requires non empty argument list.');
             } else if (findRes.type === 'many') {
-                evalError(prefix, `Method '${methodName}' has no matching override for given argument types: ${argsType}.`);
+                evalError(prefix, `Method has no matching overload for given argument types: ${argsType}.`);
             } else if (findRes.type === 'few' || findRes.type === 'mismatch') {
-                evalError(prefix, `Method '${methodName}' has no matching override for given argument types: ${argsType}.`);
+                evalError(prefix, `Method has no matching overload for given argument types: ${argsType}.`);
             } else {
                 evalError(prefix, `Unknown method name: ${methodName}.`);
             }
@@ -560,7 +561,9 @@ export function evalAny(ctx: EvalContext, expr: Node): EvalValue {
     throw new Error('Unsupported expression');
 }
 
-export function evalExpression(vars: VariablesMap, store: Store | undefined, expr: Node): {
+export function evalExpression(vars: VariablesMap, store: Store | undefined, expr: Node, opts?: {
+    weekStartDay?: number;
+}): {
     result: EvalResult;
     warnings: WrappedError[];
 } {
@@ -569,7 +572,8 @@ export function evalExpression(vars: VariablesMap, store: Store | undefined, exp
             variables: vars,
             warnings: [],
             safeIntegerOverflow: false,
-            store
+            store,
+            weekStartDay: opts?.weekStartDay || 0
         };
 
         const result = evalAny(ctx, expr);

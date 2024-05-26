@@ -1,3 +1,31 @@
+## 30.2.0
+
+# Android Client:
+* Fixed line height adjustment for embedded images and image placeholdes in `div-text`.
+* Added padding on draw `default_item` in `gallery`.
+* Improved expression error messages.
+
+# iOS Client:
+* Fixed disappear actions for gone blocks.
+* Improved expression error messages.
+
+# Web Client:
+* Calculate `is_enabled` in `actions` before executing the entire list of actions, not in the process.
+* Implemented `toString` function and method for arrays and dicts.
+* Improved expression error messages.
+* Fixed unary minus operator parsing.
+* Added functions `parseUnixTimeAsLocal`, `formatDateAsLocal`, `formatDateAsUTC`, `formatDateAsLocalWithLocale`, `formatDateAsUTCWithLocale` and the `weekStartDay` parameter.
+
+
+## 30.1.0
+
+# Android Client:
+* Fixed a bug where updates to global variables are lost if they occurred after the destruction of Div2View, but before the creation of a new one.
+
+# iOS Client:
+* Implemented operands lazy evaluation.
+
+
 ## 30.0.0
 
 # Android Client:
@@ -5,19 +33,21 @@
 * Breaking change: Classes removed from public API: `ExoDivMediaSourceAbstractFactory`, `ExoDivPlayer` (accessible by interface `DivPlayer`), `ExoDivPlayerView` (accessible by interface `DivPlayerView`)
 * Breaking change: Removed method `isCompatibleWithNewParams(scale: DivVideoScale)` from `DivPlayerView`
 * Breaking change: Removed method `makePlayerView(context: Context, additional: Map<String, Any>)` from `DivPlayerFactory`
-* Add 'gesture' extension that allows to perform div-actions when swipe gesture happens at specified div.
+* Breaking change: Use explicitly passed `ExpressionResolver` in `DivActionHandler`, `Div2Logger`, `DivExtensionHandler` and `custom` classes.
+* Breaking change: Restricted variable names with consecutive dots and with a trailing dot.
+* Added `gesture` extension that allows to perform div-actions when swipe gesture happens at specified div.
+* Added `item_builder` property support in the `container` component.
 * Added `svg` support to all `DivImageLoaders`
 * Added ability to forcibly release video players by `releaseMedia()` method of `Div2View`.
-* Added Jeptack Compose interoperability for `Div2View`
+* Added Jetpack Compose interoperability for `Div2View`
 * Calculate `is_enabled` in `actions` before executing the entire list of actions, not in the process.
 * Do not set new border or background when it has no changes.
 * Fixed text height calculation when line height specified explicitly.
 * Fixes for complex rebind algorithm
 * Old visibility actions are no longer logged after Div2View was rebound.
-* Restricted variable names with consecutive dots and with a trailing dot.
 * Supported methods in evaluable expressions, such as `123.toString()`.
 * TextureView is now a default view for DivVideo.
-* Use explicitly passed `ExpressionResolver` in `DivActionHandler`, `Div2Logger`, `DivExtensionHandler` and `custom` classes.
+
 
 # iOS Client:
 * Breaking change: Changed method signature in `ExpressionResolver` from `resolveString(_ expression: String) -> String` to `resolveString(_ expression: String) -> String?`.

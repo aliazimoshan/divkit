@@ -103,6 +103,9 @@
     export let customComponents: Map<string, CustomComponentDescription> | undefined = undefined;
     export let direction: Direction = 'ltr';
     export let store: Store | undefined = undefined;
+    export let weekStartDay = 0;
+
+    let isMounted = true;
 
     let isDesktop = writable(platform === 'desktop');
     if (platform === 'auto' && typeof matchMedia !== 'undefined') {
@@ -260,7 +263,7 @@
 
         const vars = mergeVars(variables, additionalVars);
 
-        const prepared = prepareVars(jsonProp, logError, store);
+        const prepared = prepareVars(jsonProp, logError, store, weekStartDay);
         if (!prepared.vars.length) {
             if (prepared.hasExpression) {
                 return constStore(prepared.applyVars(vars));
@@ -280,7 +283,7 @@
         additionalVars?: Map<string, Variable>,
         keepComplex = false
     ): MaybeMissing<T> {
-        const prepared = prepareVars(jsonProp, logError, store);
+        const prepared = prepareVars(jsonProp, logError, store, weekStartDay);
 
         if (!prepared.hasExpression) {
             return jsonProp;
@@ -1286,7 +1289,11 @@
     }
 
     function registerTimeout(timeout: number): void {
-        timeouts.push(timeout);
+        if (isMounted) {
+            timeouts.push(timeout);
+        } else {
+            clearTimeout(timeout);
+        }
     }
 
     setContext<RootCtxValue>(ROOT_CTX, {
@@ -1589,7 +1596,9 @@
                         const stores = exprVars.map(name => variables.get(name) || awaitVariableChanges(name));
 
                         derived(stores, () => {
-                            const res = evalExpression(variables, store, ast);
+                            const res = evalExpression(variables, store, ast, {
+                                weekStartDay
+                            });
 
                             res.warnings.forEach(logError);
 
@@ -1611,11 +1620,11 @@
                                 (mode === 'on_variable' || mode === 'on_condition' && prevConditionResult === false)
                             ) {
                                 const actionsToLog: Action[] = [];
-                                for (const action of trigger.actions) {
-                                    const resultAction = getJsonWithVars(logError, action);
-                                    if (resultAction.log_id) {
-                                        await execActionInternal(resultAction as Action);
-                                        actionsToLog.push(resultAction as Action);
+                                const actions = trigger.actions.map(action => getJsonWithVars(logError, action));
+                                for (const action of actions) {
+                                    if (action.log_id) {
+                                        await execActionInternal(action as Action);
+                                        actionsToLog.push(action as Action);
                                     }
                                 }
                                 for (const action of actionsToLog) {
@@ -1702,6 +1711,7 @@
     });
 
     onDestroy(() => {
+        isMounted = false;
         rootInstancesCount--;
 
         if (!rootInstancesCount) {

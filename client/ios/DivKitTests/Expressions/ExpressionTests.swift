@@ -127,7 +127,7 @@ private struct ExpressionTestCase: Decodable {
     ExpressionResolver(
       variables: variables,
       persistentValuesStorage: DivPersistentValuesStorage(),
-      errorTracker: errorTracker ?? { XCTFail($0.message) }
+      errorTracker: errorTracker ?? { XCTFail($0.description) }
     )
   }
 
@@ -135,7 +135,7 @@ private struct ExpressionTestCase: Decodable {
     .link(
       ExpressionLink<T>(
         rawValue: expression,
-        errorTracker: { XCTFail($0.message) }
+        errorTracker: { XCTFail($0.description) }
       )!
     )
   }
@@ -176,7 +176,7 @@ private enum ExpectedValue: Decodable {
       self = .string(value)
     case "datetime":
       let value = try container.decode(String.self, forKey: .value)
-      self = .datetime(value.toDatetime()!)
+      self = .datetime(value.toDate()!)
     case "array":
       let value = try JSONObject(from: decoder).makeDictionary()
       guard let array = value?["value"] as? [AnyHashable] else {

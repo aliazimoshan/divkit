@@ -2,101 +2,56 @@ import Foundation
 
 import CommonCorePublic
 
-enum DatetimeFunctions: String, CaseIterable {
-  case parseUnixTime
-  case parseUnixTimeAsLocal
-  case nowLocal
-  case addMillis
-  case setYear
-  case setMonth
-  case setDay
-  case setHours
-  case setMinutes
-  case setSeconds
-  case setMillis
-  case getYear
-  case getMonth
-  case getDay
-  case getDayOfWeek
-  case getHours
-  case getMinutes
-  case getSeconds
-  case getMillis
-  case formatDateAsLocal
-  case formatDateAsLocalWithLocale
-  case formatDateAsUTC
-  case formatDateAsUTCWithLocale
+extension [String: Function] {
+  mutating func addDateTimeFunctions() {
+    addFunction("parseUnixTime", parseUnixTime)
+    addFunction("parseUnixTimeAsLocal", parseUnixTimeAsLocal)
+    addFunction("nowLocal", nowLocal)
 
-  var function: Function {
-    switch self {
-    case .parseUnixTime:
-      FunctionUnary(impl: _parseUnixTime)
-    case .parseUnixTimeAsLocal:
-      FunctionUnary(impl: _parseUnixTimeAsLocal)
-    case .nowLocal:
-      FunctionNullary(impl: _nowLocal)
-    case .addMillis:
-      FunctionBinary(impl: _addMillis)
-    case .setYear:
-      FunctionBinary(impl: _setYear)
-    case .setMonth:
-      FunctionBinary(impl: _setMonth)
-    case .setDay:
-      FunctionBinary(impl: _setDay)
-    case .setHours:
-      FunctionBinary(impl: _setHours)
-    case .setMinutes:
-      FunctionBinary(impl: _setMinutes)
-    case .setSeconds:
-      FunctionBinary(impl: _setSeconds)
-    case .setMillis:
-      FunctionBinary(impl: _setMillis)
-    case .getYear:
-      FunctionUnary(impl: _getYear)
-    case .getMonth:
-      FunctionUnary(impl: _getMonth)
-    case .getDay:
-      FunctionUnary(impl: _getDay)
-    case .getDayOfWeek:
-      FunctionUnary(impl: _getDayOfWeek)
-    case .getHours:
-      FunctionUnary(impl: _getHours)
-    case .getMinutes:
-      FunctionUnary(impl: _getMinutes)
-    case .getSeconds:
-      FunctionUnary(impl: _getSeconds)
-    case .getMillis:
-      FunctionUnary(impl: _getMillis)
-    case .formatDateAsLocal:
-      FunctionBinary(impl: _formatDateAsLocal)
-    case .formatDateAsLocalWithLocale:
-      FunctionTernary(impl: _formatDateAsLocalWithLocale)
-    case .formatDateAsUTC:
-      FunctionBinary(impl: _formatDateAsUTC)
-    case .formatDateAsUTCWithLocale:
-      FunctionTernary(impl: _formatDateAsUTCWithLocale)
-    }
+    addFunction("addMillis", addMillis)
+
+    addFunction("setYear", setYear)
+    addFunction("setMonth", setMonth)
+    addFunction("setDay", setDay)
+    addFunction("setHours", setHours)
+    addFunction("setMinutes", setMinutes)
+    addFunction("setSeconds", setSeconds)
+    addFunction("setMillis", setMillis)
+
+    addFunction("getYear", getYear)
+    addFunction("getMonth", getMonth)
+    addFunction("getDay", getDay)
+    addFunction("getDayOfWeek", getDayOfWeek)
+    addFunction("getHours", getHours)
+    addFunction("getMinutes", getMinutes)
+    addFunction("getSeconds", getSeconds)
+    addFunction("getMillis", getMillis)
+
+    addFunction("formatDateAsLocal", formatDateAsLocal)
+    addFunction("formatDateAsLocalWithLocale", formatDateAsLocalWithLocale)
+    addFunction("formatDateAsUTC", formatDateAsUTC)
+    addFunction("formatDateAsUTCWithLocale", formatDateAsUTCWithLocale)
   }
 }
 
-private func _parseUnixTime(_ value: Int) -> Date {
-  Date(timeIntervalSince1970: Double(value))
+private let parseUnixTime = FunctionUnary<Int, Date> {
+  Date(timeIntervalSince1970: Double($0))
 }
 
-private func _parseUnixTimeAsLocal(_ value: Int) -> Date {
-  Date(timeIntervalSince1970: Double(value)).local
+private let parseUnixTimeAsLocal = FunctionUnary<Int, Date> {
+  Date(timeIntervalSince1970: Double($0)).local
 }
 
-private func _nowLocal() -> Date {
+private let nowLocal = FunctionNullary<Date> {
   Date().local
 }
 
-private func _addMillis(_ date: Date, _ offsetInMillis: Int) -> Date {
+private let addMillis = FunctionBinary<Date, Int, Date> { date, offsetInMillis in
   let newTimeInterval = date.timeIntervalSince1970 + offsetInMillis.toSeconds
   return Date(timeIntervalSince1970: newTimeInterval)
 }
 
-private func _setYear(date: Date, newYear: Int) throws -> Date {
+private let setYear = FunctionBinary<Date, Int, Date> { date, newYear in
   var components = date.components
   components.year = newYear
   guard let result = calendar.date(from: components) else {
@@ -105,9 +60,9 @@ private func _setYear(date: Date, newYear: Int) throws -> Date {
   return result
 }
 
-private func _setMonth(date: Date, newMonth: Int) throws -> Date {
+private let setMonth = FunctionBinary<Date, Int, Date> { date, newMonth in
   guard newMonth >= 1, newMonth <= 12 else {
-    throw CalcExpression.Error.message("Expecting month in [1..12], instead got \(newMonth).")
+    throw ExpressionError("Expecting month in [1..12], instead got \(newMonth).")
   }
   var components = date.components
   components.month = newMonth
@@ -117,7 +72,7 @@ private func _setMonth(date: Date, newMonth: Int) throws -> Date {
   return result
 }
 
-private func _setDay(date: Date, newDay: Int) throws -> Date {
+private let setDay = FunctionBinary<Date, Int, Date> { date, newDay in
   guard let range = calendar.range(of: .day, in: .month, for: date) else {
     throw componentsError()
   }
@@ -128,9 +83,7 @@ private func _setDay(date: Date, newDay: Int) throws -> Date {
   case -1:
     components.day = 0
   default:
-    throw CalcExpression.Error.message(
-      "Unable to set day \(newDay) for date \(date.formatString)."
-    )
+    throw ExpressionError("Unable to set day \(newDay) for date \(date.formatString).")
   }
   guard let result = calendar.date(from: components) else {
     throw componentsError()
@@ -138,9 +91,9 @@ private func _setDay(date: Date, newDay: Int) throws -> Date {
   return result
 }
 
-private func _setHours(date: Date, newHour: Int) throws -> Date {
+private let setHours = FunctionBinary<Date, Int, Date> { date, newHour in
   guard newHour >= 0, newHour <= 23 else {
-    throw CalcExpression.Error.message("Expecting hours in [0..23], instead got \(newHour).")
+    throw ExpressionError("Expecting hours in [0..23], instead got \(newHour).")
   }
   var components = date.components
   components.hour = newHour
@@ -150,9 +103,9 @@ private func _setHours(date: Date, newHour: Int) throws -> Date {
   return result
 }
 
-private func _setMinutes(date: Date, newMinutes: Int) throws -> Date {
+private let setMinutes = FunctionBinary<Date, Int, Date> { date, newMinutes in
   guard newMinutes >= 0, newMinutes <= 59 else {
-    throw CalcExpression.Error.message("Expecting minutes in [0..59], instead got \(newMinutes).")
+    throw ExpressionError("Expecting minutes in [0..59], instead got \(newMinutes).")
   }
   var components = date.components
   components.minute = newMinutes
@@ -162,9 +115,9 @@ private func _setMinutes(date: Date, newMinutes: Int) throws -> Date {
   return result
 }
 
-private func _setSeconds(date: Date, newSeconds: Int) throws -> Date {
+private let setSeconds = FunctionBinary<Date, Int, Date> { date, newSeconds in
   guard newSeconds >= 0, newSeconds <= 59 else {
-    throw CalcExpression.Error.message("Expecting seconds in [0..59], instead got \(newSeconds).")
+    throw ExpressionError("Expecting seconds in [0..59], instead got \(newSeconds).")
   }
   var components = date.components
   components.second = newSeconds
@@ -174,114 +127,94 @@ private func _setSeconds(date: Date, newSeconds: Int) throws -> Date {
   return result
 }
 
-private func _setMillis(date: Date, newMillis: Int) throws -> Date {
+private let setMillis = FunctionBinary<Date, Int, Date> { date, newMillis in
   guard newMillis >= 0, newMillis <= 999 else {
-    throw CalcExpression.Error.message("Expecting millis in [0..999], instead got \(newMillis).")
+    throw ExpressionError("Expecting millis in [0..999], instead got \(newMillis).")
   }
   let newTimeInterval = round(date.timeIntervalSince1970) + newMillis.toSeconds
   return Date(timeIntervalSince1970: newTimeInterval)
 }
 
-private func _getYear(_ value: Date) throws -> Int {
-  guard let year = value.components.year else {
+private let getYear = FunctionUnary<Date, Int> {
+  guard let year = $0.components.year else {
     throw componentError("year")
   }
   return year
 }
 
-private func _getMonth(_ value: Date) throws -> Int {
-  guard let month = value.components.month else {
+private let getMonth = FunctionUnary<Date, Int> {
+  guard let month = $0.components.month else {
     throw componentError("month")
   }
   return month
 }
 
-private func _getDay(_ value: Date) throws -> Int {
-  guard let day = value.components.day else {
+private let getDay = FunctionUnary<Date, Int> {
+  guard let day = $0.components.day else {
     throw componentError("day")
   }
   return day
 }
 
-private func _getDayOfWeek(_ value: Date) throws -> Int {
-  guard let weekday = value.components.weekday else {
+private let getDayOfWeek = FunctionUnary<Date, Int> {
+  guard let weekday = $0.components.weekday else {
     throw componentError("weekday")
   }
   return weekday == 1 ? 7 : weekday - 1
 }
 
-private func _getHours(_ value: Date) throws -> Int {
-  guard let hour = value.components.hour else {
+private let getHours = FunctionUnary<Date, Int> {
+  guard let hour = $0.components.hour else {
     throw componentError("hour")
   }
   return hour
 }
 
-private func _getMinutes(_ value: Date) throws -> Int {
-  guard let minute = value.components.minute else {
+private let getMinutes = FunctionUnary<Date, Int> {
+  guard let minute = $0.components.minute else {
     throw componentError("minute")
   }
   return minute
 }
 
-private func _getSeconds(_ value: Date) throws -> Int {
-  guard let second = value.components.second else {
+private let getSeconds = FunctionUnary<Date, Int> {
+  guard let second = $0.components.second else {
     throw componentError("second")
   }
   return second
 }
 
-private func _getMillis(_ value: Date) -> Int {
-  Int(value.timeIntervalSince1970.truncatingRemainder(dividingBy: 1) * 1000)
+private let getMillis = FunctionUnary<Date, Int> {
+  Int($0.timeIntervalSince1970.truncatingRemainder(dividingBy: 1) * 1000)
 }
 
-private func _formatDateAsLocal(_ value: Date, _ format: String) throws -> String {
-  try formatDate(value, format)
+private let formatDateAsLocal = FunctionBinary<Date, String, String> {
+  makeDateFormatter($1, isUTC: false).string(from: $0)
 }
 
-private func _formatDateAsLocalWithLocale(
-  value: Date,
-  format: String,
-  locale: String
-) throws -> String {
-  try formatDate(value, format, locale: locale)
+private let formatDateAsLocalWithLocale = FunctionTernary<Date, String, String, String> {
+  makeDateFormatter($1, isUTC: false, locale: $2).string(from: $0)
 }
 
-private func _formatDateAsUTC(_ value: Date, _ format: String) throws -> String {
-  try formatDate(value, format, isUTC: true)
+private let formatDateAsUTC = FunctionBinary<Date, String, String> {
+  makeDateFormatter($1, isUTC: true).string(from: $0)
 }
 
-private func _formatDateAsUTCWithLocale(
-  value: Date,
-  format: String,
-  locale: String
-) throws -> String {
-  try formatDate(value, format, isUTC: true, locale: locale)
-}
-
-private func formatDate(
-  _ value: Date,
-  _ format: String,
-  isUTC: Bool = false,
-  locale: String? = nil
-) throws -> String {
-  guard !format.contains("Z"), !format.contains("z") else {
-    throw CalcExpression.Error.message("z/Z not supported in [\(format)].")
-  }
-  return makeDateFormatter(format, isUTC: isUTC, locale: locale).string(from: value)
+private let formatDateAsUTCWithLocale = FunctionTernary<Date, String, String, String> {
+  makeDateFormatter($1, isUTC: true, locale: $2).string(from: $0)
 }
 
 private let dateFormat = "yyyy-MM-dd HH:mm:ss"
-private let timeZone = "UTC"
+private let utcTimeZone = TimeZone(abbreviation: "UTC")!
 
 extension String {
-  func toDatetime() -> Date? {
+  func toDate() -> Date? {
     makeDateFormatter(dateFormat, isUTC: true).date(from: self)
   }
 }
 
 extension Date {
-  var formatString: String {
+  fileprivate var formatString: String {
     makeDateFormatter(dateFormat, isUTC: true).string(from: self)
   }
 
@@ -313,30 +246,30 @@ extension Int {
 
 private let calendar: Calendar = {
   var calendar = Calendar.current
-  calendar.timeZone = TimeZone(abbreviation: timeZone)!
+  calendar.timeZone = utcTimeZone
   return calendar
 }()
 
 private func makeDateFormatter(
   _ format: String,
-  isUTC: Bool = false,
+  isUTC: Bool,
   locale: String? = nil
 ) -> DateFormatter {
-  let dateFormatter = DateFormatter()
-  dateFormatter.dateFormat = format.replacingOccurrences(of: "u", with: "e")
+  let formatter = DateFormatter()
+  formatter.dateFormat = format
   if isUTC {
-    dateFormatter.timeZone = TimeZone(abbreviation: timeZone)
+    formatter.timeZone = utcTimeZone
   }
   if let locale {
-    dateFormatter.locale = Locale(identifier: locale)
+    formatter.locale = Locale(identifier: locale)
   }
-  return dateFormatter
+  return formatter
 }
 
-private func componentsError() -> CalcExpression.Error {
-  .message("Date components not found.")
+private func componentsError() -> Error {
+  ExpressionError("Date components not found.")
 }
 
-private func componentError(_ name: String) -> CalcExpression.Error {
-  .message("Component '\(name)' not found.")
+private func componentError(_ name: String) -> Error {
+  ExpressionError("Component '\(name)' not found.")
 }

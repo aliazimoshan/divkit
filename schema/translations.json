@@ -695,6 +695,10 @@
     "en": "Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>",
     "ru": "Семейство шрифта:<li>`text` — стандартный текстовый шрифт;</li><li>`display` — семейство для шрифтов с крупным кеглем.</li>"
   },
+  "div_font_feature_settings": {
+    "en": "List of OpenType font features. The format is the same as the CSS font-feature-settings attribute: https://www.w3.org/TR/css-fonts-3/#font-feature-settings-prop",
+    "ru": "Список функции шрифтов OpenType. Формат соответствует атрибуту CSS font-feature-settings: https://www.w3.org/TR/css-fonts-3/#font-feature-settings-prop"
+  },
   "div_font_size": {
     "en": "Font size.",
     "ru": "Размер шрифта."
@@ -1066,6 +1070,10 @@
   "div_input_max_visible_lines": {
     "en": "Maximum number of lines to be displayed in the input field.",
     "ru": "Максимальное количество строк, которое будет видно в поле ввода."
+  },
+  "div_input_max_length": {
+    "en": "The maximum number of characters that can be entered in the input field.",
+    "ru": "Максимальное количество символов, которое возможно ввести в поле ввода."
   },
   "div_input_method": {
     "en": "Data entry method. If the value isn't set, the `keyboard_type` parameter's value is used instead.",
@@ -1730,6 +1738,22 @@
   "div_tabs_switch_tabs_by_content_swipe_enabled": {
     "en": "Switching tabs by scrolling through the contents.",
     "ru": "Переключение табов скроллом по содержимому."
+  },
+  "div_tabs_tab_title_delimiter_delimiter_style": {
+    "en": "Style of delimiters between tab titles.",
+    "ru": "Стиль оформления разделителей между заголовками табов."
+  },
+  "div_tabs_tab_title_delimiter_style_background_color": {
+    "en": "Background color of delimiter.",
+    "ru": "Цвет фона разделителей."
+  },
+  "div_tabs_tab_title_delimiter_style_corner_radius": {
+    "en": "Delimiters corner rounding radii. If the parameter isn't specified, the rounding is maximum (half of the smallest size). Not used if the `corners_radius` parameter is set.",
+    "ru": "Радиус скругления углов разделителей. Если параметр не задан, то максимальное скругление (половина от наименьшего размера). Не используется, если задан параметр `corners_radius`."
+  },
+  "div_tabs_tab_title_delimiter_style_corners_radius": {
+    "en": "Rounding radii of corners of delimiters. Empty values are replaced by 0.",
+    "ru": "Радиусы скругления углов разделителей. Пустые значения будут заменены на 0."
   },
   "div_tabs_tab_title_style": {
     "en": "Design style of tab titles.",
