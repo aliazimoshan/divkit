@@ -1,0 +1,33 @@
+apply from: "${project.projectDir}/../div-library.gradle"
+
+android {
+    namespace 'com.yandex.test'
+}
+
+dependencies {
+    api libs.androidx.core
+    api libs.androidx.coreKtx
+    api libs.androidx.appcompat
+    api libs.androidx.test.core
+    api libs.androidx.test.runner
+    api libs.androidx.test.rules
+    api (libs.androidx.espresso.contrib) {
+        exclude group: 'org.checkerframework', module: 'checker-qual'
+    }
+    api libs.androidx.espresso.core
+    api libs.androidx.espresso.intents
+
+    api libs.allure.common
+    api libs.allure.model
+    api (libs.allure.android)  {
+        artifact {
+            type = "aar"
+            transitive = false
+        }
+    }
+
+    implementation project(path: ':div-core')
+    implementation libs.androidx.test.uiautomator
+    implementation libs.fest.reflect
+    implementation libs.gson  // used by allure
+}

@@ -1,0 +1,1711 @@
+/*!************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/Root.module.css ***!
+  \************************************************************************************************************************************************************************************/
+.divkit-b023c {
+    position: relative;
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: 100%;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.25;
+    word-wrap: break-word;
+    word-break: break-word;
+    /*color: #000;
+    background: #fff;*/
+}
+
+@supports (overflow: clip) {
+    .divkit-b023c {
+        overflow: clip;
+    }
+}
+
+.divkit-bd259,
+.divkit-d9099 {
+    cursor: pointer;
+}
+
+.divkit-c016b {
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+}
+
+.divkit-ee112 {}
+
+.divkit-ee112 .divkit-bd259 {
+    transition: opacity .15s ease-out;
+}
+
+.divkit-ee112 .divkit-bd259:hover {
+    opacity: .7;
+}
+
+.divkit-ee112 .divkit-bd259:active {
+    opacity: .5;
+}
+
+.divkit-b023c:not(.divkit-ee112) .divkit-fef1e {
+    display: none;
+}
+
+.divkit-aa145 {
+    overscroll-behavior: contain;
+}
+
+.divkit-f0cba {
+    -webkit-touch-callout: none;
+}
+
+/*!************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./src/components/text/TextRange.module.css ***!
+  \************************************************************************************************************************/
+.divkit-faf07 {
+    white-space: pre-wrap;
+    color: inherit;
+}
+
+.divkit-ccb64 {
+    white-space: nowrap;
+}
+
+.divkit-d9237 {
+    display: inline-block;
+}
+
+.divkit-d7e07 {
+    text-decoration: underline line-through;
+}
+
+.divkit-f3dde {
+    text-decoration: underline;
+}
+
+.divkit-d27b7 {
+    text-decoration: line-through;
+}
+
+.divkit-c6b0f {
+    text-decoration: none;
+}
+
+/*!*****************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/text/Text.module.css ***!
+  \*****************************************************************************************************************************************************************************************/
+.divkit-d9b0e {
+    display: flex;
+    /* Already hidden in outer */
+    /*overflow: hidden;*/
+}
+
+/*@supports (overflow: clip) {
+    .text {
+        overflow: clip;
+    }
+}*/
+
+.divkit-e70de {
+    justify-content: flex-start;
+    text-align: start;
+}
+
+.divkit-e1659 {
+    justify-content: center;
+    text-align: center;
+}
+
+.divkit-e48b4 {
+    justify-content: flex-end;
+    text-align: end;
+}
+
+.divkit-b7b70 {
+    align-items: flex-start;
+}
+
+.divkit-ef58e {
+    align-items: center;
+}
+
+.divkit-d4206 {
+    align-items: flex-end;
+}
+
+.divkit-e0c6c {
+    align-items: baseline;
+}
+
+.divkit-b8528 {
+    min-width: 0;
+    min-height: 0;
+    max-height: 100%;
+}
+
+.divkit-ef11c .divkit-b8528,
+.divkit-ee8e3 .divkit-b8528 {
+    overflow: hidden;
+}
+
+@supports (overflow: clip) {
+    .divkit-ef11c .divkit-b8528,
+    .divkit-ee8e3 .divkit-b8528 {
+        overflow: clip;
+    }
+}
+
+.divkit-ef11c .divkit-b8528 {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.divkit-c6ea1 .divkit-ef11c .divkit-b8528 {
+    text-overflow: clip;
+}
+
+.divkit-ee8e3 .divkit-b8528 {
+    /* For -webkit-line-clamp */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+.divkit-cb8e0 {
+    color: transparent;
+    -webkit-background-clip: text;
+            background-clip: text;
+}
+
+.divkit-bf6e2 {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.divkit-f1002 {
+    display: none;
+}
+
+*:focus-visible .divkit-cb341 .divkit-b8528 .divkit-faf07,
+.divkit-cb341:focus-visible .divkit-b8528 .divkit-faf07 {
+    color: var(--divkit-text-focus-color) !important;
+}
+
+/*!***********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/utilities/Outer.module.css ***!
+  \***********************************************************************************************************************************************************************************************/
+.divkit-d65a7 {
+    position: relative;
+    z-index: 0;
+    box-sizing: border-box;
+    /* test tabs/fixed-width */
+    /*max-width: 100%;*/
+    /*max-height: 100%;*/
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+@supports (overflow: clip) {
+    .divkit-d65a7 {
+        overflow: clip;
+    }
+}
+
+.divkit-d65a7 {
+    color: inherit;
+}
+
+.divkit-a6d12 {
+    visibility: hidden;
+}
+
+.divkit-cc452 {
+    justify-self: start;
+}
+
+.divkit-b8331 {
+    justify-self: center;
+}
+
+.divkit-c573c {
+    justify-self: end;
+}
+
+.divkit-dcc74 {
+    justify-self: stretch;
+}
+
+.divkit-e8077 {
+    align-self: start;
+}
+
+.divkit-d40a7 {
+    align-self: center;
+}
+
+.divkit-e9f84 {
+    align-self: end;
+}
+
+.divkit-b7aa3 {
+    align-self: stretch;
+}
+
+.divkit-c143f.divkit-cc452 {
+    align-self: flex-start;
+}
+
+.divkit-c143f.divkit-b8331 {
+    align-self: center;
+}
+
+.divkit-c143f.divkit-c573c {
+    align-self: flex-end;
+}
+
+.divkit-c143f.divkit-dcc74 {
+    align-self: stretch;
+}
+
+.divkit-ef302.divkit-e8077 {
+    align-self: flex-start;
+}
+
+.divkit-ef302.divkit-d40a7 {
+    align-self: center;
+}
+
+.divkit-ef302.divkit-e9f84 {
+    align-self: flex-end;
+}
+
+.divkit-ef302.divkit-b7aa3 {
+    align-self: stretch;
+}
+
+.divkit-ef302.divkit-e72b5 {
+    align-self: baseline;
+}
+
+.divkit-b8f4d {
+    width: max-content;
+}
+
+.divkit-faa66 {
+    height: max-content;
+}
+
+.divkit-d3211 {
+    max-width: 100%;
+}
+
+.divkit-d3211.divkit-ff439 {
+    width: auto;
+}
+
+.divkit-a5256 {
+    max-height: 100%;
+}
+
+.divkit-a5256.divkit-ff439 {
+    height: auto;
+}
+
+.divkit-dab2d {
+    grid-area: 1 / 1 / 2 / 2;
+}
+
+.divkit-d43fb {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.divkit-d9e38 {
+    scroll-snap-align: center;
+}
+
+.divkit-efd1e {
+    scroll-snap-align: start;
+}
+
+.divkit-d4056 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+@supports (overflow: clip) {
+    .divkit-d4056 {
+        overflow: clip;
+    }
+}
+
+.divkit-d4056::before {
+    content: '';
+    position: absolute;
+    top: -0.1em;
+    left: -0.1em;
+    box-sizing: border-box;
+    width: calc(100% + 0.2em);
+    height: calc(100% + 0.2em);
+    border: var(--divkit-border);
+    border-radius: var(--divkit-border-radius, 0);
+}
+
+.divkit-f018b {
+    visibility: hidden;
+}
+
+.divkit-e784b {
+    display: none !important;
+}
+
+.divkit-f4980 {
+    opacity: var(--divkit-animation-opacity-start, 1);
+    transform: scale(var(--divkit-animation-scale-start, 1));
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.divkit-f4980:active {
+    opacity: var(--divkit-animation-opacity-end, 1);
+    transform: scale(var(--divkit-animation-scale-end, 1));
+}
+
+.divkit-c7f14:focus,
+.divkit-c7f14:focus-visible {
+    outline: none;
+}
+
+/*!*********************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/utilities/OuterBackground.module.css ***!
+  \*********************************************************************************************************************************************************************************************************/
+.divkit-bf253 {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.divkit-dcad7 {
+    overflow: hidden;
+}
+
+@supports (overflow: clip) {
+    .divkit-dcad7 {
+        overflow: clip;
+    }
+}
+
+.divkit-b921d {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+}
+
+.divkit-cd613 {
+    display: none;
+}
+
+/*!**********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/text/TextRange.module.css ***!
+  \**********************************************************************************************************************************************************************************************/
+.divkit-faf07 {
+    white-space: pre-wrap;
+    color: inherit;
+}
+
+.divkit-ccb64 {
+    white-space: nowrap;
+}
+
+.divkit-d9237 {
+    display: inline-block;
+}
+
+.divkit-d7e07 {
+    text-decoration: underline line-through;
+}
+
+.divkit-f3dde {
+    text-decoration: underline;
+}
+
+.divkit-d27b7 {
+    text-decoration: line-through;
+}
+
+.divkit-c6b0f {
+    text-decoration: none;
+}
+
+/*!***************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/container/Container.module.css ***!
+  \***************************************************************************************************************************************************************************************************/
+.divkit-d37d6 {
+    display: flex;
+}
+
+.divkit-c8551 {
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+.divkit-f315a {
+    overflow: visible;
+}
+
+.divkit-ddc33 {
+    flex-direction: column;
+}
+
+.divkit-ddc33.divkit-a31f0 {
+    justify-content: flex-start;
+}
+
+.divkit-ddc33.divkit-aae61 {
+    justify-content: center;
+}
+
+.divkit-ddc33.divkit-eac00 {
+    justify-content: flex-end;
+}
+
+.divkit-ddc33.divkit-ce053 {
+    justify-content: space-between;
+}
+
+.divkit-ddc33.divkit-cf29b {
+    justify-content: space-around;
+}
+
+.divkit-ddc33.divkit-b4b04 {
+    justify-content: space-evenly;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-efaf5 {
+    align-content: flex-start;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-bac9d {
+    align-content: center;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-ca36b {
+    align-content: flex-end;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-e5c38 {
+    align-content: space-between;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-feff2 {
+    align-content: space-around;
+}
+
+.divkit-c8551.divkit-ddc33.divkit-e5e05 {
+    align-content: space-evenly;
+}
+
+/*.container_orientation_horizontal {
+}*/
+
+.divkit-fe458.divkit-efaf5 {
+    justify-content: flex-start;
+}
+
+.divkit-fe458.divkit-bac9d {
+    justify-content: center;
+}
+
+.divkit-fe458.divkit-ca36b {
+    justify-content: flex-end;
+}
+
+.divkit-fe458.divkit-e5c38 {
+    justify-content: space-between;
+}
+
+.divkit-fe458.divkit-feff2 {
+    justify-content: space-around;
+}
+
+.divkit-fe458.divkit-e5e05 {
+    justify-content: space-evenly;
+}
+
+.divkit-c8551.divkit-fe458.divkit-a31f0 {
+    align-content: flex-start;
+}
+
+.divkit-c8551.divkit-fe458.divkit-aae61 {
+    align-content: center;
+}
+
+.divkit-c8551.divkit-fe458.divkit-eac00 {
+    align-content: flex-end;
+}
+
+.divkit-c8551.divkit-fe458.divkit-ce053 {
+    align-content: space-between;
+}
+
+.divkit-c8551.divkit-fe458.divkit-cf29b {
+    align-content: space-around;
+}
+
+.divkit-c8551.divkit-fe458.divkit-b4b04 {
+    align-content: space-evenly;
+}
+
+.divkit-a644d {
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: 100%;
+}
+
+/*!************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/container/ContainerSeparator.module.css ***!
+  \************************************************************************************************************************************************************************************************************/
+.divkit-a7719 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.divkit-c770e {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.divkit-f6e9a {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/*!***************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/separator/Separator.module.css ***!
+  \***************************************************************************************************************************************************************************************************/
+.divkit-a30bb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.divkit-f529e {
+    min-height: .1em;
+}
+
+.divkit-e9e27 {
+    min-width: .1em;
+}
+
+.divkit-db7d8 {
+    display: block;
+}
+
+/*!*******************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/image/Image.module.css ***!
+  \*******************************************************************************************************************************************************************************************/
+.divkit-a448f {
+    min-width: 0;
+    min-height: 0;
+}
+
+.divkit-fe14a {
+    min-width: max-content;
+}
+
+.divkit-f4d92 {
+    min-height: max-content;
+}
+
+.divkit-ce046 {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Placeholder styling */
+    background-size: cover;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+}
+
+.divkit-fe14a .divkit-ce046 {
+    width: auto;
+}
+
+.divkit-f4d92 .divkit-ce046 {
+    height: auto;
+}
+
+.divkit-f10d9 .divkit-ce046 {
+    visibility: hidden;
+}
+
+.divkit-ae78c .divkit-ce046 {
+    transform: scale(-1, 1);
+}
+
+.divkit-dc808 {
+    position: relative;
+    display: block;
+}
+
+.divkit-ae784 .divkit-ce046 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.divkit-cf4e0 .divkit-ce046 {
+    animation-name: divkit-e555f;
+    animation-duration: var(--divkit-appearance-duration);
+    animation-delay: var(--divkit-appearance-delay);
+    animation-iteration-count: 1;
+    animation-fill-mode: both;
+}
+
+.divkit-ffe8a .divkit-ce046 {
+    visibility: hidden;
+}
+
+.divkit-a448f[data-lottie="true"] .divkit-ce046 {
+    display: none;
+}
+
+@keyframes divkit-e555f {
+    from {
+        opacity: var(--divkit-appearance-fade-start);
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/*!*****************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/grid/Grid.module.css ***!
+  \*****************************************************************************************************************************************************************************************/
+.divkit-d9080 {
+    display: grid;
+}
+
+.divkit-fc24d {
+    justify-content: start;
+}
+
+.divkit-a14a6 {
+    justify-content: center;
+}
+
+.divkit-cfd04 {
+    justify-content: end;
+}
+
+.divkit-c3106 {
+    align-content: start;
+}
+
+.divkit-d4310 {
+    align-content: center;
+}
+
+.divkit-fa9cf {
+    align-content: end;
+}
+
+/*!***********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/gallery/Gallery.module.css ***!
+  \***********************************************************************************************************************************************************************************************/
+.divkit-cbb0f {
+    display: block;
+}
+
+.divkit-a4e39 {
+    width: 100%;
+    height: 100%;
+
+    /** inherit max_size from parent node (100% may be bigger than the actual size of the parent) */
+    max-width: inherit;
+    max-height: inherit;
+}
+
+.divkit-f49e7 .divkit-a4e39 {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.divkit-f49e7 .divkit-a4e39::-webkit-scrollbar {
+    display: none;
+}
+
+.divkit-c9be7 > .divkit-a4e39 {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.divkit-a72d5 > .divkit-a4e39 {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.divkit-f606e > .divkit-a4e39 {
+    scroll-snap-type: mandatory;
+    scroll-snap-type: both mandatory;
+}
+
+.divkit-f606e > .divkit-a4e39 > .divkit-eb4a5 {
+    scroll-snap-align: start;
+}
+
+.divkit-eb4a5 {
+    box-sizing: border-box;
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.divkit-c9be7 > .divkit-a4e39 > .divkit-eb4a5 {
+    flex-direction: column;
+    min-width: min-content;
+}
+
+.divkit-a72d5 > .divkit-a4e39 > .divkit-eb4a5 {
+    flex-direction: row;
+    min-height: min-content;
+}
+
+.divkit-af276 {
+    box-sizing: border-box;
+    display: inline-grid;
+}
+
+.divkit-c9be7 > .divkit-a4e39 > .divkit-eb4a5 > .divkit-af276 {
+    justify-content: start;
+    grid-template-rows: 100%;
+    grid-auto-flow: column;
+    height: 100%;
+    min-width: min-content;
+    min-height: 0;
+}
+
+.divkit-a72d5 > .divkit-a4e39 > .divkit-eb4a5 > .divkit-af276 {
+    align-content: start;
+    grid-template-columns: 100%;
+    grid-auto-flow: row;
+    width: 100%;
+    min-width: 0;
+    min-height: min-content;
+}
+
+.divkit-b72d7::before {
+    background: var(--divkit-gallery-arrow-bg, #fff);
+    box-shadow: 0 .2em .4em 0 var(--divkit-gallery-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-b72d7:hover::before {
+    box-shadow: 0 .2em .8em 0 var(--divkit-gallery-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-b72d7:active::before {
+    box-shadow: 0 .1em .4em 0 var(--divkit-gallery-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-b4173 {
+    fill: var(--divkit-gallery-arrow-fg, #000);
+}
+
+/*!************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/utilities/Arrows.module.css ***!
+  \************************************************************************************************************************************************************************************************/
+.divkit-bf36b {
+    position: absolute;
+    top: 50%;
+    width: 4.4em;
+    height: 4.4em;
+    margin-top: -2.2em;
+    cursor: pointer;
+}
+
+.divkit-bf36b::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    content: '';
+    border-radius: 100%;
+    transition: .15s ease-out;
+    transition-property: transform,box-shadow;
+}
+
+.divkit-bf36b:hover::before {
+    transform: scale(1.1);
+}
+
+.divkit-bf36b:active::before {
+    transform: scale(1.05);
+}
+
+.divkit-a67bf {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 3.2em;
+    height: 3.2em;
+    margin: auto;
+}
+
+.divkit-e2a31 {
+    left: .6em;
+}
+
+.divkit-c684b {
+    right: .6em;
+}
+
+/*!*****************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/tabs/Tabs.module.css ***!
+  \*****************************************************************************************************************************************************************************************/
+.divkit-e0df5 {
+    display: flex;
+    flex-direction: column;
+}
+
+.divkit-ea19b {
+    display: flex;
+    flex: 0 0 auto;
+    padding: var(--divkit-tabs-title-padding, 0 1.2em .8em);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.divkit-ea19b::-webkit-scrollbar {
+    display: none;
+}
+
+.divkit-c25c7 {
+    display: inline-block;
+    flex: 0 0 auto;
+    margin-left: var(--divkit-tabs-items-spacing, 0);
+    padding: var(--divkit-tabs-paddings, .5em .6667em);
+    font-size: var(--divkit-tabs-font-size, 1.2em);
+    line-height: var(--divkit-tabs-line-height, 1.25);
+    letter-spacing: var(--divkit-tabs-letter-spacing, 0);
+    font-weight: var(--divkit-tabs-inactive-font-weight, 400);
+    font-family: var(--divkit-tabs-inactive-font-family, inherit);
+    border-radius: var(--divkit-tabs-border-radius, 100em);
+    cursor: pointer;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+    white-space: pre;
+    color: var(--divkit-tabs-inactive-text-color, rgba(0, 0, 0, .5));
+    background: var(--divkit-tabs-inactive-background-color, none);
+    text-decoration: none;
+}
+
+.divkit-c25c7:first-child {
+    margin-left: 0;
+}
+
+.divkit-d560a {
+    background: var(--divkit-tabs-active-background-color, #ffdc60);
+    color: var(--divkit-tabs-active-text-color, rgba(0, 0, 0, .8));
+    cursor: default;
+    font-weight: var(--divkit-tabs-active-font-weight, 400);
+    font-family: var(--divkit-tabs-active-font-family, inherit);
+}
+
+.divkit-d560a.divkit-dfda0 {
+    cursor: pointer;
+}
+
+.divkit-f5dc0 {
+    display: flex;
+    flex: 1 1 auto;
+    transition: height .3s ease-out;
+    touch-action: pan-y;
+    overflow: hidden;
+}
+
+.divkit-eb42c {
+    position: relative;
+    display: flex;
+    flex: 0 1 auto;
+    width: 100%;
+    will-change: transform;
+    transition-property: transform;
+    transition-timing-function: ease-out;
+    transition-duration: 0s;
+}
+
+.divkit-b9f18 {
+    transition-duration: .3s;
+}
+
+.divkit-fa574 .divkit-cc9fb {
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.divkit-cc9fb {
+    display: none;
+}
+
+.divkit-e7306 {
+    display: flex;
+    flex: 0 1 auto;
+    width: 100%;
+}
+
+.divkit-ae594 .divkit-e7306 {
+    height: 100%;
+}
+
+.divkit-b85bf {
+    height: .1em;
+    margin: 0 1.2em;
+    background: rgba(0, 0, 0, .08);
+}
+
+/*!*******************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/state/State.module.css ***!
+  \*******************************************************************************************************************************************************************************************/
+.divkit-b8efc {
+    position: relative;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 100%;
+}
+
+.divkit-adaae {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.divkit-eb860 {
+    position: absolute;
+    pointer-events: auto;
+    transform-origin: 0 0;
+}
+
+.divkit-e08c6 {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 100%;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@supports (overflow: clip) {
+    .divkit-e08c6 {
+        overflow: clip;
+    }
+}
+
+/*!*******************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/pager/Pager.module.css ***!
+  \*******************************************************************************************************************************************************************************************/
+.divkit-c5feb {}
+
+.divkit-f6987 {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: mandatory;
+    scroll-snap-type: both mandatory;
+}
+
+.divkit-f6987::-webkit-scrollbar {
+    display: none;
+}
+
+.divkit-feca7 {
+    display: grid;
+    max-height: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    scroll-snap-align: center;
+}
+
+@supports (overflow: clip) {
+    .divkit-feca7 {
+        overflow: clip;
+    }
+}
+
+.divkit-b0a1c .divkit-f6987 {
+    justify-content: start;
+    grid-auto-flow: column;
+    grid-template-rows: 100%;
+    height: 100%;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.divkit-f772f .divkit-f6987 {
+    align-content: start;
+    grid-auto-flow: row;
+    grid-template-columns: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+
+.divkit-d78c2::before {
+    background: var(--divkit-pager-arrow-bg, #fff);
+    box-shadow: 0 .2em .4em 0 var(--divkit-pager-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-d78c2:hover::before {
+    box-shadow: 0 .2em .8em 0 var(--divkit-pager-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-d78c2:active::before {
+    box-shadow: 0 .1em .4em 0 var(--divkit-pager-arrow-shadow, rgba(0, 0, 0, .1));
+}
+
+.divkit-a94d9 {
+    fill: var(--divkit-pager-arrow-fg, #000);
+}
+
+/*!***************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/indicator/Indicator.module.css ***!
+  \***************************************************************************************************************************************************************************************************/
+.divkit-d8e3f {}
+
+.divkit-b5db0 {
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.divkit-b5db0::-webkit-scrollbar {
+    display: none;
+}
+
+.divkit-d5d94 {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.divkit-f6629 {
+    flex-shrink: 0;
+    width: var(--divkit-indicator-inactive-width);
+    height: var(--divkit-indicator-inactive-height);
+    border-radius: var(--divkit-indicator-inactive-border-radius);
+}
+
+.divkit-c1670 .divkit-f6629 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: var(--divkit-indicator-default-margin);
+}
+
+.divkit-c1670 .divkit-f6629::before {
+    flex: 0 0 auto;
+    content: '';
+    width: var(--divkit-indicator-inactive-width);
+    height: var(--divkit-indicator-inactive-height);
+    border-radius: var(--divkit-indicator-inactive-border-radius);
+    background: var(--divkit-indicator-inactive-background);
+    box-shadow: var(--divkit-indicator-inactive-box-shadow);
+}
+
+.divkit-c1670 .divkit-b39cd {
+    height: var(--divkit-indicator-active-height);
+}
+
+.divkit-c1670 .divkit-b39cd::before {
+    width: var(--divkit-indicator-active-width);
+    height: var(--divkit-indicator-active-height);
+    border-radius: var(--divkit-indicator-active-border-radius);
+    background: var(--divkit-indicator-active-background);
+    box-shadow: var(--divkit-indicator-active-box-shadow);
+}
+
+/* Do not use justify-content: center here, beacuse with overflow items will be still centered instead of left/right aligned */
+.divkit-c1670.divkit-a7473 .divkit-f6629:first-child {
+    margin-left: auto;
+}
+
+.divkit-c1670.divkit-a7473 .divkit-f6629:last-child {
+    margin-right: auto;
+}
+
+.divkit-c1670.divkit-a7d63 .divkit-f6629:first-child {
+    margin-right: auto;
+}
+
+.divkit-c1670.divkit-a7d63 .divkit-f6629:last-child {
+    margin-left: auto;
+}
+
+.divkit-b6bd3 .divkit-f6629 {
+    /* needs both grow and shrink */
+    flex: 1 1 0;
+    min-width: calc((100% - var(--divkit-indicator-stretch-max-spacer)) / var(--divkit-indicator-stretch-max-count));
+    margin-left: var(--divkit-indicator-stretch-margin);
+    background: var(--divkit-indicator-inactive-background);
+    box-shadow: var(--divkit-indicator-inactive-box-shadow);
+}
+
+.divkit-b6bd3 .divkit-b39cd {
+    width: var(--divkit-indicator-active-width);
+    height: var(--divkit-indicator-active-height);
+    border-radius: var(--divkit-indicator-active-border-radius);
+    background: var(--divkit-indicator-active-background);
+    box-shadow: var(--divkit-indicator-active-box-shadow);
+}
+
+.divkit-b6bd3 .divkit-b39cd {
+    flex-grow: var(--divkit-indicator-active-scale);
+}
+
+.divkit-b6bd3 .divkit-f6629:first-child {
+    margin-left: 0;
+}
+
+/*!*********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/slider/Slider.module.css ***!
+  \*********************************************************************************************************************************************************************************************/
+.divkit-ef4f7 {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.divkit-d1d65 {
+    position: relative;
+    display: block;
+    width: calc(100% + var(--divkit-slider-thumb-width));
+    height: var(--divkit-slider-max-thumb-height);
+    margin: 0;
+    margin-right: calc(var(--divkit-slider-thumb-width) / -2);
+    margin-left: calc(var(--divkit-slider-thumb-width) / -2);
+    font: inherit;
+    background: none;
+    border: none;
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
+    opacity: 0;
+}
+
+.divkit-d1d65 + .divkit-d1d65 {
+    margin-top: calc(0px - var(--divkit-slider-max-thumb-height));
+}
+
+.divkit-c7980 {
+    width: calc(100% + var(--divkit-slider-thumb-secondary-width));
+    margin-right: calc(var(--divkit-slider-thumb-secondary-width) / -2);
+    margin-left: calc(var(--divkit-slider-thumb-secondary-width) / -2);
+}
+
+.divkit-f3453 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% * var(--divkit-slider-track-part));
+    width: var(--divkit-slider-thumb-width);
+    height: var(--divkit-slider-thumb-height);
+    margin: auto 0;
+    margin-left: calc(var(--divkit-slider-thumb-width) / -2);
+    border: none;
+}
+
+.divkit-fb7b5 .divkit-f3453 {
+    right: calc(100% * var(--divkit-slider-track-part));
+    left: auto;
+    margin-right: calc(var(--divkit-slider-thumb-width) / -2);
+    margin-left: 0;
+}
+
+.divkit-e1984 {
+    left: calc(100% * var(--divkit-slider-track-secondary-part));
+    width: var(--divkit-slider-thumb-secondary-width);
+    height: var(--divkit-slider-thumb-secondary-height);
+    margin-left: calc(var(--divkit-slider-thumb-secondary-width) / -2);
+}
+
+.divkit-fb7b5 .divkit-e1984 {
+    right: calc(100% * var(--divkit-slider-track-secondary-part));
+    left: auto;
+    margin-right: calc(var(--divkit-slider-thumb-secondary-width) / -2);
+    margin-left: 0;
+}
+
+.divkit-f7338 {
+    position: relative;
+    margin-right: calc(var(--divkit-slider-max-thumb-width) / 2);
+    margin-left: calc(var(--divkit-slider-max-thumb-width) / 2);
+}
+
+.divkit-ac903 {
+    position: relative;
+}
+
+.divkit-e956c {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+}
+
+.divkit-ec5bf {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+.divkit-c4af5 {
+    position: absolute;
+    top: calc(var(--divkit-slider-text-offset-y, 0px) + 50%);
+    left: calc(var(--divkit-slider-text-offset-x, 0px) + 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: max-content;
+    height: var(--divkit-slider-thumb-height);
+    transform: translate(-50%, -50%);
+}
+
+.divkit-d8821 {
+    top: calc(var(--divkit-slider-text-secondary-offset-y, 0px) + 50%);
+    left: calc(var(--divkit-slider-text-secondary-offset-x, 0px) + 50%);
+}
+
+.divkit-bd9bf {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+}
+
+.divkit-d8ce2 {
+    left: calc(100% * var(--divkit-slider-tick));
+    width: var(--divkit-slider-tick-active-width);
+    height: var(--divkit-slider-tick-active-height);
+    margin-left: calc(var(--divkit-slider-tick-active-width) / -2);
+    background: var(--divkit-slider-tick-active-background);
+    border-radius: var(--divkit-slider-tick-active-border-radius);
+    box-shadow: var(--divkit-slider-tick-active-box-shadow);
+}
+
+.divkit-fb7b5 .divkit-d8ce2 {
+    right: calc(100% * var(--divkit-slider-tick));
+    left: auto;
+    margin-right: calc(var(--divkit-slider-tick-active-width) / -2);
+    margin-left: 0;
+}
+
+.divkit-e71e7 {
+    left: calc(100% * var(--divkit-slider-tick));
+    width: var(--divkit-slider-tick-inactive-width);
+    height: var(--divkit-slider-tick-inactive-height);
+    margin-left: calc(var(--divkit-slider-tick-inactive-width) / -2);
+    background: var(--divkit-slider-tick-inactive-background);
+    border-radius: var(--divkit-slider-tick-inactive-border-radius);
+    box-shadow: var(--divkit-slider-tick-inactive-box-shadow);
+}
+
+.divkit-fb7b5 .divkit-e71e7 {
+    right: calc(100% * var(--divkit-slider-tick));
+    left: auto;
+    margin-right: calc(var(--divkit-slider-tick-inactive-width) / -2);
+    margin-left: 0;
+}
+
+/*!*******************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/input/Input.module.css ***!
+  \*******************************************************************************************************************************************************************************************/
+.divkit-c3a4c {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    letter-spacing: 0;
+    line-height: var(--divkit-input-line-height);
+    text-align: start;
+}
+
+.divkit-fc52a {
+    text-align: center;
+}
+
+.divkit-e9096 {
+    text-align: end;
+}
+
+.divkit-e0491 {
+    width: 0;
+}
+
+.divkit-f11e0 {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+            appearance: none;
+    /* to hide arrows in firefox */
+    -moz-appearance: textfield;
+    background: none;
+    border: none;
+    border-radius: inherit;
+    /*outline: none;*/
+    outline-offset: -2px;
+    white-space: pre-wrap;
+}
+
+.divkit-f11e0::-webkit-inner-spin-button,
+.divkit-f11e0::-webkit-outer-spin-button {
+    display: none;
+}
+
+.divkit-f11e0::placeholder {
+    color: var(--divkit-input-hint-color, rgba(0, 0, 0, .45));
+}
+
+.divkit-b7593 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--divkit-input-hint-color, rgba(0, 0, 0, .45));
+    pointer-events: none;
+}
+
+.divkit-fc52a .divkit-b7593 {
+    justify-content: center;
+}
+
+.divkit-e9096 .divkit-b7593 {
+    justify-content: flex-end;
+}
+
+.divkit-cd14f .divkit-b7593 {
+    align-items: flex-start;
+}
+
+.divkit-cd38f .divkit-b7593 {
+    align-items: flex-end;
+}
+
+.divkit-dd6af .divkit-b7593 {
+    align-items: baseline;
+}
+
+.divkit-cc00f .divkit-f11e0::selection {
+    background: var(--divkit-input-highlight-color);
+}
+
+.divkit-fc52a .divkit-ffd1e {
+    text-align: center;
+}
+
+.divkit-e9096 .divkit-ffd1e {
+    text-align: end;
+}
+
+.divkit-cd14f .divkit-ffd1e {
+    align-self: flex-start;
+    height: calc(1em * var(--divkit-input-line-height));
+}
+
+.divkit-cd38f .divkit-ffd1e {
+    align-self: flex-end;
+    height: calc(1em * var(--divkit-input-line-height));
+}
+
+.divkit-dd6af .divkit-ffd1e {
+    height: calc(1em * var(--divkit-input-line-height));
+}
+
+.divkit-ad8a3 {
+    overflow: auto;
+    display: flex;
+    flex: 1 1 auto;
+    border-radius: inherit;
+}
+
+.divkit-f61f0 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100%;
+    height: max-content;
+}
+
+.divkit-cd14f .divkit-f61f0 {
+    justify-content: flex-start;
+}
+
+.divkit-cd38f .divkit-f61f0 {
+    justify-content: flex-end;
+}
+
+.divkit-dd6af .divkit-f61f0 {
+    justify-content: flex-start;
+}
+
+.divkit-fc52a .divkit-f61f0 {
+    align-items: center;
+}
+
+.divkit-e9096 .divkit-f61f0 {
+    align-items: flex-end;
+}
+
+.divkit-e6b50:focus,
+.divkit-e6b50:focus-visible {
+    outline: none;
+}
+
+/*!*********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/select/Select.module.css ***!
+  \*********************************************************************************************************************************************************************************************/
+.divkit-feef3 {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+}
+
+.divkit-cd862 {
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+    white-space: pre-wrap;
+}
+
+.divkit-a3cf6 .divkit-cd862 {
+    color: var(--divkit-input-hint-color);
+}
+
+.divkit-bdb72 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font: inherit;
+}
+
+.divkit-a46ad:focus,
+.divkit-bdb72.divkit-fc5dc:focus-visible {
+    outline: none;
+}
+
+.divkit-e774b {
+    font: inherit;
+}
+
+/*!*******************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/video/Video.module.css ***!
+  \*******************************************************************************************************************************************************************************************/
+.divkit-c11f9 {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.divkit-cfe32 {
+    position: relative;
+}
+
+.divkit-a4f5c .divkit-c11f9 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/*!********************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/utilities/RootSvgFilters.module.css ***!
+  \********************************************************************************************************************************************************************************************************/
+.divkit-dc22b {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/*!***********************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/tooltip/Tooltip.module.css ***!
+  \***********************************************************************************************************************************************************************************************/
+.divkit-f1907 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.divkit-e5914 {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/*!**************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./src/components/Root.module.css ***!
+  \**************************************************************************************************************/
+.divkit-b023c {
+    position: relative;
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: 100%;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.25;
+    word-wrap: break-word;
+    word-break: break-word;
+    /*color: #000;
+    background: #fff;*/
+}
+
+@supports (overflow: clip) {
+    .divkit-b023c {
+        overflow: clip;
+    }
+}
+
+.divkit-bd259,
+.divkit-d9099 {
+    cursor: pointer;
+}
+
+.divkit-c016b {
+    user-select: none;
+}
+
+.divkit-ee112 {}
+
+.divkit-ee112 .divkit-bd259 {
+    transition: opacity .15s ease-out;
+}
+
+.divkit-ee112 .divkit-bd259:hover {
+    opacity: .7;
+}
+
+.divkit-ee112 .divkit-bd259:active {
+    opacity: .5;
+}
+
+.divkit-b023c:not(.divkit-ee112) .divkit-fef1e {
+    display: none;
+}
+
+.divkit-aa145 {
+    overscroll-behavior: contain;
+}
+
+.divkit-f0cba {
+    -webkit-touch-callout: none;
+}
+
+/*!*****************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[0].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[0].use[2]!./src/components/menu/Menu.module.css ***!
+  \*****************************************************************************************************************************************************************************************/
+.divkit-cedbe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 190px;
+    visibility: hidden;
+    pointer-events: none;
+    background: #fff;
+    color: #000;
+    box-shadow: 0 0 10px 2px rgba(0, 0, 0, .1);
+}
+
+.divkit-e4801 {
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.divkit-c8df2 {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.divkit-ffd4a.divkit-ffd4a {
+    display: block;
+    padding: 12px 16px;
+    font-size: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: .15s ease-in-out;
+}
+
+.divkit-ee112 .divkit-ffd4a.divkit-ffd4a:hover {
+    background-color: #ddd;
+    opacity: 1;
+}
+
+
+/*# sourceMappingURL=client.css.map*/

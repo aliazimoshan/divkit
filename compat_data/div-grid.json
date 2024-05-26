@@ -1,0 +1,14 @@
+{
+    "features": [{
+        "id": "grid_not_fullfilled_support",
+        "name": "The grid supports empty cells at the end",
+        "compat": {
+            "android": {
+                "version_added": "29.11.0"
+            },
+            "web": {
+                "version_added": "29.11.0"
+            }
+        }
+    }]
+}

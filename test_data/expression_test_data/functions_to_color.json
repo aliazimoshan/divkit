@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "name": "some incorrect string to color => color",
+      "expression": "@{toColor('abc')}",
+      "expected": {
+        "type": "error",
+        "value": "Failed to evaluate [toColor('abc')]. Unable to convert value to Color, expected format #AARRGGBB."
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "some correct string to color => color",
+      "expression": "@{toColor('#fff')}",
+      "expected": {
+        "type": "color",
+        "value": "#FFFFFFFF"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    }
+  ]
+}

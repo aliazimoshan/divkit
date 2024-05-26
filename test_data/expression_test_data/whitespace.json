@@ -1,0 +1,154 @@
+{
+  "cases": [
+    {
+      "name": "integer_var  +  10 => 15",
+      "expression": "@{integer_var  +  10}",
+      "expected": {
+        "type": "integer",
+        "value": 15
+      },
+      "variables": [
+        {
+          "name": "integer_var",
+          "type": "integer",
+          "value": 5
+        }
+      ],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "integer_var\t+\t10 => 15",
+      "expression": "@{integer_var\t+\t10}",
+      "expected": {
+        "type": "integer",
+        "value": 15
+      },
+      "variables": [
+        {
+          "name": "integer_var",
+          "type": "integer",
+          "value": 5
+        }
+      ],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "integer_var+10 => 15",
+      "expression": "@{integer_var+10}",
+      "expected": {
+        "type": "integer",
+        "value": 15
+      },
+      "variables": [
+        {
+          "name": "integer_var",
+          "type": "integer",
+          "value": 5
+        }
+      ],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "5-2 => 3",
+      "expression": "@{5-2}",
+      "expected": {
+        "type": "integer",
+        "value": 3
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "len('12345')-2 => 3",
+      "expression": "@{len('12345')-2}",
+      "expected": {
+        "type": "integer",
+        "value": 3
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "5 + - 3 => 2",
+      "expression": "@{5 + - 3}",
+      "expected": {
+        "type": "integer",
+        "value": 2
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "5 - + 3 => 2",
+      "expression": "@{5 - + 3}",
+      "expected": {
+        "type": "integer",
+        "value": 2
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "( integer_var + 3 ) * 4 => 20",
+      "expression": "@{( integer_var + 3 ) * 4}",
+      "expected": {
+        "type": "integer",
+        "value": 20
+      },
+      "variables": [
+        {
+          "name": "integer_var",
+          "type": "integer",
+          "value": 2
+        }
+      ],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    },
+    {
+      "name": "toString (123) => '123'",
+      "expression": "@{toString (123)}",
+      "expected": {
+        "type": "string",
+        "value": "123"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    }
+  ]
+}

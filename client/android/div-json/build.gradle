@@ -1,0 +1,17 @@
+apply from: "${project.projectDir}/../div-library.gradle"
+apply from: "${project.projectDir}/../div-tests.gradle"
+apply from: "${project.projectDir}/../publish-android.gradle"
+
+android {
+    namespace 'com.yandex.div.json'
+}
+
+dependencies {
+    implementation project(path: ':assertion')
+    implementation project(path: ':div-core')
+    implementation project(path: ':div-evaluable')
+    implementation project(path: ':logging')
+    implementation project(path: ':utils')
+
+    api libs.androidx.core
+}

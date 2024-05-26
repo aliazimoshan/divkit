@@ -1,0 +1,294 @@
+{
+  "cases": [
+    {
+      "name": "'Hello!'.toString() => 'Hello!'",
+      "expression": "@{'Hello!'.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "123.toString() => '123'",
+      "expression": "@{123.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "123"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "123.45.toString() => '123.45'",
+      "expression": "@{123.45.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "123.45"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "true.toString() => 'true'",
+      "expression": "@{true.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "true"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "color_var.toString() => '#FFAABBCC'",
+      "expression": "@{color_var.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "#FFAABBCC"
+      },
+      "variables": [
+        {
+          "name": "color_var",
+          "type": "color",
+          "value": "#AABBCC"
+        }
+      ],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "url_var.toString() => 'https://some.url'",
+      "expression": "@{url_var.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "https://some.url"
+      },
+      "variables": [
+        {
+          "name": "url_var",
+          "type": "url",
+          "value": "https://some.url"
+        }
+      ],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "array_var.toString() => string",
+      "expression": "@{array_var.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "[\"value 1\"]"
+      },
+      "variables": [
+        {
+          "name": "array_var",
+          "type": "array",
+          "value": [
+            "value 1"
+          ]
+        }
+      ],
+      "platforms": [
+        "ios"
+      ]
+    },
+    {
+      "name": "dict_var.toString() => string",
+      "expression": "@{dict_var.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "{\"param1\":\"value 1\"}"
+      },
+      "variables": [
+        {
+          "name": "dict_var",
+          "type": "dict",
+          "value": {
+            "param1": "value 1"
+          }
+        }
+      ],
+      "platforms": [
+        "ios"
+      ]
+    },
+    {
+      "name": "'Hello!'.toString().toString() => 'Hello!'",
+      "expression": "@{'Hello!'.toString().toString()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "toString(123).toString() => '123'",
+      "expression": "@{toString(123).toString()}",
+      "expected": {
+        "type": "string",
+        "value": "123"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "string.var.toString() => 'Hello!'",
+      "expression": "@{string.var.toString()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "variables": [
+        {
+          "name": "string.var",
+          "type": "string",
+          "value": "Hello!"
+        }
+      ],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "(2 + 3).toString() => '5'",
+      "expression": "@{(2 + 3).toString()}",
+      "expected": {
+        "type": "string",
+        "value": "5"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "(!false).toString() => 'true'",
+      "expression": "@{(!false).toString()}",
+      "expected": {
+        "type": "string",
+        "value": "true"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "!false.toString() => error",
+      "expression": "@{!false.toString()}",
+      "expected": {
+        "type": "error",
+        "value": "Failed to evaluate [!'false']. A Boolean is expected after a unary not."
+      },
+      "variables": [],
+      "platforms": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "'Hello!' .toString() => 'Hello!'",
+      "expression": "@{'Hello!' .toString()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "'Hello!'. toString() => 'Hello!'",
+      "expression": "@{'Hello!'. toString()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "'Hello!'.toString () => 'Hello!'",
+      "expression": "@{'Hello!'.toString ()}",
+      "expected": {
+        "type": "string",
+        "value": "Hello!"
+      },
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "'Hello!'.toString => error",
+      "expression": "@{'Hello!'.toString}",
+      "expected": {
+        "type": "error",
+        "value": "Method expected after ."
+      },
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "name": "'#FFAABBCCC'.getColorAlpha() => error",
+      "expression": "@{'#FFAABBCCC'.getColorAlpha()}",
+      "expected": {
+        "type": "error",
+        "value": "Failed to evaluate [getColorAlpha()]. Unknown method name: getColorAlpha."
+      },
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    }
+  ]
+}

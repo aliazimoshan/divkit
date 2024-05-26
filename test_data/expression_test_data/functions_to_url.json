@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "name": "some string to url => url",
+      "expression": "@{toUrl('https://ya.ru')}",
+      "expected": {
+        "type": "url",
+        "value": "https://ya.ru"
+      },
+      "variables": [],
+      "platforms": [
+        "android",
+        "web",
+        "ios"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "anyOf": [
+    {
+      "$ref": "div-action-array-insert-value.json"
+    },
+    {
+      "$ref": "div-action-array-remove-value.json"
+    },
+    {
+      "$ref": "div-action-set-variable.json"
+    },
+    {
+      "$ref": "div-action-focus-element.json"
+    },
+    {
+      "$ref": "div-action-clear-focus.json"
+    },
+    {
+      "$ref": "div-action-copy-to-clipboard.json"
+    }
+  ]
+}
