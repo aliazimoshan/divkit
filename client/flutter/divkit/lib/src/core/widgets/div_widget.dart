@@ -5,6 +5,7 @@ import 'package:divkit/src/core/widgets/div_error_widget.dart';
 import 'package:divkit/src/core/widgets/gallery/div_gallery_widget.dart';
 import 'package:divkit/src/core/widgets/image/div_image_widget.dart';
 import 'package:divkit/src/core/widgets/input/div_input_widget.dart';
+import 'package:divkit/src/core/widgets/separator/div_separator_widget.dart';
 import 'package:divkit/src/core/widgets/state/div_state_widget.dart';
 import 'package:divkit/src/core/widgets/text/div_text_widget.dart';
 import 'package:divkit/src/generated_sources/div.dart';
@@ -28,6 +29,7 @@ class DivWidget extends StatelessWidget {
         divImage: (data) => DivImageWidget(data),
         divInput: (data) => DivInputWidget(data),
         divCustom: (data) => DivCustomWidget(data),
+        divSeparator: (data) => DivSeparatorWidget(data),
         orElse: () {
           logger.warning("Attempt to render an unsupported div!");
           return DivErrorWidget(
