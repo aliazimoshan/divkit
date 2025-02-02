@@ -1,4 +1,4 @@
 export interface DivAction {
-    log_id: string;
-    url?: string;
+  log_id: string;
+  url?: string;
 }

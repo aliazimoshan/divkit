@@ -7,20 +7,20 @@ export type AlignmentHorizontal = 'left' | 'center' | 'right';
 export type AlignmentVertical = 'top' | 'center' | 'bottom';
 
 export interface GradientBackground {
-    type: 'gradient';
-    colors: string[];
-    angle?: number;
+  type: 'gradient';
+  colors: string[];
+  angle?: number;
 }
 
 export interface ImageBackground {
-    type: 'image';
-    image_url: string;
-    content_alignment_vertical?: AlignmentVertical;
-    content_alignment_horizontal?: AlignmentHorizontal;
-    scale?: ImageScale;
-    alpha?: number;
-    // preload_required
-    // filters?: Filter[];
+  type: 'image';
+  image_url: string;
+  content_alignment_vertical?: AlignmentVertical;
+  content_alignment_horizontal?: AlignmentHorizontal;
+  scale?: ImageScale;
+  alpha?: number;
+  // preload_required
+  // filters?: Filter[];
 }
 
 /* export interface NinePatchImageBackground {
@@ -30,8 +30,8 @@ export interface ImageBackground {
 } */
 
 export interface SolidBackground {
-    type: 'solid';
-    color: string;
+  type: 'solid';
+  color: string;
 }
 
 /* export interface RadialBackgroundRelativeRadius {
@@ -62,10 +62,14 @@ export interface RadialBackground {
     center_y?: RadialGradientCenter;
 } */
 
-export type Background = GradientBackground | ImageBackground |
-    SolidBackground/*  | RadialBackground | NinePatchImageBackground */;
+export type Background =
+  | GradientBackground
+  | ImageBackground
+  | SolidBackground /*  | RadialBackground | NinePatchImageBackground */;
 
-export function backgroundPreview(background: Background[], lang: {
+export function backgroundPreview(
+  background: Background[],
+  lang: {
     noBackground: string;
     multipleBackgrounds: string;
     unknownBackgrounds: string;
@@ -73,35 +77,46 @@ export function backgroundPreview(background: Background[], lang: {
     backgroundGradient: string;
     backgroundImage: string;
     noUrl: string;
-}, palette: PaletteItem[]): string {
-    if (!background || !Array.isArray(background) || !background.length) {
-        return lang.noBackground;
-    }
+  },
+  palette: PaletteItem[],
+): string {
+  if (!background || !Array.isArray(background) || !background.length) {
+    return lang.noBackground;
+  }
 
-    if (background.length > 1) {
-        return lang.multipleBackgrounds;
-    }
+  if (background.length > 1) {
+    return lang.multipleBackgrounds;
+  }
 
-    return backgroundPreviewSingle(background[0], lang, palette);
+  return backgroundPreviewSingle(background[0], lang, palette);
 }
 
-export function backgroundPreviewSingle(background: Background, lang: {
+export function backgroundPreviewSingle(
+  background: Background,
+  lang: {
     unknownBackgrounds: string;
     backgroundSolid: string;
     backgroundGradient: string;
     backgroundImage: string;
     noUrl: string;
-}, palette: PaletteItem[]): string {
-    if (background.type === 'solid') {
-        // todo rect preview
-        const isPalette = isPaletteColor(background.color);
-        const preview = isPalette ? palettePreview(palette, background.color) : background.color;
-        return lang.backgroundSolid.replace('%s', () => preview);
-    } else if (background.type === 'gradient') {
-        return lang.backgroundGradient;
-    } else if (background.type === 'image') {
-        return lang.backgroundImage.replace('%s', () => background.image_url || lang.noUrl);
-    }
+  },
+  palette: PaletteItem[],
+): string {
+  if (background.type === 'solid') {
+    // todo rect preview
+    const isPalette = isPaletteColor(background.color);
+    const preview = isPalette
+      ? palettePreview(palette, background.color)
+      : background.color;
+    return lang.backgroundSolid.replace('%s', () => preview);
+  } else if (background.type === 'gradient') {
+    return lang.backgroundGradient;
+  } else if (background.type === 'image') {
+    return lang.backgroundImage.replace(
+      '%s',
+      () => background.image_url || lang.noUrl,
+    );
+  }
 
-    return lang.unknownBackgrounds;
+  return lang.unknownBackgrounds;
 }

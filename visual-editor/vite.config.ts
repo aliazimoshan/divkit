@@ -1,12 +1,22 @@
-import { defineConfig } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
-const isProduction = process.env.NODE_ENV === 'production';
+// const isProduction = process.env.NODE_ENV === 'production';
 
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [
         svelte()
     ],
-    base: isProduction ? process.env.PROD_BASE : undefined
+    server: {
+        proxy: {
+            '/screen': {
+                target: 'https://172.19.83.20:8443',
+                changeOrigin: true,
+                secure: false
+            }
+        },
+        host: true,
+        port: 5173
+    }
 });

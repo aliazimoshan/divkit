@@ -9,47 +9,46 @@ import indicatorIcon from '../../assets/components/indicator.svg?url';
 import separatorIcon from '../../assets/components/separator.svg?url';
 import galleryHorizontalIcon from '../../assets/components/gallery-horizontal.svg?url';
 import galleryVerticalIcon from '../../assets/components/gallery-vertical.svg?url';
-import switchIcon from '../../assets/components/switch.svg?url';
 import unknownIcon from '../../assets/components/unknown.svg?url';
 
 const MAP = {
-    text: textIcon,
-    container: containerVerticalIcon,
-    gallery: galleryHorizontalIcon,
-    gif: gifIcon,
-    image: imageIcon,
-    indicator: indicatorIcon,
-    separator: separatorIcon,
-    switch: switchIcon
+  text: textIcon,
+  container: containerVerticalIcon,
+  gallery: galleryHorizontalIcon,
+  gif: gifIcon,
+  image: imageIcon,
+  indicator: indicatorIcon,
+  separator: separatorIcon,
 };
 
 const MAP_BY_ORIENTATION = {
-    container: {
-        horizontal: containerHorizontalIcon,
-        overlap: containerOverlapIcon
-    },
-    gallery: {
-        vertical: galleryVerticalIcon
-    }
+  container: {
+    horizontal: containerHorizontalIcon,
+    overlap: containerOverlapIcon,
+  },
+  gallery: {
+    vertical: galleryVerticalIcon,
+  },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function componentIcon(type: string, json?: any): string {
-    if (type in MAP) {
-        const orientation = json?.orientation;
+  if (type in MAP) {
+    const orientation = json?.orientation;
 
-        if (orientation && type in MAP_BY_ORIENTATION) {
-            const submap = MAP_BY_ORIENTATION[type as keyof typeof MAP_BY_ORIENTATION];
-            if (orientation in submap) {
-                return submap[orientation as keyof typeof submap];
-            }
-        }
-
-        return MAP[type as keyof typeof MAP];
-    }
-    if (type in namedTemplates && namedTemplates[type].icon) {
-        return namedTemplates[type].icon;
+    if (orientation && type in MAP_BY_ORIENTATION) {
+      const submap =
+        MAP_BY_ORIENTATION[type as keyof typeof MAP_BY_ORIENTATION];
+      if (orientation in submap) {
+        return submap[orientation as keyof typeof submap];
+      }
     }
 
-    return unknownIcon;
+    return MAP[type as keyof typeof MAP];
+  }
+  if (type in namedTemplates && namedTemplates[type].icon) {
+    return namedTemplates[type].icon;
+  }
+
+  return unknownIcon;
 }
