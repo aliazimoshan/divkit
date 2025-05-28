@@ -1,28 +1,26 @@
 <script lang="ts">
-  import { getContext, onDestroy, onMount } from "svelte";
-  import { combineRanges } from "../data/highlightChannel";
-  import type { createEditor } from "../data/editor";
+  import { getContext, onDestroy, onMount } from 'svelte';
+  import { combineRanges } from '../data/highlightChannel';
+  import type { createEditor } from '../data/editor';
   import {
     APP_CTX,
-    buttonValue,
-    deletingScreen,
-    isYesNoModalOpen,
-    selectedPatchJson,
+    deletePatchConfirmationModal,
+    selectedPatch,
     selectedScreen,
-    showAddScreenModal,
     type AppContext,
-  } from "../ctx/appContext";
-  import { SetJsonCommand } from "../data/commands/setJson";
-  // import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome";
-  // import type { ScreenModel } from "./models/ScreenModel";
-  // import { saveScreen } from "./services/services";
-  // import toast from "svelte-french-toast";
-  // import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
+  } from '../ctx/appContext';
+  import { SetJsonCommand } from '../data/commands/setJson';
+  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+  import { faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+  import { PatchModel } from './models/PatchModel';
+  import { savePatch } from './services/patch_services';
+  import toast from 'svelte-french-toast';
 
   let node: HTMLElement;
   let editor: ReturnType<typeof createEditor> | undefined;
   let isSelfClick = false;
-  let prevVal = "";
+  let prevVal = '';
+  let originalJson = ''; // Backup of original JSON
 
   const { editorFabric, shadowRoot, state } = getContext<AppContext>(APP_CTX);
 
@@ -40,58 +38,110 @@
 
   let isLoading = false;
 
+  function applyPatch() {
+    if (!$selectedPatch || !$divjsonStore.fullString) return;
+
+    try {
+      let selectedJson = JSON.parse($divjsonStore.fullString);
+      let patch = JSON.parse($selectedPatch.jsonObject);
+
+      function applyChanges(obj: any, changes: any[]): any {
+        if (!obj || typeof obj !== 'object') return obj;
+
+        if (obj.id && changes.some((change) => change.id === obj.id)) {
+          const patchData = changes.find((change) => change.id === obj.id);
+          return { ...obj, items: patchData.items };
+        }
+
+        if (Array.isArray(obj)) {
+          return obj.map((item) => applyChanges(item, changes));
+        } else {
+          let newObj = { ...obj };
+          for (let key in newObj) {
+            newObj[key] = applyChanges(newObj[key], changes);
+          }
+          return newObj;
+        }
+      }
+
+      if (patch.patch && patch.patch.mode === 'partial') {
+        selectedJson = applyChanges(selectedJson, patch.patch.changes);
+      }
+
+      state.pushCommand(
+        new SetJsonCommand(state, JSON.stringify(selectedJson, null, 2)),
+      );
+    } catch (err) {
+      console.error('Error applying patch:', err);
+    }
+  }
+
+  function undoPatch() {
+    if (!originalJson) return; // Prevent undo if there's no backup
+
+    state.pushCommand(new SetJsonCommand(state, originalJson));
+  }
+
+  function handleBack() {
+    undoPatch();
+    selectedPatch.set(null);
+  }
+
   // Function to handle update button click
-  // async function handleUpdate() {
-  // if ($buttonValue === "Save") {
-  //   showAddScreenModal.set(true); // Open modal
-  // } else {
-  //   if (!editor) return;
-  //   try {
-  //     isLoading = true; // Start loading
-  //     const updatedScreen: ScreenModel = {
-  //       id: $selectedScreen!.id ?? "",
-  //       path: $selectedScreen!.path ?? "",
-  //       version: $selectedScreen!.version ?? "",
-  //       screenName: $selectedScreen!.screenName ?? "",
-  //       idSystem: $selectedScreen!.idSystem ?? 0,
-  //       appScreenPatches: $selectedScreen!.appScreenPatches ?? [],
-  //       jsonObject: $divjsonStore.fullString, // Explicitly assign the updated jsonObject
-  //     };
+  async function handleUpdate() {
+    // Add your update logic here
+    if (!$selectedPatch) {
+      console.error('No patch selected to save.');
+      return;
+    }
 
-  //     console.log("Updated ScreenModel:", updatedScreen);
+    try {
+      const patchModel = createPatchModel();
+      await savePatch(patchModel);
+      deletePatchConfirmationModal.set(false);
+    } catch (err) {
+      console.error('Unexpected error while saving patch:', err);
+      toast.error('Error happened while updating patch');
+    }
+  }
 
-  //     const saveResult = await saveScreen(updatedScreen);
+  // Function to handle delete button click
+  async function handleDelete() {
+    if (!$selectedPatch) {
+      console.error('No patch selected to delete.');
+      return;
+    }
 
-  //     state.pushCommand(new SetJsonCommand(state, BASE_VIEW_JSON));
-  //     buttonValue.set("Save");
+    const patch = $selectedPatch; // Extract the value from the store
+    if (!patch) {
+      toast.error('No patch selected for deletion.');
+      return;
+    }
+    deletePatchConfirmationModal.set(true);
+    undoPatch();
+  }
 
-  //     console.log("Screen saved successfully:", saveResult);
-
-  //     isLoading = false;
-  //     toast.success("Screen created successfully!");
-
-  //     showAddScreenModal.set(false);
-  //     console.log("Modal closed after success");
-  //   } catch (err) {
-  //     isLoading = false;
-
-  //     if (err instanceof Error) {
-  //       console.error("Save screen failed:", err);
-  //       toast.error(err.message);
-  //     } else {
-  //       console.error("Save screen failed with unknown error:", err);
-  //       toast.error("An unknown error occurred while saving.");
-  //     }
-  //   }
-  // }
-  // }
+  // Helper function to create a ScreenModel instance
+  function createPatchModel(): PatchModel {
+    const selectedSystem = localStorage.getItem('selectedSystem');
+    const systemId = JSON.parse(selectedSystem!).id;
+    const parsedSystemId = systemId ? parseInt(systemId, 10) : null;
+    const idScreen = $selectedScreen!.id!;
+    return new PatchModel(
+      $selectedPatch?.id!,
+      $selectedPatch?.jsonObject!,
+      idScreen,
+      $selectedPatch?.patchName!,
+      parsedSystemId!,
+    );
+  }
 
   // $: if ($selectedPatchJson) {
   //   editor?.setValue($selectedPatchJson); // Update editor with selected patch JSON
   // }
 
-  $: if (prevVal !== $selectedPatchJson && !editor?.isFocused()) {
-    editor?.setValue($selectedPatchJson);
+  $: if (prevVal !== $selectedPatch?.jsonObject && !editor?.isFocused()) {
+    editor?.setValue($selectedPatch?.jsonObject ?? '');
   }
 
   $: editor?.setTheme($themeStore);
@@ -111,24 +161,23 @@
   onMount(() => {
     editor = editorFabric({
       node,
-      value: $selectedPatchJson,
+      value: $selectedPatch?.jsonObject ?? '',
       theme: $themeStore,
       readOnly: $readOnly,
       shadowRoot,
       onChange(value) {
-        console.log("onChange", value);
-        if (value !== $selectedPatchJson) {
-          console.log("first if", value);
+        if (value !== $selectedPatch?.jsonObject) {
           let json;
           try {
             json = JSON.parse(value);
-            console.log("Parsed JSON:", json);
+            // Update selected patch with new JSON
+            selectedPatch.update(
+              (patch) => ({ ...patch, jsonObject: value }) as PatchModel,
+            );
           } catch (err) {
-            console.log("JSON parse error:", err);
+            console.log('JSON parse error:', err);
           }
-          console.log("catch", value);
           if (json) {
-            console.log("Valid JSON before pushCommand:", json);
             prevVal = value;
             state.pushCommand(new SetJsonCommand(state, value));
           }
@@ -156,6 +205,15 @@
         selectedLeaf.set(leaf || null);
       },
     });
+
+    // Save the original JSON when the component is mounted
+    if ($selectedPatch && $divjsonStore.fullString) {
+      originalJson = JSON.stringify(
+        JSON.parse($divjsonStore.fullString),
+        null,
+        2,
+      );
+    }
   });
 
   onDestroy(() => {
@@ -166,52 +224,57 @@
   });
 </script>
 
+<div class="button-row-container">
+  <button class="back-button" on:click={handleBack}>← Back</button>
+  <div class="right-buttons">
+    <button class="secondary-button undo-button" on:click={undoPatch}>
+      Reset
+    </button>
+    <button class="styled-button apply-button" on:click={applyPatch}>
+      Apply
+    </button>
+  </div>
+</div>
+
 <div class="editor-container">
   {#if isLoading}
     <div class="loading-overlay">Loading...</div>
   {/if}
 
   <div class="text-editor" bind:this={node} class:blurred={isLoading}></div>
-
   <!-- Buttons Section -->
-  <!-- <div class="button-container"> -->
-  <!-- Delete Button -->
-  <!-- <button
-      class="styled-button delete-button"
-      on:click={(event) => {
-        event.stopPropagation(); // Prevent triggering any other events
-        const screen = $selectedScreen; // Extract the value from the store
-        if (!screen) {
-          toast.error("No screen selected for deletion.");
-          return;
-        }
-        isYesNoModalOpen.set(true);
-        deletingScreen.set(screen); // Ensure proper type
-      }}
+  <div class="button-container">
+    <!-- Delete Button -->
+    <button
+      class="full-width-button delete-button"
+      on:click={handleDelete}
       class:blurred={isLoading}
     >
       <FontAwesomeIcon icon={faTrash} />
       Delete
-    </button> -->
+    </button>
 
-  <!-- Update/Save Button -->
-  <!-- <button
-      class="styled-button update-button"
+    <!-- Update/Save Button -->
+    <button
+      class="full-width-button update-button"
       on:click={handleUpdate}
       class:blurred={isLoading}
     >
-      {#if $buttonValue === "Save"}
-        <FontAwesomeIcon icon={faSave} />
-        Save
-      {:else}
-        <FontAwesomeIcon icon={faEdit} />
-        Update
-      {/if}
-    </button> -->
-  <!-- </div> -->
+      <FontAwesomeIcon icon={faEdit} />
+      Update
+    </button>
+    <!-- </div> -->
+  </div>
 </div>
 
 <style>
+  .button-row-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-right: 5px;
+  }
   .editor-container {
     display: flex;
     flex-direction: column;
@@ -241,13 +304,13 @@
 
   /* Button styling */
   .styled-button {
-    width: 100%; /* Stretches button to full width */
-    padding: 12px 16px;
-    font-size: 16px;
-    font-weight: bold;
+    padding: 10px 14px;
+    font-size: 14px;
+    /* font-weight: bold; */
     color: #fff;
     background-color: var(--accent-purple);
     border: none;
+    border-radius: 8px;
     outline: none;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -268,6 +331,37 @@
 
   .styled-button:focus {
     outline: 2px solid var(--accent-purple-focus);
+  }
+
+  .secondary-button {
+    padding: 10px 14px;
+    font-size: 14px;
+    margin: 5px;
+    /* font-weight: bold; */
+    color: var(--accent-purple); /* Change font color to purple */
+    background-color: var(--accent-purple-light);
+    border: 1px solid var(--accent-purple);
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition:
+      background-color 0.3s,
+      box-shadow 0.3s;
+  }
+
+  .secondary-button:hover {
+    background-color: var(--accent-gray-hover);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .secondary-button:active {
+    background-color: var(--accent-gray-active);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .secondary-button:focus {
+    outline: 2px solid var(--accent-gray-focus);
   }
   .editor-container {
     position: relative;
@@ -300,17 +394,41 @@
     margin-top: 1rem; /* Add spacing from the content above */
   }
 
-  .styled-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem; /* Add spacing between icon and text */
-    padding: 0.75rem 1.5rem;
-    font-size: 16px;
-    border-radius: 4px;
+  .back-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-purple);
+    background-color: transparent;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s;
+  }
+
+  .back-button:hover {
+    background-color: var(--text-tertiary);
+  }
+
+  .blurred {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .full-width-button {
+    width: 100%; /* Stretches button to full width */
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: var(--accent-purple);
+    border: none;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition:
+      background-color 0.3s,
+      box-shadow 0.3s;
   }
 
   .update-button {
@@ -329,10 +447,5 @@
 
   .delete-button:hover {
     background-color: #d32f2f;
-  }
-
-  .blurred {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 </style>

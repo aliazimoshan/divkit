@@ -609,6 +609,7 @@
         "timersTickActions": "Tick actions",
         "timersEndActions": "End actions",
         "rtl.switchToRTL": "Turn on RTL layout",
-        "rtl.switchToLTR": "Turn on LTR layout"
+        "rtl.switchToLTR": "Turn on LTR layout",
+        "patchList": "Patch List"
     }
 }

@@ -1,13 +1,17 @@
 <script lang="ts">
-  import { onMount, setContext } from "svelte";
-  import { derived, get, writable } from "svelte/store";
-  import SplitView from "./lib/components/SplitView.svelte";
-  import type { LanguageContext } from "./lib/ctx/languageContext";
-  import { LANGUAGE_CTX } from "./lib/ctx/languageContext";
-  import translations from "./auto/lang.json";
-  import ContextMenu from "./lib/components/ContextMenu.svelte";
-  import toast, { Toaster } from "svelte-french-toast";
-  import Login from "./lib/components/Login.svelte";
+  import { onMount, setContext } from 'svelte';
+  import { derived, get, writable } from 'svelte/store';
+  import SplitView from './lib/components/SplitView.svelte';
+  import type { LanguageContext } from './lib/ctx/languageContext';
+  import { LANGUAGE_CTX } from './lib/ctx/languageContext';
+  import translations from './auto/lang.json';
+  import ContextMenu from './lib/components/ContextMenu.svelte';
+  import toast, { Toaster } from 'svelte-french-toast';
+  import Login from './lib/components/Login.svelte';
+  import {
+    fetchTempJson,
+    logout as logoutService,
+  } from './lib/components/services/services';
   import type {
     CardLocale,
     EditorInstance,
@@ -17,63 +21,70 @@
     GetTranslationSuggest,
     Layout,
     Locale,
-  } from "./lib";
-  import LayoutColumn from "./lib/components/LayoutColumn.svelte";
+  } from './lib';
+  import LayoutColumn from './lib/components/LayoutColumn.svelte';
   import {
     APP_CTX,
     buttonValue,
-    isYesNoModalOpen,
+    deletePatchConfirmationModal,
+    deleteScreenConfirmationModal,
+    selectedPatch,
     selectedScreen,
+    selectedSystem,
+    showAddPatchModal,
     showAddScreenModal,
     type AppContext,
     type ContextMenuApi,
     type RendererApi,
     type ShowErrors,
-  } from "./lib/ctx/appContext";
-  import { editorFabric as editorFabricInternal } from "./lib/data/editorWrapper";
-  import CustomTooltip from "./lib/components/CustomTooltip.svelte";
-  import Background2Dialog from "./lib/components/prop-dialog/Background2Dialog.svelte";
-  import Color2Dialog from "./lib/components/prop-dialog/Color2Dialog.svelte";
-  import File2Dialog from "./lib/components/prop-dialog/File2Dialog.svelte";
-  import Link2Dialog from "./lib/components/prop-dialog/Link2Dialog.svelte";
-  import Actions2Dialog from "./lib/components/prop-dialog/Actions2Dialog.svelte";
-  import TextAlign2Dialog from "./lib/components/prop-dialog/TextAlign2Dialog.svelte";
-  import InplaceEditorDialog from "./lib/components/InplaceEditorDialog.svelte";
-  import Tanker2Dialog from "./lib/components/prop-dialog/Tanker2Dialog.svelte";
-  import Expression2Dialog from "./lib/components/prop-dialog/Expression2Dialog.svelte";
-  import { onGlobalKeydown } from "./lib/utils/keybinder/keybinder";
-  import { loadFileAsBase64 } from "./lib/utils/loadFileAsBase64";
-  import VideoSourcesDialog from "./lib/components/prop-dialog/VideoSourcesDialog.svelte";
-  import type { State } from "./lib/data/state";
-  import SelectOptionsDialog from "./lib/components/prop-dialog/SelectOptionsDialog.svelte";
-  import type { ScreenModel } from "./lib/components/models/ScreenModel";
-  import { SetJsonCommand } from "./lib/data/commands/setJson";
-  import AddScreenModal from "./lib/components/AddScreenModal.svelte";
-  import YesNoModal from "./lib/components/YesNoModal.svelte";
+  } from './lib/ctx/appContext';
+  import { editorFabric as editorFabricInternal } from './lib/data/editorWrapper';
+  import CustomTooltip from './lib/components/CustomTooltip.svelte';
+  import Background2Dialog from './lib/components/prop-dialog/Background2Dialog.svelte';
+  import Color2Dialog from './lib/components/prop-dialog/Color2Dialog.svelte';
+  import File2Dialog from './lib/components/prop-dialog/File2Dialog.svelte';
+  import Link2Dialog from './lib/components/prop-dialog/Link2Dialog.svelte';
+  import Actions2Dialog from './lib/components/prop-dialog/Actions2Dialog.svelte';
+  import TextAlign2Dialog from './lib/components/prop-dialog/TextAlign2Dialog.svelte';
+  import InplaceEditorDialog from './lib/components/InplaceEditorDialog.svelte';
+  import Tanker2Dialog from './lib/components/prop-dialog/Tanker2Dialog.svelte';
+  import Expression2Dialog from './lib/components/prop-dialog/Expression2Dialog.svelte';
+  import { onGlobalKeydown } from './lib/utils/keybinder/keybinder';
+  import { loadFileAsBase64 } from './lib/utils/loadFileAsBase64';
+  import VideoSourcesDialog from './lib/components/prop-dialog/VideoSourcesDialog.svelte';
+  import type { State } from './lib/data/state';
+  import SelectOptionsDialog from './lib/components/prop-dialog/SelectOptionsDialog.svelte';
+  import type { ScreenModel } from './lib/components/models/ScreenModel';
+  import { SetJsonCommand } from './lib/data/commands/setJson';
+  import AddScreenModal from './lib/components/AddScreenModal.svelte';
+  import { onDestroy } from 'svelte';
+  import AddPatchModal from './lib/components/AddPatchModal.svelte';
+  import DeletePatchConfirmation from './lib/components/DeletePatchConfirmation.svelte';
+  import DeleteScreenConfirmation from './lib/components/DeleteScreenConfirmation.svelte';
 
   let tempScreenId: string | null = null;
   let tempScreen: ScreenModel | null = null;
 
   onMount(async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    tempScreenId = urlParams.get("id");
+    tempScreenId = urlParams.get('id');
+
+    checkLoginStatus();
+
+    // Get the selected system from local storage
+    updateSelectedSystemFromLocalStorage();
 
     if (tempScreenId || selectedScreen) {
-      buttonValue.set("Save");
-      const tempScreenUrl = "/screen/getTmpJson/" + tempScreenId;
+      buttonValue.set('Save');
 
       try {
-        const response = await fetch(tempScreenUrl);
-        if (!response.ok) {
-          throw new Error("Failed to fetch systems");
-        }
-
-        tempScreen = await response.json();
+        // Use the service to fetch the temporary screen JSON
+        tempScreen = await fetchTempJson(tempScreenId);
         if (tempScreen === null) {
-          throw new Error("Invalid Url.");
+          throw new Error('Invalid Url.');
         }
 
-        console.log("got temp screen");
+        console.log('got temp screen');
         console.log(tempScreen.jsonObject);
 
         state.pushCommand(new SetJsonCommand(state, tempScreen.jsonObject));
@@ -81,11 +92,10 @@
         console.log(
           err instanceof Error
             ? err.message
-            : "Failed to fetch systems from server. Please try again."
+            : 'Failed to fetch systems from server. Please try again.',
         );
       } finally {
-        console.log("load done!");
-        // isLoading = false;
+        console.log('load done!');
       }
     }
   });
@@ -94,21 +104,21 @@
 
   export let layout: Layout = [
     {
-      items: ["new-component", "component-tree"],
+      items: ['new-component', 'component-tree'],
     },
     {
-      items: ["preview"],
+      items: ['preview'],
       weight: 3,
     },
     {
-      items: ["component-props:code"],
+      items: ['component-props:code'],
     },
   ];
-  export let locale: Locale = "en";
+  export let locale: Locale = 'en';
 
   export let shadowRoot: ShadowRoot | undefined = undefined;
 
-  export let actionLogUrlVariable = "";
+  export let actionLogUrlVariable = '';
 
   export let cardLocales: CardLocale[] = [];
 
@@ -143,19 +153,38 @@
   }
 
   let isLoggedIn = false;
-  onMount(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
-    if (loggedIn === "true") {
-      isLoggedIn = true; // User is logged in, show the main app
-    }
-  });
 
-  function handleLogin(status: any) {
-    isLoggedIn = status;
+  function checkLoginStatus() {
+    const token = localStorage.getItem('refreshToken');
+    isLoggedIn = token ? true : false;
+  }
+
+  function updateSelectedSystemFromLocalStorage() {
+    const storedSystem = localStorage.getItem('selectedSystem');
+    console.log(storedSystem);
+    if (storedSystem) {
+      selectedSystem.set(JSON.parse(storedSystem));
+    }
+    console.log($selectedSystem);
+  }
+
+  function handleLogin(status: boolean) {
+    if (status) {
+      // Update login state and selected system from localStorage
+      isLoggedIn = true;
+      const storedSystem = localStorage.getItem('selectedSystem');
+      if (storedSystem) {
+        selectedSystem.set(JSON.parse(storedSystem));
+      }
+      // Optionally, you can force a reload if you want a full refresh:
+      // window.location.reload();
+    } else {
+      isLoggedIn = false;
+    }
   }
 
   function logout() {
-    localStorage.removeItem("loggedIn");
+    logoutService();
     isLoggedIn = false;
   }
 
@@ -170,7 +199,7 @@
       console.error(`Missing translation for key "${key}"`);
     }
 
-    return translation || "";
+    return translation || '';
   };
 
   let lang = writable(locale);
@@ -184,10 +213,10 @@
     return (key: string, overrideLang?: string) => {
       const val = l10nGetter(overrideLang || lang, key);
 
-      if (typeof val !== "string") {
+      if (typeof val !== 'string') {
         // todo expose error
         console.error(`Missing translation for key "${key}"`);
-        return "";
+        return '';
       }
 
       return val;
@@ -248,8 +277,8 @@
       // Incorrect TypeScript DOM typings
       if (
         shadowRoot &&
-        "getSelection" in shadowRoot &&
-        typeof shadowRoot.getSelection === "function"
+        'getSelection' in shadowRoot &&
+        typeof shadowRoot.getSelection === 'function'
       ) {
         return shadowRoot.getSelection();
       }
@@ -419,7 +448,7 @@
       component: LayoutColumn,
       weight: column.weight || 1,
       minSize: column.minWidth,
-      key: column.items.join(","),
+      key: column.items.join(','),
       props: {
         items: column.items,
       },
@@ -433,7 +462,7 @@
     if (!(target instanceof HTMLElement)) {
       return;
     }
-    const owner = target.closest("[data-custom-tooltip]");
+    const owner = target.closest('[data-custom-tooltip]');
     if (
       owner &&
       owner instanceof HTMLElement &&
@@ -459,34 +488,62 @@
   showAddScreenModal.subscribe((value) => {
     isAddScreenModalOpen = value;
   });
+  let isAddPatchModalOpen = false;
+  // $: isAddScreenModalOpen =
+  showAddPatchModal.subscribe((value) => {
+    isAddPatchModalOpen = value;
+  });
 
-  function openAddScreenModal(): void {
-    showAddScreenModal.set(true);
-  }
+  // function openAddScreenModal(): void {
+  //   showAddScreenModal.set(true);
+  // }
 
-  function submitAddScreen(): void {}
+  // function submitAddScreen(): void {}
 
-  function closeAddPageModal(): void {
-    showAddScreenModal.set(false);
-  }
+  // function closeAddPageModal(): void {
+  //   showAddScreenModal.set(false);
+  // }
   function showToast(message: string, type: string) {
-    type === "success" ? toast.success(message) : toast.error(message);
+    type === 'success' ? toast.success(message) : toast.error(message);
   }
+
+  // function handleSystemSelection(system: any) {
+  //   if (system) {
+  //     isSystemSelected = true;
+  //     selectedSystem.set(system);
+  //   } else {
+  //     toast.error('Please select a system.');
+  //   }
+  // }
+
+  // Add a listener for localStorage changes
+  function handleStorageEvent(event: StorageEvent) {
+    if (event.key === 'selectedSystem') {
+      const newValue = event.newValue ? JSON.parse(event.newValue) : null;
+      selectedSystem.set(newValue);
+      console.log('selectedSystem updated from localStorage:', newValue);
+    }
+  }
+
+  window.addEventListener('storage', handleStorageEvent);
+
+  onDestroy(() => {
+    window.removeEventListener('storage', handleStorageEvent);
+  });
 </script>
 
 <!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-{#if isLoggedIn}
+{#if isLoggedIn && $selectedSystem?.id != undefined}
   <!-- Main App Content -->
   <div
     class="app"
-    class:app_dark={$themeStore === "dark"}
+    class:app_dark={$themeStore === 'dark'}
     on:mouseover={onMouseOver}
     on:mouseout={onMouseOut}
     on:keydown={onGlobalKeydown}
   >
     {#if isAddScreenModalOpen}
-      <!-- {console.log('AddScreenModal is rendered')} -->
       <AddScreenModal
         on:showToast={(event) => {
           showToast(event.detail.message, event.detail.type);
@@ -494,8 +551,20 @@
       />
     {/if}
 
-    {#if $isYesNoModalOpen}
-      <YesNoModal screenModel={$selectedScreen} />
+    {#if isAddPatchModalOpen}
+      <AddPatchModal
+        on:showToast={(event) => {
+          showToast(event.detail.message, event.detail.type);
+        }}
+      />
+    {/if}
+
+    {#if $deleteScreenConfirmationModal}
+      <DeleteScreenConfirmation screenModel={$selectedScreen} />
+    {/if}
+
+    {#if $deletePatchConfirmationModal}
+      <DeletePatchConfirmation />
     {/if}
 
     <main class="main">
@@ -515,13 +584,12 @@
     <VideoSourcesDialog bind:this={videoSourcesDialog} />
 
     <CustomTooltip owner={currentTooltipOwner} />
-    <Toaster position="top-center" />
   </div>
 {:else}
   <!-- Login Page -->
   <Login onLogin={handleLogin} />
-  <Toaster position="top-center" />
 {/if}
+<Toaster position="top-center" />
 
 <style>
   .app {
@@ -544,7 +612,7 @@
   .app {
     color-scheme: light;
 
-    --monospace-font: Droid Sans Mono, "monospace", monospace,
+    --monospace-font: Droid Sans Mono, 'monospace', monospace,
       Droid Sans Fallback;
   }
 
@@ -591,6 +659,7 @@
     --text-tertiary: #b0b0b0;
 
     --accent-purple: #5959e8;
+    --accent-purple-light: #d0d0fc;
     --accent-purple-sub: #3d3de3;
     --accent-purple-hover: #545bd6;
     --accent-purple-active: #4e54c9;

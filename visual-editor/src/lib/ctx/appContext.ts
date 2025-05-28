@@ -13,45 +13,53 @@ import type { Background } from "../data/background";
 import type { VideoSource } from "../utils/video";
 import type { SelectOption } from "../utils/select";
 import { derived, writable } from "svelte/store";
-import type { SystemModel } from "../components/models/SystemModel";
+// import type { PageModel } from "../components/models/PageModel";
 import type { ScreenModel } from "../components/models/ScreenModel";
+import type { PatchModel } from "../components/models/PatchModel";
+import type { SystemModel } from "../components/models/SystemModel";
 
 export const showAddScreenModal = writable(false);
+export const showAddPatchModal = writable(false);
 export const isAuthenticated = writable(false);
 export const buttonValue = writable("Update");
 export const systemsList = writable<SystemModel[]>([]);
+export const selectedSystem = writable<SystemModel | null>();
 export const selectedScreen = writable<ScreenModel | null>();
-export const deletingScreen = writable<ScreenModel | null>();
+// export const deletingScreen = writable<ScreenModel | null>();
 export const json = writable<string>();
 export const isNewScreen = writable(false);
-export const isYesNoModalOpen = writable(false);
+export const isNewPatch = writable(false);
+export const deleteScreenConfirmationModal = writable(false);
+export const deletePatchConfirmationModal = writable(false);
 export const isDeleteConfirmed = writable(false);
-export const selectedPatchJson = writable<string>("");
+export const selectedPatch = writable<PatchModel | null>();
+export const refreshScreens = writable(0);
+export const refreshPatches = writable(0);
 
 export const APP_CTX = Symbol("app");
 
-// Derived store for systemScreens
-export const systemScreens = derived(systemsList, ($systemsList) => {
-  const screens: Record<number, ScreenModel[]> = {};
+// // Derived store for systemScreens
+// export const systemScreens = derived(systemsList, ($systemsList) => {
+//   const screens: Record<number, ScreenModel[]> = {};
 
-  // Fetch screens for each system
-  async function fetchScreens() {
-    for (const system of $systemsList) {
-      if (!screens[system.id]) {
-        const response = await fetch(`/screen/getScreenBySystem/${system.id}`);
-        if (response.ok) {
-          screens[system.id] = await response.json();
-        } else {
-          screens[system.id] = []; // Fallback to an empty array
-        }
-      }
-    }
-  }
+//   // Fetch screens for each system
+//   async function fetchScreens() {
+//     for (const system of $systemsList) {
+//       if (!screens[system.id]) {
+//         const response = await fetch(`/screen/getScreenBySystem/${system.id}`);
+//         if (response.ok) {
+//           screens[system.id] = await response.json();
+//         } else {
+//           screens[system.id] = []; // Fallback to an empty array
+//         }
+//       }
+//     }
+//   }
 
-  fetchScreens();
+//   fetchScreens();
 
-  return screens; // Return the screens for each system
-});
+//   return screens; // Return the screens for each system
+// });
 
 export interface MenuItem {
   text: string;
@@ -299,4 +307,34 @@ export interface AppContext {
   textAlign2Dialog: () => TextAlign2DialogApi;
   videoSource2Dialog: () => VideoSource2DialogApi;
   selectOptionsDialog: () => SelectOptionsDialogApi;
+}
+
+// Add token management to the service layer
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string): void {
+  accessToken = token;
+}
+
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
+export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  if (!accessToken) {
+    throw new Error('Access token is not set. Please authenticate first.');
+  }
+
+  const headers = {
+    ...options.headers,
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    throw new Error('Unauthorized. Please check your access token.');
+  }
+
+  return response;
 }

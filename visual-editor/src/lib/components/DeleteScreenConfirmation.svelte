@@ -1,41 +1,30 @@
 <script lang="ts">
-  import { getContext } from "svelte";
+  import { getContext } from 'svelte';
   import {
     APP_CTX,
-    isYesNoModalOpen,
+    deleteScreenConfirmationModal,
+    selectedScreen,
     type AppContext,
-  } from "../ctx/appContext";
-  import toast from "svelte-french-toast";
-  import type { ScreenModel } from "./models/ScreenModel";
-  import { deleteScreen } from "./services/services";
-  import { SetJsonCommand } from "../data/commands/setJson";
+  } from '../ctx/appContext';
+  import toast from 'svelte-french-toast';
+  import type { ScreenModel } from './models/ScreenModel';
+  import { deleteScreen } from './services/services';
+  import { SetJsonCommand } from '../data/commands/setJson';
 
   const { state } = getContext<AppContext>(APP_CTX);
 
   const BASE_VIEW_JSON = JSON.stringify({
     card: {
-      log_id: "div2_sample_card",
+      log_id: 'div2_sample_card',
       states: [
         {
           state_id: 0,
           div: {
             items: [
               {
-                items: [
-                  {
-                    accessibility: {
-                      description: "Hello Naji",
-                    },
-                    font_size: 32,
-                    line_height: 40,
-                    text: "Hello Naji",
-                    font_weight: "medium",
-                    text_color: "#000",
-                    type: "text",
-                  },
-                ],
+                items: [{}],
                 height: {
-                  type: "match_parent",
+                  type: 'match_parent',
                 },
                 margins: {
                   bottom: 0,
@@ -43,51 +32,22 @@
                   left: 40,
                   right: 40,
                 },
-                type: "container",
+                type: 'container',
               },
             ],
-            visibility_action: {
-              log_id: "visible",
-            },
+            visibility_action: {},
             background: [
               {
                 color:
                   "@{getDictOptColor('#00ffffff', local_palette, 'bg_primary', theme)}",
-                type: "solid",
+                type: 'solid',
               },
             ],
             height: {
-              type: "match_parent",
+              type: 'match_parent',
             },
-            orientation: "overlap",
-            type: "container",
-          },
-        },
-      ],
-      variables: [
-        {
-          type: "dict",
-          name: "local_palette",
-          value: {
-            bg_primary: {
-              name: "Primary background",
-              light: "#fff",
-              dark: "#000",
-            },
-            color0: {
-              name: "Secondary background",
-              light: "#eeeeee",
-              dark: "#000",
-            },
-          },
-        },
-        {
-          type: "dict",
-          name: "test",
-          value: {
-            logged: 1,
-            login: "Vasya",
-            mailCount: 123,
+            orientation: 'overlap',
+            type: 'container',
           },
         },
       ],
@@ -105,7 +65,7 @@
       // Call deleteScreen from ExamplePages when 'Yes' is clicked
       deleteScreenById(screenModel).finally(() => {
         isLoading = false;
-        isYesNoModalOpen.set(false); // Close the modal after the action is complete
+        deleteScreenConfirmationModal.set(false); // Close the modal after the action is complete
       });
     }
   }
@@ -113,33 +73,16 @@
   async function deleteScreenById(screen: ScreenModel) {
     try {
       await deleteScreen(screen); // Assuming this function deletes the screen
-      toast.success("Screen deleted successfully!");
       state.pushCommand(new SetJsonCommand(state, BASE_VIEW_JSON));
-      window.location.reload();
-
-      // Only clear selectedScreen if the deleted screen was selected
-      // if ($selectedScreen?.id === screen.id) {
-      //   selectedScreen.set(null);
-      // }
-      // if (selectedSystem) {
-      //   const remainingScreens = $systemScreens[selectedSystem.id] || [];
-      //   if (remainingScreens.length === 0) {
-      //     selectedSystem = null;
-      //   } else if (
-      //     remainingScreens.length > 0 &&
-      //     !remainingScreens.find((s) => s.id === $selectedScreen?.id)
-      //   ) {
-      //     selectedScreen.set(remainingScreens[0]);
-      //     isDeleteConfirmed.set(false);
-      //   }
-      // }
+      selectedScreen.set(null);
     } catch (error) {
-      toast.error("Failed to delete screen");
+      console.log(error);
+      toast.error('Failed to delete screen');
     }
   }
 
   function onCancel() {
-    isYesNoModalOpen.set(false);
+    deleteScreenConfirmationModal.set(false);
   }
 
   // const dispatch = createEventDispatcher();
@@ -151,6 +94,8 @@
     <div class="spinner"></div>
   </div>
 {:else}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="modal" on:click={onCancel}>
     <div class="modal-content" on:click|stopPropagation>
       <div class="modal-header">
@@ -159,7 +104,9 @@
       </div>
 
       <div class="modal-body">
-        <p>Are you sure you want to proceed?</p>
+        <p>
+          Are you sure you want to delete the ${$selectedScreen?.screenName} screen?
+        </p>
       </div>
 
       <div class="modal-actions">
