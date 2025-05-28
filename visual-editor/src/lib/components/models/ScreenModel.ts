@@ -4,7 +4,7 @@ export class ScreenModel {
   jsonObject: string;
   version: string;
   screenName: string;
-  idSystem: number;
+  idSystem: number | null;
   appScreenPatches: [];
 
   constructor(
@@ -13,7 +13,7 @@ export class ScreenModel {
     jsonObject: string,
     version: string,
     screenName: string,
-    idSystem: number,
+    idSystem: number | null,
     appScreenPatches: [],
   ) {
     this.id = id;

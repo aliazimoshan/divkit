@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { getContext, createEventDispatcher } from "svelte";
-  import toast, { Toaster } from "svelte-french-toast";
-  import { saveScreen } from "./services/services";
-  import { ScreenModel } from "./models/ScreenModel";
-  import type { SystemModel } from "./models/SystemModel";
-  import { SetJsonCommand } from "../data/commands/setJson";
+  import { getContext, createEventDispatcher } from 'svelte';
+  import toast, { Toaster } from 'svelte-french-toast';
+  import { saveScreen } from './services/services';
+  import { ScreenModel } from './models/ScreenModel';
+  // import type { SystemModel } from './models/SystemModel';
+  // import type { PageModel } from './models/PageModel';
+  import { SetJsonCommand } from '../data/commands/setJson';
 
   import {
     APP_CTX,
@@ -13,11 +14,12 @@
     showAddScreenModal,
     isNewScreen,
     selectedScreen,
-  } from "../ctx/appContext";
+    selectedSystem,
+  } from '../ctx/appContext';
 
   const BASE_VIEW_JSON = JSON.stringify({
     card: {
-      log_id: "div2_sample_card",
+      log_id: 'div2_sample_card',
       states: [
         {
           state_id: 0,
@@ -27,18 +29,18 @@
                 items: [
                   {
                     accessibility: {
-                      description: "Hello Naji",
+                      description: 'Hello Naji',
                     },
                     font_size: 32,
                     line_height: 40,
-                    text: "Hello Naji",
-                    font_weight: "medium",
-                    text_color: "#000",
-                    type: "text",
+                    text: 'Hello Naji',
+                    font_weight: 'medium',
+                    text_color: '#000',
+                    type: 'text',
                   },
                 ],
                 height: {
-                  type: "match_parent",
+                  type: 'match_parent',
                 },
                 margins: {
                   bottom: 0,
@@ -46,50 +48,50 @@
                   left: 40,
                   right: 40,
                 },
-                type: "container",
+                type: 'container',
               },
             ],
             visibility_action: {
-              log_id: "visible",
+              log_id: 'visible',
             },
             background: [
               {
                 color:
                   "@{getDictOptColor('#00ffffff', local_palette, 'bg_primary', theme)}",
-                type: "solid",
+                type: 'solid',
               },
             ],
             height: {
-              type: "match_parent",
+              type: 'match_parent',
             },
-            orientation: "overlap",
-            type: "container",
+            orientation: 'overlap',
+            type: 'container',
           },
         },
       ],
       variables: [
         {
-          type: "dict",
-          name: "local_palette",
+          type: 'dict',
+          name: 'local_palette',
           value: {
             bg_primary: {
-              name: "Primary background",
-              light: "#fff",
-              dark: "#000",
+              name: 'Primary background',
+              light: '#fff',
+              dark: '#000',
             },
             color0: {
-              name: "Secondary background",
-              light: "#eeeeee",
-              dark: "#000",
+              name: 'Secondary background',
+              light: '#eeeeee',
+              dark: '#000',
             },
           },
         },
         {
-          type: "dict",
-          name: "test",
+          type: 'dict',
+          name: 'test',
           value: {
             logged: 1,
-            login: "Vasya",
+            login: 'Vasya',
             mailCount: 123,
           },
         },
@@ -98,9 +100,9 @@
   });
   let isAddScreenModalOpen = false;
   let dropdownOptions = systemsList;
-  let selectedOption: SystemModel | null = null;
-  let screenPath = "";
-  let screenName = "";
+  // let selectedOption: SystemModel | null = null;
+  let screenPath = '';
+  let screenName = '';
   let isLoading = false;
   const dispatch = createEventDispatcher();
 
@@ -111,69 +113,51 @@
     isAddScreenModalOpen = value;
   });
 
-  if (selectedOption === null && $dropdownOptions.length > 0) {
-    selectedOption = $dropdownOptions[0];
-  }
-
   function openAddScreenModal(): void {
     showAddScreenModal.set(true);
   }
 
+  // Refactor submitAddScreen function to improve readability and maintainability
   async function submitAddScreen() {
-    if (!(selectedOption && screenName && screenPath)) {
-      toast.error("Please fill all required fields.");
-      console.log("Validation failed:", {
-        selectedOption,
-        screenName,
-        screenPath,
-      });
-      return;
-    }
-    isLoading = true; // Show loading indicator
-    console.log("Calling saveScreen with:", {
-      selectedOption,
-      screenName,
-      screenPath,
-    });
+    if (!validateForm(screenName, screenPath)) return;
 
+    isLoading = true;
     try {
-      const urlParams = new URLSearchParams(window.location.search);
-      let tempScreenId = urlParams.get("id");
+      const json = isNewScreen ? BASE_VIEW_JSON : $divjsonStore.fullString;
+      const screenModel = createScreenModel(screenPath, json, screenName);
 
-      let json = $divjsonStore.fullString;
-      if (isNewScreen && !tempScreenId) {
-        json = BASE_VIEW_JSON;
-      }
-      const m = new ScreenModel(
-        null,
-        screenPath,
-        json,
-        new Date().toISOString(),
-        screenName,
-        selectedOption.id,
-        []
-      );
-      console.log("ScreenModel:", m);
-
-      const saveResult = await saveScreen(m);
-      state.pushCommand(new SetJsonCommand(state, BASE_VIEW_JSON));
-      console.dir(saveResult);
-      dispatch("showToast", {
-        message: "Screen created successfully!",
-        type: "success",
-      });
-      // isNewScreen ? goToNewScreen(saveResult.id, saveResult.idSystem) : null;
-      isNewScreen.set(false);
-      setTimeout(() => {
-        isLoading = false;
-        closeAddPageModal();
-      }, 1000);
+      await saveScreen(screenModel);
+      state.pushCommand(new SetJsonCommand(state, json));
+      selectedScreen.set(screenModel);
+      modalStore.close();
     } catch (error) {
+      handleError(error);
+    } finally {
       isLoading = false;
-      console.error("Save screen failed:", error);
-      dispatch("showToast", { message: error, type: "error" });
     }
   }
+
+  // Helper function to create a ScreenModel instance
+  function createScreenModel(
+    screenPath: string,
+    json: string,
+    screenName: string,
+  ): ScreenModel {
+    //TODO: get selected system from local storage
+    const selectedSystem = localStorage.getItem('selectedSystem');
+    const systemId = selectedSystem ? JSON.parse(selectedSystem).id : null;
+    const parsedSystemId = systemId ? parseInt(systemId, 10) : null;
+    return new ScreenModel(
+      null,
+      screenPath,
+      json,
+      new Date().toISOString(),
+      screenName,
+      parsedSystemId,
+      [],
+    );
+  }
+
   function closeAddPageModal(): void {
     showAddScreenModal.set(false);
     isNewScreen.set(false);
@@ -181,54 +165,40 @@
 
   function handleBackgroundClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (target.classList.contains("modal")) {
+    if (target.classList.contains('modal')) {
       closeAddPageModal();
     }
   }
-  // async function goToNewScreen(id: string, systemId: number) {
-  //   const screenModels = await fetchScreenBySystem(systemId);
 
-  //   if (!Array.isArray(screenModels)) {
-  //     console.error("Invalid data returned, expected an array:", screenModels);
-  //     return;
-  //   }
+  // Validate form inputs
+  function validateForm(screenName: string, screenPath: string): boolean {
+    if (!screenName || !screenPath) {
+      toast.error('Please fill all required fields.');
+      return false;
+    }
+    return true;
+  }
 
-  //   const screen = screenModels.find((screen) => screen.id === id);
+  // Handle errors
+  function handleError(error: unknown): void {
+    console.error('Error:', error);
+    toast.error(
+      error instanceof Error ? error.message : 'An unknown error occurred.',
+    );
+  }
 
-  //   if (screen) {
-  //     selectedScreen.set(screen);
-  //     console.log("Selected screen:", screen);
-  //   } else {
-  //     console.error("Screen not found for id:", id);
-  //   }
-  // }
-
-  // async function fetchScreenBySystem(id: number): Promise<ScreenModel[]> {
-  //   const screenPath = `/screen/getScreenBySystem/${id}`;
-  //   try {
-  //     const response = await fetch(screenPath);
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch screens: ${response.statusText}`);
-  //     }
-
-  //     const data: any[] = await response.json();
-
-  //     // Map and validate to ensure it matches ScreenModel[]
-  //     const screens: ScreenModel[] = data.map((item) => ({
-  //       id: item.id,
-  //       screenName: item.screenName,
-  //     }));
-
-  //     return screens;
-  //   } catch (error) {
-  //     console.error("Error fetching screens:", error);
-  //     return []; // Return an empty array if an error occurs
-  //   }
-  // }
+  // Define modalStore to handle modal state
+  const modalStore = {
+    close: () => {
+      showAddScreenModal.set(false);
+      isNewScreen.set(false);
+    },
+  };
 </script>
 
 {#if isAddScreenModalOpen}
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
   <div class="modal" on:click={handleBackgroundClick}>
     <div class="modal-content">
       {#if isLoading}
@@ -240,7 +210,11 @@
       {:else}
         <div class="modal-header">
           <h2>Add New Screen</h2>
-          <span class="close" on:click={closeAddPageModal}>&times;</span>
+          <button
+            class="close"
+            on:click={closeAddPageModal}
+            aria-label="Close modal">&times;</button
+          >
         </div>
 
         <div class="modal-body">
@@ -261,18 +235,6 @@
             placeholder="Enter Path"
             bind:value={screenPath}
           />
-
-          <label class="label" for="optionSelect">Select System</label>
-          <select
-            id="optionSelect"
-            class="dropdown"
-            bind:value={selectedOption}
-            on:change={() => console.log("Selected Option:", selectedOption)}
-          >
-            {#each $dropdownOptions as option}
-              <option value={option}>{option.systemName}</option>
-            {/each}
-          </select>
 
           <button class="button" on:click={submitAddScreen}
             >Create Screen</button
@@ -380,7 +342,7 @@
   .close:hover {
     color: #f00;
   }
-
+  /* 
   .dropdown {
     width: 100%;
     padding: 12px 8px;
@@ -389,7 +351,7 @@
     border-radius: 4px;
     border: 1px solid #ccc;
     box-sizing: border-box;
-  }
+  } */
 
   .button {
     padding: 14px;

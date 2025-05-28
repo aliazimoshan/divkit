@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [svelte()],
   server: {
     proxy: {
-      "/screen": {
+      "/api": {
         target: "https://172.19.83.21:8443",
         changeOrigin: true,
         secure: false,

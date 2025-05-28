@@ -1,27 +1,28 @@
 <script lang="ts">
-  import { getContext, onDestroy, onMount } from "svelte";
-  import { combineRanges } from "../data/highlightChannel";
-  import type { createEditor } from "../data/editor";
+  import { getContext, onDestroy, onMount } from 'svelte';
+  import { combineRanges } from '../data/highlightChannel';
+  import type { createEditor } from '../data/editor';
   import {
     APP_CTX,
     buttonValue,
-    deletingScreen,
-    isYesNoModalOpen,
+    // deletingScreen,
+    deleteScreenConfirmationModal,
     selectedScreen,
+    selectedSystem,
     showAddScreenModal,
     type AppContext,
-  } from "../ctx/appContext";
-  import { SetJsonCommand } from "../data/commands/setJson";
-  import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome";
-  import type { ScreenModel } from "./models/ScreenModel";
-  import { saveScreen } from "./services/services";
-  import toast from "svelte-french-toast";
-  import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
+  } from '../ctx/appContext';
+  import { SetJsonCommand } from '../data/commands/setJson';
+  import { FontAwesomeIcon } from '@fortawesome/svelte-fontawesome';
+  import type { ScreenModel } from './models/ScreenModel';
+  import { saveScreen } from './services/services';
+  import toast from 'svelte-french-toast';
+  import { faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 
   let node: HTMLElement;
   let editor: ReturnType<typeof createEditor> | undefined;
   let isSelfClick = false;
-  let prevVal = "";
+  let prevVal = '';
 
   const { editorFabric, shadowRoot, state } = getContext<AppContext>(APP_CTX);
 
@@ -39,129 +40,46 @@
 
   let isLoading = false;
 
-  const BASE_VIEW_JSON = JSON.stringify({
-    card: {
-      log_id: "div2_sample_card",
-      states: [
-        {
-          state_id: 0,
-          div: {
-            items: [
-              {
-                items: [
-                  {
-                    accessibility: {
-                      description: "Hello Naji",
-                    },
-                    font_size: 32,
-                    line_height: 40,
-                    text: "Hello Naji",
-                    font_weight: "medium",
-                    text_color: "#000",
-                    type: "text",
-                  },
-                ],
-                height: {
-                  type: "match_parent",
-                },
-                margins: {
-                  bottom: 0,
-                  top: 50,
-                  left: 40,
-                  right: 40,
-                },
-                type: "container",
-              },
-            ],
-            visibility_action: {
-              log_id: "visible",
-            },
-            background: [
-              {
-                color:
-                  "@{getDictOptColor('#00ffffff', local_palette, 'bg_primary', theme)}",
-                type: "solid",
-              },
-            ],
-            height: {
-              type: "match_parent",
-            },
-            orientation: "overlap",
-            type: "container",
-          },
-        },
-      ],
-      variables: [
-        {
-          type: "dict",
-          name: "local_palette",
-          value: {
-            bg_primary: {
-              name: "Primary background",
-              light: "#fff",
-              dark: "#000",
-            },
-            color0: {
-              name: "Secondary background",
-              light: "#eeeeee",
-              dark: "#000",
-            },
-          },
-        },
-        {
-          type: "dict",
-          name: "test",
-          value: {
-            logged: 1,
-            login: "Vasya",
-            mailCount: 123,
-          },
-        },
-      ],
-    },
-  });
-
   // Function to handle update button click
   async function handleUpdate() {
-    if ($buttonValue === "Save") {
+    if ($buttonValue === 'Save') {
       showAddScreenModal.set(true); // Open modal
     } else {
       if (!editor) return;
       try {
         isLoading = true; // Start loading
         const updatedScreen: ScreenModel = {
-          id: $selectedScreen!.id ?? "",
-          path: $selectedScreen!.path ?? "",
-          version: $selectedScreen!.version ?? "",
-          screenName: $selectedScreen!.screenName ?? "",
+          id: $selectedScreen!.id ?? '',
+          path: $selectedScreen!.path ?? '',
+          version: $selectedScreen!.version ?? '',
+          screenName: $selectedScreen!.screenName ?? '',
           idSystem: $selectedScreen!.idSystem ?? 0,
           appScreenPatches: $selectedScreen!.appScreenPatches ?? [],
           jsonObject: $divjsonStore.fullString, // Explicitly assign the updated jsonObject
         };
 
-        console.log("Updated ScreenModel:", updatedScreen);
+        console.log('Updated ScreenModel:', updatedScreen);
 
         const saveResult = await saveScreen(updatedScreen);
 
-        state.pushCommand(new SetJsonCommand(state, BASE_VIEW_JSON));
-        buttonValue.set("Save");
+        // state.pushCommand(new SetJsonCommand(state, BASE_VIEW_JSON));
+        // buttonValue.set('Save');
 
-        console.log("Screen saved successfully:", saveResult);
+        console.log('Screen saved successfully:', saveResult);
 
         isLoading = false;
-        toast.success("Screen created successfully!");
 
         showAddScreenModal.set(false);
-        console.log("Modal closed after success");
+        console.log('Modal closed after success');
       } catch (err) {
         isLoading = false;
 
         if (err instanceof Error) {
-          console.error("Save screen failed:", err);
+          console.error('Save screen failed:', err);
           toast.error(err.message);
         } else {
-          console.error("Save screen failed with unknown error:", err);
-          toast.error("An unknown error occurred while saving.");
+          console.error('Save screen failed with unknown error:', err);
+          toast.error('An unknown error occurred while saving.');
         }
       }
     }
@@ -193,19 +111,12 @@
       readOnly: $readOnly,
       shadowRoot,
       onChange(value) {
-        console.log("onChange", value);
         if (value !== $divjsonStore.fullString) {
-          console.log("first if", value);
           let json;
           try {
             json = JSON.parse(value);
-            console.log("Parsed JSON:", json);
-          } catch (err) {
-            console.log("JSON parse error:", err);
-          }
-          console.log("catch", value);
+          } catch (err) {}
           if (json) {
-            console.log("Valid JSON before pushCommand:", json);
             prevVal = value;
             state.pushCommand(new SetJsonCommand(state, value));
           }
@@ -252,39 +163,43 @@
 
   <!-- Buttons Section -->
   <div class="button-container">
-    <!-- Delete Button -->
-    <button
-      class="styled-button delete-button"
-      on:click={(event) => {
-        event.stopPropagation(); // Prevent triggering any other events
-        const screen = $selectedScreen; // Extract the value from the store
-        if (!screen) {
-          toast.error("No screen selected for deletion.");
-          return;
-        }
-        isYesNoModalOpen.set(true);
-        deletingScreen.set(screen); // Ensure proper type
-      }}
-      class:blurred={isLoading}
-    >
-      <FontAwesomeIcon icon={faTrash} />
-      Delete
-    </button>
+    {#if $selectedSystem?.userPermissions && $selectedSystem.userPermissions.includes('delete')}
+      <!-- Delete Button -->
+      <button
+        class="styled-button delete-button"
+        on:click={(event) => {
+          event.stopPropagation(); // Prevent triggering any other events
+          const screen = $selectedScreen; // Extract the value from the store
+          if (!screen) {
+            toast.error('No screen selected for deletion.');
+            return;
+          }
+          deleteScreenConfirmationModal.set(true);
+          // deletingScreen.set(screen); // Ensure proper type
+        }}
+        class:blurred={isLoading}
+      >
+        <FontAwesomeIcon icon={faTrash} />
+        Delete
+      </button>
+    {/if}
 
-    <!-- Update/Save Button -->
-    <button
-      class="styled-button update-button"
-      on:click={handleUpdate}
-      class:blurred={isLoading}
-    >
-      {#if $buttonValue === "Save"}
-        <FontAwesomeIcon icon={faSave} />
-        Save
-      {:else}
-        <FontAwesomeIcon icon={faEdit} />
-        Update
-      {/if}
-    </button>
+    {#if $selectedSystem?.userPermissions && ($selectedSystem.userPermissions.includes('edit') || $selectedSystem.userPermissions.includes('write'))}
+      <!-- Update/Save Button -->
+      <button
+        class="styled-button update-button"
+        on:click={handleUpdate}
+        class:blurred={isLoading}
+      >
+        {#if $buttonValue === 'Save'}
+          <FontAwesomeIcon icon={faSave} />
+          Save
+        {:else}
+          <FontAwesomeIcon icon={faEdit} />
+          Update
+        {/if}
+      </button>
+    {/if}
   </div>
 </div>
 
@@ -375,19 +290,6 @@
     justify-content: flex-end;
     gap: 3px; /* Add spacing between buttons */
     margin-top: 1rem; /* Add spacing from the content above */
-  }
-
-  .styled-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem; /* Add spacing between icon and text */
-    padding: 0.75rem 1.5rem;
-    font-size: 16px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
   }
 
   .update-button {
