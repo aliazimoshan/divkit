@@ -6,17 +6,18 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.view.get
 import androidx.core.view.isNotEmpty
+import androidx.core.view.isVisible
 import androidx.core.view.marginTop
-import com.yandex.div.core.view2.divs.drawChildrenShadows
+import com.yandex.div.core.view2.divs.drawShadow
 import com.yandex.div.internal.widget.FrameContainerLayout
-import com.yandex.div2.DivCustom
+import com.yandex.div2.Div
 
 internal class DivCustomWrapper @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-): FrameContainerLayout(context, attrs, defStyleAttr),
-    DivHolderView<DivCustom> by DivHolderViewMixin() {
+) : FrameContainerLayout(context, attrs, defStyleAttr),
+    DivHolderView<Div.Custom> by DivHolderViewMixin() {
 
     val customView get() = if (isNotEmpty()) get(0) else null
 
@@ -29,9 +30,11 @@ internal class DivCustomWrapper @JvmOverloads constructor(
         drawBorderClipped(canvas) { super.draw(it) }
     }
 
-    override fun dispatchDraw(canvas: Canvas) {
-        drawChildrenShadows(canvas)
-        dispatchDrawBorderClipped(canvas) { super.dispatchDraw(it) }
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        if (child != null && child.isVisible) {
+            child.drawShadow(canvas)
+        }
+        return super.drawChild(canvas, child, drawingTime)
     }
 
     override fun getBaseline(): Int {

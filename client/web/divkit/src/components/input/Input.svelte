@@ -44,7 +44,9 @@
     import type { InputMask } from '../../types/input';
     import type { AlignmentHorizontal } from '../../types/alignment';
     import type { ComponentContext } from '../../types/componentContext';
+    import type { PhoneInputMask } from '../../utils/mask/phoneInputMask';
     import { ROOT_CTX, type RootCtxValue } from '../../context/root';
+    import { ACTION_CTX, type ActionCtxValue } from '../../context/action';
     import { genClassName } from '../../utils/genClassName';
     import { pxToEm, pxToEmWithUnits } from '../../utils/pxToEm';
     import { wrapError } from '../../utils/wrapError';
@@ -67,6 +69,8 @@
     import { calcSelectionOffset, setSelectionOffset } from '../../utils/contenteditable';
     import { correctBooleanInt } from '../../utils/correctBooleanInt';
     import { filterEnabledActions } from '../../utils/filterEnabledActions';
+    import { updatePhoneMask } from '../../utils/updatePhoneMask';
+    import { composeAccessibilityDescription } from '../../utils/composeAccessibilityDescription';
     import Outer from '../utilities/Outer.svelte';
     import DevtoolHolder from '../utilities/DevtoolHolder.svelte';
 
@@ -74,6 +78,7 @@
     export let layoutParams: LayoutParams | undefined = undefined;
 
     const rootCtx = getContext<RootCtxValue>(ROOT_CTX);
+    const actionCtx = getContext<ActionCtxValue>(ACTION_CTX);
 
     const direction = rootCtx.direction;
 
@@ -171,11 +176,20 @@
     $: jsonValidators = componentContext.getDerivedFromVars(componentContext.json.validators);
     $: jsonFilters = componentContext.getDerivedFromVars(componentContext.json.filters);
 
-    $: if (variable) {
-        hasError = false;
-    } else {
-        hasError = true;
-        componentContext.logError(wrapError(new Error('Missing "text_variable" in "input"')));
+    $: {
+        let newHasError = false;
+
+        if (!variable) {
+            hasError = true;
+            componentContext.logError(wrapError(new Error('Missing "text_variable" in "input"')));
+        } else if (actionCtx.hasAction() || $jsonAccessibility?.mode === 'exclude') {
+            newHasError = true;
+            componentContext.logError(wrapError(new Error('Cannot show "input" inside component with an action or inside accessibility mode=exclude')));
+        }
+
+        if (hasError !== newHasError) {
+            hasError = newHasError;
+        }
     }
 
     function updateMaskData(mask: MaybeMissing<InputMask> | undefined): void {
@@ -183,6 +197,8 @@
             inputMask = updateFixedMask(mask, componentContext.logError, inputMask as FixedLengthInputMask);
         } else if (mask?.type === 'currency') {
             inputMask = updateCurrencyMask(mask, componentContext.logError, inputMask as CurrencyInputMask);
+        } else if (mask?.type === 'phone') {
+            inputMask = updatePhoneMask(componentContext.logError, inputMask as PhoneInputMask);
         }
 
         if (inputMask) {
@@ -316,7 +332,7 @@
     }
 
     $: if ($jsonAccessibility?.description) {
-        description = $jsonAccessibility.description;
+        description = composeAccessibilityDescription($jsonAccessibility);
     } else {
         componentContext.logError(wrapError(new Error('Missing accessibility "description" for input'), {
             level: 'warn'
@@ -445,10 +461,8 @@
 
         const actions = componentContext.json.enter_key_actions;
         if (event.key === 'Enter' && Array.isArray(actions) && actions.length) {
-            const evalledActions = componentContext.getJsonWithVars(actions);
-            const filteredActions = evalledActions.filter(action => action.log_id).filter(filterEnabledActions);
             event.preventDefault();
-            componentContext.execAnyActions(filteredActions);
+            componentContext.execAnyActions(actions);
         }
     }
 
@@ -670,6 +684,7 @@
         let:focusHandler
         let:blurHandler
         let:hasCustomFocus
+        alwaysCustomFocus
         cls={genClassName('input', css, mods)}
         style={stl}
         customDescription={true}

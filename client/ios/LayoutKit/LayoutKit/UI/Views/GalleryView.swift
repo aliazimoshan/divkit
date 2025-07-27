@@ -28,6 +28,7 @@ public final class GalleryView: BlockView {
     }
   }
 
+  public var layoutReporter: LayoutReporter?
   private var model: GalleryViewModel!
   private var layout: GalleryViewLayouting!
   private(set) var state: GalleryViewState!
@@ -129,7 +130,14 @@ public final class GalleryView: BlockView {
         deferredStateSetting = .pending(self.state)
       case .idle, .pending, .firstLayoutPerformed:
         if oldModel?.path == model.path {
-          updateContentOffset(to: self.state.contentPosition, animated: true)
+          let contentPosition = shiftedInfiniteScrollContentPosition(oldState: oldState)
+            ?? self.state.contentPosition
+
+          let animated = self.state.animated
+          updateContentOffset(to: contentPosition, animated: animated)
+          if !animated {
+            onDidEndScroll(collectionView)
+          }
         } else {
           collectionView.performWithDetachedDelegate {
             updateContentOffset(to: self.state.contentPosition, animated: false)
@@ -230,6 +238,7 @@ public final class GalleryView: BlockView {
     guard !bounds.isEmpty else {
       return
     }
+    layoutReporter?.willLayoutSubviews()
     collectionView.frame = bounds
 
     if let model, layout?.isEqual(to: model, boundsSize: bounds.size) != true {
@@ -242,6 +251,7 @@ public final class GalleryView: BlockView {
       }
     }
     deferredStateSetting = .idle
+    layoutReporter?.didLayoutSubviews()
   }
 
   private func updateContentOffset(
@@ -267,6 +277,22 @@ public final class GalleryView: BlockView {
     if collectionView.contentOffset != contentOffset {
       collectionView.setContentOffset(contentOffset, animated: animated)
     }
+  }
+
+  private func shiftedInfiniteScrollContentPosition(
+    oldState: GalleryViewState?
+  ) -> GalleryViewState.Position? {
+    guard model.infiniteScroll else { return nil }
+    let firstRealPageIndex = CGFloat(model.bufferSize)
+    let bufferedFirstItemPageIndex = CGFloat(model.items.count - model.bufferSize)
+    let lastRealPageIndex = bufferedFirstItemPageIndex - 1
+
+    guard oldState?.contentPosition.pageIndex == lastRealPageIndex,
+          state.contentPosition.pageIndex == firstRealPageIndex else {
+      return nil
+    }
+
+    return .paging(index: bufferedFirstItemPageIndex)
   }
 }
 
@@ -308,14 +334,7 @@ extension GalleryView: ScrollDelegate {
 
   public func onDidScroll(_ scrollView: ScrollView) {
     var offset = getOffset(scrollView)
-    let contentPosition: GalleryViewState.Position
-    if model.infiniteScroll, let newPosition = InfiniteScroll.getNewPosition(
-      currentOffset: offset,
-      origins: layout.blockFrames.map { model.direction.isHorizontal ? $0.minX : $0.minY },
-      bufferSize: model.bufferSize,
-      boundsSize: model.direction.isHorizontal ? bounds.width : bounds.height,
-      alignment: model.alignment
-    ) {
+    if let newPosition = calculateNewInfiniteScrollPosition(scrollView, offset: offset) {
       offset = newPosition.offset
       scrollStartOffset = offset
       contentPager.flatMap { compoundScrollDelegate.remove($0) }
@@ -327,22 +346,22 @@ extension GalleryView: ScrollDelegate {
         updateContentOffset(to: .paging(index: CGFloat(newPosition.page)), animated: true)
       }
     }
-    switch model.scrollMode {
+    let contentPosition: GalleryViewState.Position = switch model.scrollMode {
     case .default:
-      contentPosition = .offset(
+      .offset(
         offset,
         firstVisibleItemIndex: Int(layout.pageIndex(forContentOffset: CGFloat(offset)))
       )
     case .fixedPaging, .autoPaging:
-      let pageIndex = layout.pageIndex(forContentOffset: offset)
-      contentPosition = .paging(index: pageIndex)
+      .paging(index: layout.pageIndex(forContentOffset: offset))
     }
 
     let newState = GalleryViewState(
       contentPosition: contentPosition,
       itemsCount: model.items.count,
       isScrolling: true,
-      scrollRange: state.scrollRange
+      scrollRange: state.scrollRange,
+      animated: true
     )
     setState(newState, notifyingObservers: true)
     updatesDelegate?.onContentOffsetChanged(offset, in: model)
@@ -374,7 +393,8 @@ extension GalleryView: ScrollDelegate {
       contentPosition: state.contentPosition,
       itemsCount: model.items.count,
       isScrolling: false,
-      scrollRange: state.scrollRange
+      scrollRange: state.scrollRange,
+      animated: true
     )
     setState(newState, notifyingObservers: true)
     visibilityDelegate?.onGalleryVisibilityChanged()
@@ -401,6 +421,20 @@ extension GalleryView: ScrollDelegate {
       lastVisibleItemIndex: lastVisibleItemIndex,
       itemsCount: model.items.count
     ).sendFrom(self)
+  }
+
+  private func calculateNewInfiniteScrollPosition(_: ScrollView, offset: CGFloat) -> InfiniteScroll
+    .Position? {
+    guard model.infiniteScroll else { return nil }
+
+    return InfiniteScroll.getNewPosition(
+      currentOffset: offset,
+      origins: layout.blockFrames.map { model.direction.isHorizontal ? $0.minX : $0.minY },
+      bufferSize: model.bufferSize,
+      boundsSize: model.direction.isHorizontal ? bounds.width : bounds.height,
+      alignment: model.alignment,
+      insetMode: model.metrics.axialInsetMode
+    )
   }
 }
 
@@ -472,7 +506,8 @@ extension GalleryView {
       isScrolling: state.isScrolling,
       scrollRange: model.direction.isHorizontal ?
         layout.contentSize.width - bounds.width :
-        layout.contentSize.height - bounds.height
+        layout.contentSize.height - bounds.height,
+      animated: state.animated
     )
   }
 }

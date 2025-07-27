@@ -119,6 +119,24 @@ export interface Source {
   example: object;
 }
 
+export interface FileLimit {
+  warn?: number;
+  error?: number;
+}
+
+export interface FileLimits {
+  preview?: FileLimit;
+  image?: FileLimit;
+  lottie?: FileLimit;
+  video?: FileLimit;
+  upload?: FileLimit;
+}
+
+export interface EditorError {
+  message: string;
+  level: 'error' | 'warn';
+}
+
 export interface DivProEditorOptions {
   renderTo: HTMLElement;
   shadowRoot?: ShadowRoot;
@@ -134,19 +152,26 @@ export interface DivProEditorOptions {
   paletteEnabled?: boolean;
   cardLocales?: CardLocale[];
   sources?: Source[];
+  /* @deprecated */
   previewWarnFileLimit?: number;
+  /* @deprecated */
   previewErrorFileLimit?: number;
+  /* @deprecated */
   warnFileLimit?: number;
+  /* @deprecated */
   errorFileLimit?: number;
+  fileLimits?: FileLimits;
   rootConfigurable?: boolean;
   customFontFaces?: FontFaceDesc[];
   directionSelector?: boolean;
-  direction?: "ltr" | "rtl";
+  direction?: 'ltr' | 'rtl';
+  perThemeProps?: boolean;
 }
 
 export interface DivProEditorInstance {
   getValue(): string;
   getCard(): Card;
+  getErrors(): EditorError[];
   setTheme(theme: Theme): void;
   setLayout(layout: Layout): void;
   setLocale(locale: Locale): void;
@@ -161,7 +186,9 @@ export const DivProEditor = {
     const json = JSON.parse(opts.card?.json || opts.value || "{}");
 
     const state = new State({
-      getTranslationKey: opts.api?.getTranslationKey,
+      locale: opts.locale || 'en',
+      fileLimits: opts.fileLimits,
+      getTranslationKey: opts.api?.getTranslationKey
     });
 
     state.paletteEnabled.set(opts.paletteEnabled ?? true);
@@ -209,7 +236,7 @@ export const DivProEditor = {
     if (logId) {
       state.rootLogId.set(logId);
     } else {
-      state.rootLogId.set("div2_sample_card");
+      state.rootLogId.set('div2_sample_card');
     }
 
     state.setDivJson(json);
@@ -219,7 +246,6 @@ export const DivProEditor = {
       props: {
         state,
         layout: opts.layout,
-        locale: opts.locale,
         shadowRoot: opts.shadowRoot,
         actionLogUrlVariable: opts.actionLogUrlVariable,
         cardLocales: opts.cardLocales,
@@ -227,14 +253,16 @@ export const DivProEditor = {
         previewErrorFileLimit: opts.previewErrorFileLimit,
         warnFileLimit: opts.warnFileLimit,
         errorFileLimit: opts.errorFileLimit,
+        fileLimits: opts.fileLimits,
         rootConfigurable: opts.rootConfigurable,
         customFontFaces: opts.customFontFaces,
         directionSelector: opts.directionSelector,
+        perThemeProps: opts.perThemeProps,
         uploadFile: opts.api?.uploadFile,
         editorFabric: opts.api?.editorFabric,
         getTranslationKey: opts.api?.getTranslationKey,
-        getTranslationSuggest: opts.api?.getTranslationSuggest,
-      },
+        getTranslationSuggest: opts.api?.getTranslationSuggest
+      }
     });
 
     let unsubscribeStore: Unsubscriber | undefined;
@@ -257,8 +285,8 @@ export const DivProEditor = {
         return {
           json: get(state.divjsonStore).fullString,
           meta: {
-            tanker: get(state.tanker),
-          },
+            tanker: get(state.tanker)
+          }
         };
       },
       setTheme(theme) {
@@ -268,7 +296,7 @@ export const DivProEditor = {
         app.setLayout(layout);
       },
       setLocale(locale) {
-        app.setLocale(locale);
+        state.lang.set(locale);
       },
       setReadOnly(readOnly) {
         state.readOnly.set(readOnly);
@@ -279,10 +307,13 @@ export const DivProEditor = {
       setPaletteEnabled(toggle) {
         state.paletteEnabled.set(toggle);
       },
+      getErrors() {
+        return state.getEditorErrors();
+      },
       destroy() {
         app.$destroy();
         unsubscribeStore?.();
-      },
+      }
     };
   },
 };

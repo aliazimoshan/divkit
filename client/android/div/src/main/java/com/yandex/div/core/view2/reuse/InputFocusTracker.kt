@@ -21,6 +21,8 @@ internal class InputFocusTracker @Inject constructor(
         div2View.addPersistentDivDataObserver(divDataChangedObserver)
     }
 
+    fun isFocusedOnInput(): Boolean = focusedInputTag != null
+
     fun inputFocusChanged(tag: Any?, view: DivInputView, focused: Boolean) {
         when {
             changingState -> return

@@ -31,6 +31,7 @@
     import { correctTintMode } from '../../utils/correctTintMode';
     import { getCssFilter } from '../../utils/filters';
     import { prepareBase64 } from '../../utils/prepareBase64';
+    import { correctBooleanInt } from '../../utils/correctBooleanInt';
     import Outer from '../utilities/Outer.svelte';
     import DevtoolHolder from '../utilities/DevtoolHolder.svelte';
 
@@ -52,7 +53,10 @@
     // Exactly "none", "scale-down" would not match android
     let scale = 'none';
     let position = '50% 50%';
+    let aspectPaddingTop = '0';
     let aspectPaddingBottom = '0';
+    let aspectContent = false;
+    let aspectContentVAlign = 'center';
     let tintColor: string | undefined = undefined;
     let tintMode: TintMode = 'source_in';
     let svgFilterId = '';
@@ -63,13 +67,18 @@
     let filter = '';
     let filterClipPath = '';
     let isRTLMirror = false;
+    let highPriorityPreview = false;
+    let highPrority = false;
 
     $: origJson = componentContext.origJson;
 
     function rebind(): void {
+        aspectContent = false;
         scale = 'none';
         position = '50% 50%';
         tintMode = 'source_in';
+        highPriorityPreview = false;
+        highPrority = false;
     }
 
     $: if (origJson) {
@@ -94,6 +103,8 @@
     $: jsonAppearanceAnimation = componentContext.getDerivedFromVars(componentContext.json.appearance_animation);
     $: jsonFilters = componentContext.getDerivedFromVars(componentContext.json.filters);
     $: jsonPreloadRequired = componentContext.getDerivedFromVars(componentContext.json.preload_required);
+    $: jsonHighPriorityPreviewShow =
+        componentContext.getDerivedFromVars(componentContext.json.high_priority_preview_show);
 
     $: {
         let img = componentContext.json.type === 'gif' ? $jsonGifUrl : $jsonImageUrl;
@@ -108,6 +119,10 @@
         state = STATE_LOADING;
     }
     $: updateImageUrl(imageUrl);
+
+    $: {
+        highPriorityPreview = correctBooleanInt($jsonHighPriorityPreviewShow, highPriorityPreview);
+    }
 
     $: {
         if (!imageUrl) {
@@ -127,8 +142,10 @@
 
         if ((state === STATE_LOADING || state === STATE_ERROR || isEmpty) && preview) {
             backgroundImage = `url("${prepareBase64(preview)}")`;
+            highPrority = highPriorityPreview;
         } else {
             backgroundImage = '';
+            highPrority = false;
         }
     }
 
@@ -153,9 +170,28 @@
     $: alt = $jsonA11y?.description || '';
 
     $: {
+        aspectContentVAlign = 'center';
+        aspectPaddingTop = '0';
+        aspectPaddingBottom = '0';
+
         const newRatio = $jsonAspect?.ratio;
         if (newRatio && isPositiveNumber(newRatio)) {
-            aspectPaddingBottom = (100 / Number(newRatio)).toFixed(2);
+            const height = 100 / Number(newRatio);
+            aspectContent = componentContext.json.width?.type === 'wrap_content';
+
+            if (aspectContent) {
+                if ($jsonPosition.content_alignment_vertical === 'top') {
+                    aspectPaddingBottom = height.toFixed(2);
+                    aspectContentVAlign = 'top';
+                } else if ($jsonPosition.content_alignment_vertical === 'bottom') {
+                    aspectPaddingTop = height.toFixed(2);
+                    aspectContentVAlign = 'bottom';
+                } else {
+                    aspectPaddingTop = aspectPaddingBottom = (height / 2).toFixed(2);
+                }
+            } else {
+                aspectPaddingBottom = height.toFixed(2);
+            }
         } else {
             aspectPaddingBottom = '0';
         }
@@ -197,7 +233,9 @@
     }
 
     $: mods = {
-        aspect: aspectPaddingBottom !== '0',
+        aspect: aspectPaddingBottom !== '0' || aspectPaddingTop !== '0',
+        'aspect-content': aspectContent,
+        'aspect-valign': aspectContentVAlign !== 'center' ? aspectContentVAlign : undefined,
         'is-width-content': isWidthContent,
         'is-height-content': isHeightContent,
         loaded: state === STATE_LOADED,
@@ -250,13 +288,17 @@
         <!-- Safari does not redraw images when changing the svg filter, a complete reconstruction of the DOM is required -->
         {#key svgFilterId}
             {#if mods.aspect}
-                <span class={css['image__aspect-wrapper']} style:padding-bottom="{aspectPaddingBottom}%">
+                <span
+                    class={css['image__aspect-wrapper']}
+                    style:padding-top="{aspectPaddingTop}%"
+                    style:padding-bottom="{aspectPaddingBottom}%"
+                >
                     <img
                         bind:this={img}
                         class={css.image__image}
                         src={state === STATE_ERROR ? FALLBACK_IMAGE : imageUrl}
-                        loading={$jsonPreloadRequired ? 'eager' : 'lazy'}
-                        decoding="async"
+                        loading={($jsonPreloadRequired || highPrority) ? 'eager' : 'lazy'}
+                        decoding={highPrority ? 'sync' : 'async'}
                         style={makeStyle(style)}
                         {alt}
                         aria-hidden={alt ? null : 'true'}
@@ -269,8 +311,8 @@
                     bind:this={img}
                     class={css.image__image}
                     src={state === STATE_ERROR ? FALLBACK_IMAGE : imageUrl}
-                    loading={$jsonPreloadRequired ? 'eager' : 'lazy'}
-                    decoding="async"
+                    loading={($jsonPreloadRequired || highPrority) ? 'eager' : 'lazy'}
+                    decoding={highPrority ? 'sync' : 'async'}
                     style={makeStyle(style)}
                     {alt}
                     aria-hidden={alt ? null : 'true'}

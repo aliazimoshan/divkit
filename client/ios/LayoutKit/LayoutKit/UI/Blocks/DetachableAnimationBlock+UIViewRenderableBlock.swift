@@ -35,6 +35,8 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
     didSet {
       guard childView !== oldValue else { return }
 
+      isFirstChildLayout = true
+
       switch (oldValue, childView) {
       case (.none, .none):
         break
@@ -67,7 +69,7 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
   private var animationChange: ChangeBoundsTransition?
   private var queuedAnimation: DispatchWorkItem?
   private var child: Block?
-  private var isFirstLayout: Bool = true
+  private var isFirstChildLayout: Bool = true
 
   var effectiveBackgroundColor: UIColor? { childView?.effectiveBackgroundColor }
 
@@ -97,13 +99,13 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
 
   override func layoutSubviews() {
     super.layoutSubviews()
-    guard isFirstLayout || animationChange == nil else {
+    guard isFirstChildLayout || animationChange == nil else {
       return
     }
 
     childView?.frame = bounds
     if frame != .zero {
-      isFirstLayout = false
+      isFirstChildLayout = false
     }
   }
 
@@ -166,37 +168,25 @@ final class DetachableAnimationBlockView: BlockView, DelayedVisibilityActionView
     childView.frame = convertFrame(to: container)
     self.childView = nil
     container.addSubview(childView)
-    childView.perform(animationOut, animated: true, completion: { [weak self] in
+    childView.perform(animationOut, animated: true, completion: {
       childView.removeFromSuperview()
-      self?.animationOut = nil
     })
   }
 
-  public func addWithAnimation(in container: UIView) {
+  public func addWithAnimation() {
     guard let childView,
           let animationIn else {
       return
     }
 
-    let originalFrame = childView.frame
-    childView.frame = convertFrame(to: container)
-
-    self.childView = nil
-
     let minDelay = animationIn.sortedChronologically().first?.delay ?? 0
 
     let item = DispatchWorkItem { [weak self] in
-      container.addSubview(childView)
       childView.setInitialParamsAndAnimate(
         animations: animationIn.withDelay(-minDelay),
         completion: { [weak self] in
-
           self?.queuedAnimation = nil
           self?.animationIn = nil
-          if childView.superview == container {
-            childView.frame = originalFrame
-            self?.childView = childView
-          }
         }
       )
     }

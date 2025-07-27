@@ -12,11 +12,12 @@ import com.yandex.div.core.DivCustomContainerChildFactory;
 import com.yandex.div.core.DivCustomContainerViewAdapter;
 import com.yandex.div.core.DivDataChangeListener;
 import com.yandex.div.core.DivPreloader;
+import com.yandex.div.core.DivViewDataPreloader;
 import com.yandex.div.core.actions.DivActionTypedHandlerCombiner;
 import com.yandex.div.core.downloader.DivDownloader;
 import com.yandex.div.core.downloader.DivPatchManager;
 import com.yandex.div.core.experiments.Experiment;
-import com.yandex.div.core.expression.ExpressionsRuntimeProvider;
+import com.yandex.div.core.expression.RuntimeStoreProvider;
 import com.yandex.div.core.expression.storedvalues.StoredValuesController;
 import com.yandex.div.core.expression.variables.DivVariableController;
 import com.yandex.div.core.extension.DivExtensionController;
@@ -105,7 +106,7 @@ public interface Div2Component {
     DivDataChangeListener getDivDataChangeListener();
 
     @NonNull
-    ExpressionsRuntimeProvider getExpressionsRuntimeProvider();
+    RuntimeStoreProvider getRuntimeStoreProvider();
 
     @NonNull
     DivTimerEventDispatcherProvider getDivTimersControllerProvider();
@@ -189,6 +190,9 @@ public interface Div2Component {
 
     @NonNull
     BitmapEffectHelper getBitmapEffectHelper();
+
+    @NonNull
+    DivViewDataPreloader getDivViewDataPreloader();
 
     /**
      * Builder for Div2Component

@@ -47,7 +47,7 @@ data class BooleanVariable internal constructor(
          */
         val name: Property<String>?,
         /**
-         * Value.
+         * Value. Supports expressions for variable initialization.
          */
         val value: Property<Boolean>?,
     ) {
@@ -63,7 +63,7 @@ data class BooleanVariable internal constructor(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.booleanVariable(
@@ -79,7 +79,7 @@ fun DivScope.booleanVariable(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.booleanVariableProps(
@@ -93,7 +93,7 @@ fun DivScope.booleanVariableProps(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun TemplateScope.booleanVariableRefs(
@@ -107,7 +107,7 @@ fun TemplateScope.booleanVariableRefs(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun BooleanVariable.override(
@@ -123,7 +123,7 @@ fun BooleanVariable.override(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun BooleanVariable.defer(
@@ -133,6 +133,36 @@ fun BooleanVariable.defer(
 ): BooleanVariable = BooleanVariable(
     BooleanVariable.Properties(
         name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param name Variable name.
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun BooleanVariable.modify(
+    `use named arguments`: Guard = Guard.instance,
+    name: Property<String>? = null,
+    value: Property<Boolean>? = null,
+): BooleanVariable = BooleanVariable(
+    BooleanVariable.Properties(
+        name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun BooleanVariable.evaluate(
+    `use named arguments`: Guard = Guard.instance,
+    value: ExpressionProperty<Boolean>? = null,
+): BooleanVariable = BooleanVariable(
+    BooleanVariable.Properties(
+        name = properties.name,
         value = value ?: properties.value,
     )
 )

@@ -3,6 +3,7 @@ import type {
   CardLocale,
   EditorInstance,
   EditorOptions,
+  FileLimits,
   FontFaceDesc,
   GetTranslationKey,
   GetTranslationSuggest,
@@ -13,7 +14,6 @@ import type { Background } from "../data/background";
 import type { VideoSource } from "../utils/video";
 import type { SelectOption } from "../utils/select";
 import { derived, writable } from "svelte/store";
-// import type { PageModel } from "../components/models/PageModel";
 import type { ScreenModel } from "../components/models/ScreenModel";
 import type { PatchModel } from "../components/models/PatchModel";
 import type { SystemModel } from "../components/models/SystemModel";
@@ -25,7 +25,6 @@ export const buttonValue = writable("Update");
 export const systemsList = writable<SystemModel[]>([]);
 export const selectedSystem = writable<SystemModel | null>();
 export const selectedScreen = writable<ScreenModel | null>();
-// export const deletingScreen = writable<ScreenModel | null>();
 export const json = writable<string>();
 export const isNewScreen = writable(false);
 export const isNewPatch = writable(false);
@@ -37,29 +36,6 @@ export const refreshScreens = writable(0);
 export const refreshPatches = writable(0);
 
 export const APP_CTX = Symbol("app");
-
-// // Derived store for systemScreens
-// export const systemScreens = derived(systemsList, ($systemsList) => {
-//   const screens: Record<number, ScreenModel[]> = {};
-
-//   // Fetch screens for each system
-//   async function fetchScreens() {
-//     for (const system of $systemsList) {
-//       if (!screens[system.id]) {
-//         const response = await fetch(`/screen/getScreenBySystem/${system.id}`);
-//         if (response.ok) {
-//           screens[system.id] = await response.json();
-//         } else {
-//           screens[system.id] = []; // Fallback to an empty array
-//         }
-//       }
-//     }
-//   }
-
-//   fetchScreens();
-
-//   return screens; // Return the screens for each system
-// });
 
 export interface MenuItem {
   text: string;
@@ -283,9 +259,11 @@ export interface AppContext {
   previewErrorFileLimit: number;
   warnFileLimit: number;
   errorFileLimit: number;
+  fileLimits: FileLimits | undefined;
   rootConfigurable: boolean;
   customFontFaces: FontFaceDesc[];
   directionSelector: boolean;
+  perThemeProps: boolean;
 
   rendererApi: () => RendererApi;
   setRendererApi(api: RendererApi): void;

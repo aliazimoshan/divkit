@@ -47,7 +47,7 @@ data class NumberVariable internal constructor(
          */
         val name: Property<String>?,
         /**
-         * Value.
+         * Value. Supports expressions for variable initialization.
          */
         val value: Property<Double>?,
     ) {
@@ -63,7 +63,7 @@ data class NumberVariable internal constructor(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.numberVariable(
@@ -79,7 +79,7 @@ fun DivScope.numberVariable(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.numberVariableProps(
@@ -93,7 +93,7 @@ fun DivScope.numberVariableProps(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun TemplateScope.numberVariableRefs(
@@ -107,7 +107,7 @@ fun TemplateScope.numberVariableRefs(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun NumberVariable.override(
@@ -123,7 +123,7 @@ fun NumberVariable.override(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun NumberVariable.defer(
@@ -133,6 +133,36 @@ fun NumberVariable.defer(
 ): NumberVariable = NumberVariable(
     NumberVariable.Properties(
         name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param name Variable name.
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun NumberVariable.modify(
+    `use named arguments`: Guard = Guard.instance,
+    name: Property<String>? = null,
+    value: Property<Double>? = null,
+): NumberVariable = NumberVariable(
+    NumberVariable.Properties(
+        name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun NumberVariable.evaluate(
+    `use named arguments`: Guard = Guard.instance,
+    value: ExpressionProperty<Double>? = null,
+): NumberVariable = NumberVariable(
+    NumberVariable.Properties(
+        name = properties.name,
         value = value ?: properties.value,
     )
 )

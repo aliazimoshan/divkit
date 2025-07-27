@@ -17,6 +17,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.os.postDelayed
 import androidx.core.view.children
 import com.yandex.div.R
+import com.yandex.div.core.DivActionHandler
 import com.yandex.div.core.DivPreloader
 import com.yandex.div.core.DivTooltipRestrictor
 import com.yandex.div.core.actions.logError
@@ -36,6 +37,7 @@ import com.yandex.div.core.view2.errors.ErrorCollectors
 import com.yandex.div.internal.Assert
 import com.yandex.div.json.expressions.ExpressionResolver
 import com.yandex.div2.Div
+import com.yandex.div2.DivAction
 import com.yandex.div2.DivTooltip
 import com.yandex.div2.DivTooltipMode
 import javax.inject.Inject
@@ -78,14 +80,19 @@ internal class DivTooltipController @VisibleForTesting constructor(
 
     fun showTooltip(tooltipId: String, context: BindingContext, multiple: Boolean = false) {
         findChildWithTooltip(tooltipId, context.divView)?.let { (divTooltip, anchor) ->
-            showTooltip(divTooltip, anchor, context, multiple)
+            showTooltip(context, divTooltip, anchor, multiple)
         } ?: run {
             context.divView.logError(IllegalStateException(
                 "Unable to find view for tooltip '$tooltipId'"))
         }
     }
 
-    private fun showTooltip(divTooltip: DivTooltip, anchor: View, context: BindingContext, multiple: Boolean) {
+    private fun showTooltip(
+        context: BindingContext,
+        divTooltip: DivTooltip,
+        anchor: View,
+        multiple: Boolean
+    ) {
         if (tooltips.contains(divTooltip.id)) {
             return
         }
@@ -101,30 +108,49 @@ internal class DivTooltipController @VisibleForTesting constructor(
         tooltips[id]?.popupWindow?.dismiss()
     }
 
-    fun cancelTooltips(context: BindingContext) = cancelTooltips(context, context.divView, context.divView)
+    fun cancelTooltips(divView: Div2View) = cancelTooltips(divView as View)
 
-    private fun cancelTooltips(context: BindingContext, view: View, div2View: Div2View) {
+    private fun cancelTooltips(view: View) {
         @Suppress("UNCHECKED_CAST")
         (view.getTag(R.id.div_tooltips_tag) as? List<DivTooltip>)?.let { tooltipList ->
-            tooltipList.forEach { tooltip ->
-                val forRemove = mutableListOf<String>()
-                tooltips[tooltip.id]?.apply {
-                    dismissed = true
-                    if (popupWindow.isShowing) {
-                        popupWindow.clearAnimation()
-                        popupWindow.dismiss()
-                    } else {
-                        forRemove.add(tooltip.id)
-                        stopVisibilityTracking(context, tooltip.div)
-                    }
-                    ticket?.cancel()
-                }
-                forRemove.forEach { tooltips.remove(it) }
+            val forRemove = tooltipList.mapNotNull { tooltip ->
+                dismissTooltip(tooltip)
             }
+            forRemove.forEach { tooltips.remove(it) }
         }
         if (view is ViewGroup) {
             view.children.forEach { child ->
-                cancelTooltips(context, child, div2View)
+                cancelTooltips(child)
+            }
+        }
+    }
+
+    fun cancelAllTooltips(): Boolean {
+        if (tooltips.isEmpty()) {
+            return false
+        }
+
+        tooltips.values.toList().forEach { tooltip -> dismissTooltip(tooltip) }
+        tooltips.clear()
+        return true
+    }
+
+    private fun dismissTooltip(tooltip: DivTooltip): String? {
+        val tooltipData = tooltips[tooltip.id] ?: return null
+        return dismissTooltip(tooltipData)
+    }
+
+    private fun dismissTooltip(tooltip: TooltipData): String? {
+        tooltip.apply {
+            dismissed = true
+            ticket?.cancel()
+            return if (popupWindow.isShowing) {
+                popupWindow.clearAnimation()
+                popupWindow.dismiss()
+                null
+            } else {
+                stopVisibilityTracking(tooltip.bindingContext, tooltip.div)
+                tooltip.id
             }
         }
     }
@@ -187,13 +213,22 @@ internal class DivTooltipController @VisibleForTesting constructor(
                     this,
                     tooltipView,
                     divTooltip.isModal(),
-                    divTooltip.shouldDismissByOutsideTouch(resolver)
+                    isOutsideTouchable,
+                    divTooltip.tapOutsideActions,
+                    context
                 )
             )
             setupAnimation(divTooltip, resolver)
         }
         val onBackPressedCallback = createOnBackPressCallback(divTooltip, div2View)
-        val tooltipData = TooltipData(popup, div, null, onBackPressedCallback)
+        val tooltipData = TooltipData(
+            id = divTooltip.id,
+            bindingContext = context,
+            div = div,
+            popupWindow = popup,
+            ticket = null,
+            onBackPressedCallback = onBackPressedCallback
+        )
 
         popup.setOnDismissListener {
             tooltips.remove(divTooltip.id)
@@ -275,8 +310,10 @@ internal class DivTooltipController @VisibleForTesting constructor(
 }
 
 private class TooltipData(
-    val popupWindow: SafePopupWindow,
+    val id: String,
+    val bindingContext: BindingContext,
     val div: Div,
+    val popupWindow: SafePopupWindow,
     var ticket: DivPreloader.Ticket? = null,
     val onBackPressedCallback: OnBackPressedCallback?,
     var dismissed: Boolean = false,
@@ -286,7 +323,9 @@ private class PopupWindowTouchListener(
     private val popupWindow: PopupWindow,
     private val tooltipView: View,
     private val isModal: Boolean,
-    private val shouldDismissByOutsideTouch: Boolean
+    private val shouldDismissByOutsideTouch: Boolean,
+    private val tapOutsideActions: List<DivAction>?,
+    private val bindingContext: BindingContext
 ) : View.OnTouchListener {
 
     private val hitRect = Rect()
@@ -297,7 +336,24 @@ private class PopupWindowTouchListener(
             hitRect.contains(event.x.toInt(), event.y.toInt()) -> false
 
             else -> {
-                if (shouldDismissByOutsideTouch) popupWindow.dismiss()
+                if (event.action == MotionEvent.ACTION_UP) {
+                    tapOutsideActions?.let { actions ->
+                        val resolver = bindingContext.expressionResolver
+                        val divView = bindingContext.divView
+                        actions.filter { it.isEnabled.evaluate(resolver) }.forEach { action ->
+                            divView.div2Component.actionHandler.handleActionWithReason(
+                                action,
+                                divView,
+                                resolver,
+                                DivActionHandler.DivActionReason.CLICK
+                            )
+                        }
+                    }
+
+                    if (shouldDismissByOutsideTouch) {
+                        popupWindow.dismiss()
+                    }
+                }
                 isModal
             }
         }

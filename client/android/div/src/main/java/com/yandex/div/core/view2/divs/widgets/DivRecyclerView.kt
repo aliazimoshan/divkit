@@ -13,13 +13,13 @@ import com.yandex.div.R
 import com.yandex.div.core.annotations.Mockable
 import com.yandex.div.core.view2.Releasable
 import com.yandex.div.core.view2.backbutton.BackHandlingRecyclerView
-import com.yandex.div.core.view2.divs.drawChildrenShadows
+import com.yandex.div.core.view2.divs.drawShadow
 import com.yandex.div.core.view2.divs.gallery.DivGridLayoutManager
 import com.yandex.div.core.view2.divs.gallery.PagerSnapStartHelper
 import com.yandex.div.core.widget.DivViewWrapper
 import com.yandex.div.internal.widget.OnInterceptTouchEventListener
 import com.yandex.div.internal.widget.OnInterceptTouchEventListenerHost
-import com.yandex.div2.DivGallery
+import com.yandex.div2.Div
 import com.yandex.div2.DivGallery.ScrollMode
 import kotlin.math.abs
 import kotlin.math.atan
@@ -31,7 +31,7 @@ internal class DivRecyclerView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : BackHandlingRecyclerView(ContextThemeWrapper(context, R.style.Div_Gallery), attrs, defStyleAttr),
-    DivHolderView<DivGallery> by DivHolderViewMixin(),
+    DivHolderView<Div.Gallery> by DivHolderViewMixin(),
     OnInterceptTouchEventListenerHost {
 
     private var scrollPointerId = -1
@@ -202,9 +202,11 @@ internal class DivRecyclerView @JvmOverloads constructor(
         drawBorderClipped(canvas) { super.draw(it) }
     }
 
-    override fun dispatchDraw(canvas: Canvas) {
-        drawChildrenShadows(canvas)
-        dispatchDrawBorderClipped(canvas) { super.dispatchDraw(it) }
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        if (child != null && child.visibility == VISIBLE) {
+            child.drawShadow(canvas)
+        }
+        return super.drawChild(canvas, child, drawingTime)
     }
 
     override fun release() {

@@ -1,4 +1,3 @@
-import type { ComponentContext } from '../src/types/componentContext';
 import type { Variable } from './variables';
 
 export type Subscriber<T> = (value: T) => void;
@@ -108,6 +107,20 @@ export interface Palette {
     dark: PaletteList;
 }
 
+export type EvalTypes = 'string' | 'number' | 'integer' | 'boolean' | 'color' | 'url' | 'datetime' | 'dict' | 'array';
+
+export interface DivFunctionArgument {
+    name: string;
+    type: EvalTypes;
+}
+
+export interface DivFunction {
+    name: string;
+    body: string;
+    return_type: EvalTypes;
+    arguments: DivFunctionArgument[];
+}
+
 export interface DivJson {
     templates?: Record<string, unknown>;
     card: {
@@ -116,6 +129,7 @@ export interface DivJson {
         variables?: DivVariable[];
         variable_triggers?: VariableTrigger[];
         timers?: DivTimer[];
+        functions?: DivFunction[];
     }
     /** @deprecated */
     palette?: Palette;
@@ -309,10 +323,49 @@ export interface ActionSubmit {
     on_fail_actions?: Action[];
 }
 
+export type Overflow = 'clamp' | 'ring';
+
+export interface ActionScrollBy {
+    type: 'scroll_by';
+    id: string;
+    animated?: boolean;
+    overflow?: Overflow;
+    offset?: number;
+    item_count?: number;
+}
+
+export interface ActionScrollToDestinationOffset {
+    type: 'offset';
+    value: number;
+}
+
+export interface ActionScrollToDestinationIndex {
+    type: 'index';
+    value: number;
+}
+
+export interface ActionScrollToDestinationStart {
+    type: 'start';
+}
+
+export interface ActionScrollToDestinationEnd {
+    type: 'end';
+}
+
+export type ActionScrollToDestination = ActionScrollToDestinationOffset | ActionScrollToDestinationIndex |
+    ActionScrollToDestinationStart | ActionScrollToDestinationEnd;
+
+export interface ActionScrollTo {
+    type: 'scroll_to';
+    id: string;
+    animated?: boolean;
+    destination: ActionScrollToDestination;
+}
+
 export type TypedAction = ActionSetVariable | ActionArrayRemoveValue | ActionArrayInsertValue |
     ActionCopyToClipboard | ActionFocusElement | ActionClearFocus | ActionDictSetValue | ActionArraySetValue |
     ActionAnimatorStart | ActionAnimatorStop | ActionShowTooltip | ActionHideTooltip | ActionTimer | ActionDownload |
-    ActionVideo | ActionStore | ActionSetState | ActionSubmit;
+    ActionVideo | ActionStore | ActionSetState | ActionSubmit | ActionScrollBy | ActionScrollTo;
 
 export interface ActionBase {
     log_id: string;
@@ -364,7 +417,7 @@ export type ComponentCallback = (details: {
     json: DivBase;
     origJson: DivBase | undefined;
     templateContext: TemplateContext;
-    componentContext: ComponentContext;
+    componentContext: unknown;
 }) => void;
 
 export interface WrappedError extends Error {
@@ -450,3 +503,48 @@ export interface Patch {
         on_failed_actions?: Action[];
     };
 }
+
+export interface VideoSource {
+    type: 'video_source';
+
+    url: string;
+    mime_type: string;
+    resolution?: {
+        type: 'resolution';
+        width: number;
+        height: number;
+    };
+    bitrate?: number;
+}
+
+export type VideoScale = 'fill' | 'no_scale' | 'fit';
+
+export interface VideoPlayerProviderData {
+    sources: VideoSource[];
+    repeatable?: boolean;
+    autostart?: boolean;
+    preloadRequired?: boolean;
+    muted?: boolean;
+    preview?: string;
+    aspect?: number;
+    scale?: VideoScale;
+    payload?: Record<string, unknown>;
+}
+
+export interface VideoPlayerInstance {
+    update?(data: VideoPlayerProviderData): void;
+    seek?(positionInMS: number): void;
+    pause(): void;
+    play(): void;
+    destroy(): void;
+}
+
+export interface VideoPlayerProviderClient {
+    instance: (parent: HTMLElement, data: VideoPlayerProviderData) => VideoPlayerInstance | undefined | void;
+}
+
+export interface VideoPlayerProviderServer {
+    template: string | ((data: VideoPlayerProviderData) => string);
+}
+
+export type VideoPlayerProvider = VideoPlayerProviderClient | VideoPlayerProviderServer;

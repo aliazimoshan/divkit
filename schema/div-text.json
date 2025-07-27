@@ -54,11 +54,7 @@
         "font_size_unit": {
           "$ref": "div-size-unit.json",
           "default_value": "sp",
-          "$description": "translations.json#/div_font_size_unit",
-          "platforms": [
-            "android",
-            "ios"
-          ]
+          "$description": "translations.json#/div_font_size_unit"
         },
         "font_feature_settings": {
           "type": "string",
@@ -67,6 +63,14 @@
             "android",
             "ios",
             "web"
+          ]
+        },
+        "font_variation_settings": {
+          "type": "dict",
+          "$description": "translations.json#/div_font_variation_settings",
+          "platforms": [
+            "ios",
+            "android"
           ]
         },
         "letter_spacing": {
@@ -133,7 +137,9 @@
         "mask": {
           "$ref": "div-text-range-mask.json",
           "$description": "translations.json#/div_text_range_mask",
-          "platforms": []
+          "platforms": [
+            "web"
+          ]
         }
       },
       "$description": "translations.json#/div_text_range"
@@ -278,7 +284,10 @@
       "platforms": [
         "android",
         "ios"
-      ]
+      ],
+      "unsupported_platforms": {
+        "web": "There is no css implementation for this."
+      }
     }
   },
   "allOf": [
@@ -289,33 +298,14 @@
       "$ref": "div-actionable.json"
     },
     {
+      "$ref": "div-font-base.json"
+    },
+    {
       "properties": {
         "type": {
           "type": "string",
           "enum": [
             "text"
-          ]
-        },
-        "font_size": {
-          "$ref": "common.json#/non_negative_integer",
-          "default_value": "12",
-          "$description": "translations.json#/div_font_size"
-        },
-        "font_family": {
-          "type": "string",
-          "$description": "translations.json#/div_font_family",
-          "platforms": [
-            "android",
-            "ios",
-            "web"
-          ]
-        },
-        "font_size_unit": {
-          "$ref": "div-size-unit.json",
-          "default_value": "sp",
-          "platforms": [
-            "android",
-            "ios"
           ]
         },
         "font_feature_settings": {
@@ -341,7 +331,10 @@
           "platforms": [
             "android",
             "ios"
-          ]
+          ],
+          "unsupported_platforms": {
+            "web": "There is no css implementation for this."
+          }
         },
         "auto_ellipsize": {
           "$ref": "common.json#/boolean_int",
@@ -351,30 +344,6 @@
             "ios",
             "web",
             "flutter"
-          ]
-        },
-        "letter_spacing": {
-          "type": "number",
-          "default_value": "0",
-          "$description": "translations.json#/div_text_letter_spacing",
-          "platforms": [
-            "android",
-            "ios",
-            "web"
-          ]
-        },
-        "font_weight": {
-          "$ref": "div-font-weight.json",
-          "default_value": "regular",
-          "$description": "translations.json#/div_font_weight"
-        },
-        "font_weight_value": {
-          "$ref": "common.json#/positive_integer",
-          "$description": "translations.json#/div_font_weight_value",
-          "platforms": [
-            "ios",
-            "android",
-            "web"
           ]
         },
         "text_alignment_horizontal": {
@@ -387,16 +356,12 @@
           "default_value": "top",
           "$description": "translations.json#/div_text_text_alignment_vertical"
         },
-        "text_color": {
-          "$ref": "common.json#/color",
-          "default_value": "#FF000000",
-          "$description": "translations.json#/div_text_text_color"
-        },
         "focused_text_color": {
           "$ref": "common.json#/color",
           "$description": "translations.json#/div_text_focused_text_color",
           "platforms": [
             "android",
+            "ios",
             "web"
           ]
         },
@@ -467,7 +432,10 @@
           "platforms": [
             "android",
             "ios"
-          ]
+          ],
+          "unsupported_platforms": {
+            "web": "There is no css implementation for this."
+          }
         },
         "truncate": {
           "type": "string",
@@ -479,13 +447,13 @@
           ],
           "default_value": "end",
           "$description": "translations.json#/div_text_truncate",
-          "deprecated": true,
-          "code_generation_disabled_kotlin": true,
-          "code_generation_disabled_swift": true,
           "platforms": [
             "android",
             "ios"
-          ]
+          ],
+          "unsupported_platforms": {
+            "web": "There is no css implementation for this."
+          }
         },
         "text_shadow": {
           "$ref": "div-shadow.json",

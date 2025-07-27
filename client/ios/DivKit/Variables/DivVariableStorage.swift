@@ -1,4 +1,5 @@
 import Foundation
+import LayoutKit
 import VGSL
 
 /// Stores variables.
@@ -9,6 +10,7 @@ public final class DivVariableStorage {
     public let changedVariables: Set<DivVariableName>
   }
 
+  let initialPath: UIElementPath?
   private let outerStorage: DivVariableStorage?
 
   private var _values = DivVariables()
@@ -40,14 +42,34 @@ public final class DivVariableStorage {
   ///   - outerStorage: Storage that provides outer scope variables. Outer scope variables are
   /// accessible via current storage (see `getValue` and `update` methods). Outer scope variables
   /// can be shadowed.
-  public init(outerStorage: DivVariableStorage? = nil) {
+  public convenience init(
+    outerStorage: DivVariableStorage? = nil
+  ) {
+    self.init(outerStorage: outerStorage, initialPath: nil)
+  }
+
+  init(
+    outerStorage: DivVariableStorage?,
+    initialPath: UIElementPath?
+  ) {
     self.outerStorage = outerStorage
+    self.initialPath = initialPath
 
     if let outerStorage {
       changeEvents = Signal.merge(outerStorage.changeEvents, changeEventsPipe.signal)
     } else {
       changeEvents = changeEventsPipe.signal
     }
+  }
+
+  /// Gets variable value.
+  /// If variable with the given name not exists gets value from the outer storage.
+  /// Returns `DivVariableValue`.
+  public func getVariableValue(_ name: DivVariableName) -> DivVariableValue? {
+    let variable = lock.withLock {
+      _values[name]
+    }
+    return variable ?? outerStorage?.getValue(name)
   }
 
   /// Gets variable value.

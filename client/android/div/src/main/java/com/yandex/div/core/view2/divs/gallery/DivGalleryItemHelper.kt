@@ -6,10 +6,11 @@ import android.view.ViewGroup
 import androidx.core.view.children
 import androidx.core.view.forEach
 import androidx.core.view.marginStart
-import androidx.recyclerview.widget.OrientationHelper
+import androidx.core.view.marginTop
 import androidx.recyclerview.widget.RecyclerView
 import com.yandex.div.R
 import com.yandex.div.core.util.doOnActualLayout
+import com.yandex.div.core.util.isLayoutRtl
 import com.yandex.div.core.view2.BindingContext
 import com.yandex.div.core.view2.divs.widgets.DivHolderView
 import com.yandex.div.core.widget.makeAtMostSpec
@@ -57,9 +58,11 @@ internal interface DivGalleryItemHelper {
         isRelayoutingChildren: Boolean = false
     ) {
         val orientation = getLayoutManagerOrientation()
+        val actualContentWidth = view.measuredWidth - view.paddingLeft - view.paddingRight
+        val actualContentHeight = view.measuredHeight - view.paddingTop - view.paddingBottom
         val shouldRelayout = when (orientation) {
-            RecyclerView.VERTICAL -> view.measuredWidth == 0 || child.measuredWidth == 0
-            RecyclerView.HORIZONTAL -> view.measuredHeight == 0 || child.measuredHeight == 0
+            RecyclerView.VERTICAL -> view.measuredWidth == 0 || actualContentWidth == 0 || child.measuredWidth == 0
+            RecyclerView.HORIZONTAL -> view.measuredHeight == 0 || actualContentHeight == 0 || child.measuredHeight == 0
             else -> false
         }
 
@@ -82,7 +85,7 @@ internal interface DivGalleryItemHelper {
                 asCrossContentAlignment()
             }
             calculateOffset(
-                view.measuredWidth - view.paddingLeft - view.paddingRight,
+                actualContentWidth,
                 right - left,
                 alignment
             )
@@ -95,7 +98,7 @@ internal interface DivGalleryItemHelper {
                 asCrossContentAlignment()
             }
             calculateOffset(
-                view.measuredHeight - view.paddingTop - view.paddingBottom,
+                actualContentHeight,
                 bottom - top,
                 alignment
             )
@@ -132,16 +135,14 @@ internal interface DivGalleryItemHelper {
     ) {
         view.doOnActualLayout {
             if (position == 0) {
-                view.scrollBy(-offset, -offset)
+                val fixedOffset = if (isHorizontal && view.isLayoutRtl()) offset else -offset
+                view.scrollBy(fixedOffset, fixedOffset)
                 return@doOnActualLayout
             }
 
             view.scrollBy(-view.scrollX, -view.scrollY)
 
             var targetView: View? = view.layoutManager?.findViewByPosition(position)
-
-            val orientationHelper = OrientationHelper
-                .createOrientationHelper(view.layoutManager, getLayoutManagerOrientation())
 
             while (
                 (targetView == null) &&
@@ -172,16 +173,28 @@ internal interface DivGalleryItemHelper {
                 }
 
                 ScrollPosition.DEFAULT -> {
-                    var startGap = orientationHelper.getDecoratedStart(targetView) - offset +
-                        targetView.marginStart
-                    if (view.clipToPadding) {
-                        startGap -= orientationHelper.startAfterPadding
+                    var startGap = targetView.scrollOffset - offset
+                    if (view.isLayoutRtl()) {
+                        startGap = -startGap
                     }
                     view.scrollBy(startGap, startGap)
                 }
             }
         }
     }
+
+    private val isHorizontal get() = getLayoutManagerOrientation() == RecyclerView.HORIZONTAL
+
+    private val View.scrollOffset: Int get() {
+        return if (!isHorizontal) {
+            top - marginTop - view.paddingTop
+        } else {
+            val viewStart = if (isLayoutRtl()) view.width - right else left
+            viewStart - marginStart - view.paddingStart
+        }
+    }
+
+    fun calcScrollOffset(targetView: View) = targetView.scrollOffset
 
     fun superLayoutDecoratedWithMargins(child: View, left: Int, top: Int, right: Int, bottom: Int)
 

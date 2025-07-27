@@ -4,10 +4,15 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
+import android.text.method.KeyListener
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputConnectionWrapper
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
@@ -15,7 +20,7 @@ import com.yandex.div.R
 import com.yandex.div.core.annotations.Mockable
 import com.yandex.div.core.view2.reuse.InputFocusTracker
 import com.yandex.div.internal.widget.SuperLineHeightEditText
-import com.yandex.div2.DivInput
+import com.yandex.div2.Div
 
 @Mockable
 internal class DivInputView @JvmOverloads constructor(
@@ -23,7 +28,7 @@ internal class DivInputView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = R.attr.divInputStyle
 ) : SuperLineHeightEditText(context, attrs, defStyleAttr),
-    DivHolderView<DivInput> by DivHolderViewMixin(),
+    DivHolderView<Div.Input> by DivHolderViewMixin(),
     DivAnimator {
 
     @get:DrawableRes
@@ -46,6 +51,8 @@ internal class DivInputView @JvmOverloads constructor(
     private var _hint: String? = null
 
     private var _isFocusable = true
+
+    private var editorActionListener: OnEditorActionListener? = null
 
     var enabled = true
         internal set(value) {
@@ -86,11 +93,7 @@ internal class DivInputView @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-        drawBorderClippedAndTranslated(canvas, scrollX, scrollY) { super.draw(it) }
-    }
-
-    override fun dispatchDraw(canvas: Canvas) {
-        dispatchDrawBorderClippedAndTranslated(canvas, scrollX, scrollY) { super.dispatchDraw(it) }
+        drawBorderClipped(canvas, scrollX, scrollY) { super.draw(it) }
     }
 
     override fun setFocusable(focusable: Boolean) {
@@ -98,6 +101,11 @@ internal class DivInputView @JvmOverloads constructor(
         val isFocusable = _isFocusable && enabled
         super.setFocusable(isFocusable)
         isFocusableInTouchMode = isFocusable
+    }
+
+    override fun setOnEditorActionListener(l: OnEditorActionListener?) {
+        super.setOnEditorActionListener(l)
+        editorActionListener = l
     }
 
     fun addAfterTextChangeAction(action: (Editable?) -> Unit) {
@@ -114,5 +122,63 @@ internal class DivInputView @JvmOverloads constructor(
         removeTextChangedListener(textChangeWatcher)
         onTextChangedActions.clear()
         textChangeWatcher = null
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if ((inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0 &&
+            (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)
+        ) {
+            val imeAction = imeOptions and EditorInfo.IME_MASK_ACTION
+            editorActionListener?.onEditorAction(this, imeAction, event)?.let {
+                return it
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
+        val baseInputConnection = super.onCreateInputConnection(outAttrs) ?: return null
+        if ((inputType and InputType.TYPE_TEXT_FLAG_MULTI_LINE) == 0) return baseInputConnection
+        return object : InputConnectionWrapper(baseInputConnection, true) {
+            override fun sendKeyEvent(event: KeyEvent): Boolean {
+                if ((event.keyCode == KeyEvent.KEYCODE_ENTER ||
+                            event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) &&
+                    event.action == KeyEvent.ACTION_DOWN
+                ) {
+                    val imeAction = imeOptions and EditorInfo.IME_MASK_ACTION
+                    editorActionListener?.onEditorAction(this@DivInputView, imeAction, event)?.let {
+                        return it
+                    }
+                }
+
+                return super.sendKeyEvent(event)
+            }
+
+            //Enter key from soft keyboard
+            override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
+                if (text == "\n") {
+                    val imeAction = imeOptions and EditorInfo.IME_MASK_ACTION
+                    editorActionListener?.onEditorAction(this@DivInputView, imeAction, null)?.let{
+                        return it
+                    }
+                }
+                return super.commitText(text, newCursorPosition)
+            }
+        }
+    }
+
+    override fun setInputType(type: Int) {
+        if (inputType == type) {
+            return
+        }
+
+        super.setInputType(type)
+    }
+
+    override fun setKeyListener(keyListener: KeyListener?) {
+        if (this.keyListener == keyListener) {
+            return
+        }
+        super.setKeyListener(keyListener)
     }
 }

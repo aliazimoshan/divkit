@@ -35,20 +35,30 @@ public final class DivSlider: DivBase, Sendable {
     }
   }
 
-  public final class TextStyle: Sendable {
-    public let fontSize: Expression<Int> // constraint: number >= 0
+  public final class TextStyle: @unchecked Sendable {
+    public let fontFamily: Expression<String>?
+    public let fontSize: Expression<Int> // constraint: number >= 0; default value: 12
     public let fontSizeUnit: Expression<DivSizeUnit> // default value: sp
+    public let fontVariationSettings: Expression<[String: Any]>?
     public let fontWeight: Expression<DivFontWeight> // default value: regular
     public let fontWeightValue: Expression<Int>? // constraint: number > 0
     public let offset: DivPoint?
     public let textColor: Expression<Color> // default value: #FF000000
 
-    public func resolveFontSize(_ resolver: ExpressionResolver) -> Int? {
-      resolver.resolveNumeric(fontSize)
+    public func resolveFontFamily(_ resolver: ExpressionResolver) -> String? {
+      resolver.resolveString(fontFamily)
+    }
+
+    public func resolveFontSize(_ resolver: ExpressionResolver) -> Int {
+      resolver.resolveNumeric(fontSize) ?? 12
     }
 
     public func resolveFontSizeUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
       resolver.resolveEnum(fontSizeUnit) ?? DivSizeUnit.sp
+    }
+
+    public func resolveFontVariationSettings(_ resolver: ExpressionResolver) -> [String: Any]? {
+      resolver.resolveDict(fontVariationSettings)
     }
 
     public func resolveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight {
@@ -70,15 +80,19 @@ public final class DivSlider: DivBase, Sendable {
       makeValueValidator(valueValidator: { $0 > 0 })
 
     init(
-      fontSize: Expression<Int>,
+      fontFamily: Expression<String>? = nil,
+      fontSize: Expression<Int>? = nil,
       fontSizeUnit: Expression<DivSizeUnit>? = nil,
+      fontVariationSettings: Expression<[String: Any]>? = nil,
       fontWeight: Expression<DivFontWeight>? = nil,
       fontWeightValue: Expression<Int>? = nil,
       offset: DivPoint? = nil,
       textColor: Expression<Color>? = nil
     ) {
-      self.fontSize = fontSize
+      self.fontFamily = fontFamily
+      self.fontSize = fontSize ?? .value(12)
       self.fontSizeUnit = fontSizeUnit ?? .value(.sp)
+      self.fontVariationSettings = fontVariationSettings
       self.fontWeight = fontWeight ?? .value(.regular)
       self.fontWeightValue = fontWeightValue
       self.offset = offset
@@ -461,6 +475,34 @@ extension DivSlider: Serializable {
 }
 
 #if DEBUG
+// WARNING: this == is incomplete because of [String: Any] in class fields
+extension DivSlider.TextStyle: Equatable {
+  public static func ==(lhs: DivSlider.TextStyle, rhs: DivSlider.TextStyle) -> Bool {
+    guard
+      lhs.fontFamily == rhs.fontFamily,
+      lhs.fontSize == rhs.fontSize,
+      lhs.fontSizeUnit == rhs.fontSizeUnit
+    else {
+      return false
+    }
+    guard
+      lhs.fontWeight == rhs.fontWeight,
+      lhs.fontWeightValue == rhs.fontWeightValue,
+      lhs.offset == rhs.offset
+    else {
+      return false
+    }
+    guard
+      lhs.textColor == rhs.textColor
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
+#if DEBUG
 extension DivSlider.Range: Equatable {
   public static func ==(lhs: DivSlider.Range, rhs: DivSlider.Range) -> Bool {
     guard
@@ -473,28 +515,6 @@ extension DivSlider.Range: Equatable {
     guard
       lhs.trackActiveStyle == rhs.trackActiveStyle,
       lhs.trackInactiveStyle == rhs.trackInactiveStyle
-    else {
-      return false
-    }
-    return true
-  }
-}
-#endif
-
-#if DEBUG
-extension DivSlider.TextStyle: Equatable {
-  public static func ==(lhs: DivSlider.TextStyle, rhs: DivSlider.TextStyle) -> Bool {
-    guard
-      lhs.fontSize == rhs.fontSize,
-      lhs.fontSizeUnit == rhs.fontSizeUnit,
-      lhs.fontWeight == rhs.fontWeight
-    else {
-      return false
-    }
-    guard
-      lhs.fontWeightValue == rhs.fontWeightValue,
-      lhs.offset == rhs.offset,
-      lhs.textColor == rhs.textColor
     else {
       return false
     }
@@ -518,8 +538,10 @@ extension DivSlider.Range: Serializable {
 extension DivSlider.TextStyle: Serializable {
   public func toDictionary() -> [String: ValidSerializationValue] {
     var result: [String: ValidSerializationValue] = [:]
+    result["font_family"] = fontFamily?.toValidSerializationValue()
     result["font_size"] = fontSize.toValidSerializationValue()
     result["font_size_unit"] = fontSizeUnit.toValidSerializationValue()
+    result["font_variation_settings"] = fontVariationSettings?.toValidSerializationValue()
     result["font_weight"] = fontWeight.toValidSerializationValue()
     result["font_weight_value"] = fontWeightValue?.toValidSerializationValue()
     result["offset"] = offset?.toDictionary()

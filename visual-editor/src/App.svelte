@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, setContext } from 'svelte';
+  import { onMount, setContext, onDestroy } from 'svelte';
   import { derived, get, writable } from 'svelte/store';
   import SplitView from './lib/components/SplitView.svelte';
   import type { LanguageContext } from './lib/ctx/languageContext';
@@ -16,6 +16,7 @@
     CardLocale,
     EditorInstance,
     EditorOptions,
+    FileLimits,
     FontFaceDesc,
     GetTranslationKey,
     GetTranslationSuggest,
@@ -57,13 +58,25 @@
   import type { ScreenModel } from './lib/components/models/ScreenModel';
   import { SetJsonCommand } from './lib/data/commands/setJson';
   import AddScreenModal from './lib/components/AddScreenModal.svelte';
-  import { onDestroy } from 'svelte';
   import AddPatchModal from './lib/components/AddPatchModal.svelte';
   import DeletePatchConfirmation from './lib/components/DeletePatchConfirmation.svelte';
   import DeleteScreenConfirmation from './lib/components/DeleteScreenConfirmation.svelte';
 
   let tempScreenId: string | null = null;
   let tempScreen: ScreenModel | null = null;
+
+  export let layout: Layout = [
+    {
+      items: ['new-component', 'component-tree'],
+    },
+    {
+      items: ['preview'],
+      weight: 3,
+    },
+    {
+      items: ['component-props:code'],
+    },
+  ];
 
   onMount(async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -101,47 +114,24 @@
   });
 
   export let state: State;
-
-  export let layout: Layout = [
-    {
-      items: ['new-component', 'component-tree'],
-    },
-    {
-      items: ['preview'],
-      weight: 3,
-    },
-    {
-      items: ['component-props:code'],
-    },
-  ];
   export let locale: Locale = 'en';
-
   export let shadowRoot: ShadowRoot | undefined = undefined;
-
   export let actionLogUrlVariable = '';
-
   export let cardLocales: CardLocale[] = [];
-
   export let previewWarnFileLimit = 10000;
   export let previewErrorFileLimit = Infinity;
-
   export let warnFileLimit = Infinity;
   export let errorFileLimit = Infinity;
-
+  export let fileLimits: FileLimits | undefined = undefined;
   export let rootConfigurable = false;
-
   export let customFontFaces: FontFaceDesc[] = [];
-
   export let directionSelector = false;
-
+  export let perThemeProps = false;
   export let uploadFile: (file: File) => Promise<string> = loadFileAsBase64;
-
   export let editorFabric: (opts: EditorOptions) => EditorInstance =
     editorFabricInternal;
-
   export let getTranslationSuggest: GetTranslationSuggest | undefined =
     undefined;
-
   export let getTranslationKey: GetTranslationKey | undefined = undefined;
 
   export function setLayout(newLayout: Layout): void {
@@ -292,9 +282,11 @@
     previewErrorFileLimit,
     warnFileLimit,
     errorFileLimit,
+    fileLimits,
     rootConfigurable,
     customFontFaces,
     directionSelector,
+    perThemeProps,
 
     rendererApi() {
       return rendererApi;

@@ -76,6 +76,26 @@ private final class SubviewStorage: RenderingDelegate {
     )
   }
 
+  func reportViewWasCreated() {
+    wrappedRenderingDelegate?.reportViewWasCreated()
+  }
+
+  func reportBlockDidConfigure(path: UIElementPath) {
+    wrappedRenderingDelegate?.reportBlockDidConfigure(path: path)
+  }
+
+  func reportBlockWillConfigure(path: UIElementPath) {
+    wrappedRenderingDelegate?.reportBlockWillConfigure(path: path)
+  }
+
+  func reportViewDidLayout(path: UIElementPath) {
+    wrappedRenderingDelegate?.reportViewDidLayout(path: path)
+  }
+
+  func reportViewWillLayout(path: UIElementPath) {
+    wrappedRenderingDelegate?.reportViewWillLayout(path: path)
+  }
+
   func getView(_ id: BlockViewID) -> DetachableAnimationBlockView? {
     views.first { $0.id == id }?.view
   }
@@ -191,7 +211,7 @@ private final class StateBlockView: BlockView {
 
   private func addWithAnimations(_ views: [DetachableAnimationBlockView]) {
     for view in views {
-      view.addWithAnimation(in: self)
+      view.addWithAnimation()
     }
   }
 

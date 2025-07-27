@@ -4,7 +4,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Paint
 import android.text.Layout
-import android.text.TextUtils
+import android.text.TextUtils.TruncateAt
 import android.util.DisplayMetrics
 import android.view.View
 import android.widget.TextView
@@ -22,7 +22,6 @@ import com.yandex.div.core.view2.Div2View
 import com.yandex.div.core.view2.DivTypefaceResolver
 import com.yandex.div.core.view2.DivViewBinder
 import com.yandex.div.core.view2.divs.widgets.DivLineHeightTextView
-import com.yandex.div.core.view2.getTypeface
 import com.yandex.div.core.view2.spannable.ShadowData
 import com.yandex.div.core.view2.spannable.SpannedTextBuilder
 import com.yandex.div.core.widget.AdaptiveMaxLines
@@ -38,9 +37,9 @@ import com.yandex.div.json.expressions.ExpressionResolver
 import com.yandex.div.json.expressions.equalsToConstant
 import com.yandex.div.json.expressions.isConstant
 import com.yandex.div.json.expressions.isConstantOrNull
+import com.yandex.div2.Div
 import com.yandex.div2.DivAlignmentHorizontal
 import com.yandex.div2.DivAlignmentVertical
-import com.yandex.div2.DivFontWeight
 import com.yandex.div2.DivLineStyle
 import com.yandex.div2.DivLinearGradient
 import com.yandex.div2.DivRadialGradient
@@ -48,34 +47,27 @@ import com.yandex.div2.DivRadialGradientCenter
 import com.yandex.div2.DivRadialGradientRadius
 import com.yandex.div2.DivRadialGradientRelativeRadius
 import com.yandex.div2.DivShadow
-import com.yandex.div2.DivSizeUnit
 import com.yandex.div2.DivSolidBackground
 import com.yandex.div2.DivText
 import com.yandex.div2.DivTextGradient
 import javax.inject.Inject
-import kotlin.math.min
 
 private const val SOFT_HYPHEN = '\u00AD'
-private const val LONGEST_WORD_BREAK = 10
 
 /**
  * Class for binding div text to templated view
  */
 @DivScope
 internal class DivTextBinder @Inject constructor(
-    private val baseBinder: DivBaseBinder,
+    baseBinder: DivBaseBinder,
     private val typefaceResolver: DivTypefaceResolver,
     private val spannedTextBuilder: SpannedTextBuilder,
     @ExperimentFlag(HYPHENATION_SUPPORT_ENABLED) private val isHyphenationEnabled: Boolean
-) : DivViewBinder<DivText, DivLineHeightTextView> {
-
-    override fun bindView(context: BindingContext, view: DivLineHeightTextView, div: DivText) {
-        val oldDiv = view.div
-        if (div === oldDiv) return
-
-        baseBinder.bindView(context, view, div, oldDiv)
-        view.applyDivActions(
-            context,
+) : DivViewBinder<Div.Text, DivText, DivLineHeightTextView>(baseBinder) {
+    
+    override fun DivLineHeightTextView.bind(bindingContext: BindingContext, div: DivText, oldDiv: DivText?) {
+        applyDivActions(
+            bindingContext,
             div.action,
             div.actions,
             div.longtapActions,
@@ -86,25 +78,27 @@ internal class DivTextBinder @Inject constructor(
             div.pressEndActions,
             div.actionAnimation,
             div.accessibility,
+            div.captureFocusOnAction,
         )
 
-        val expressionResolver = context.expressionResolver
-        view.bindTypeface(div, oldDiv, expressionResolver)
-        view.bindTextAlignment(div, oldDiv, expressionResolver)
-        view.bindFontSize(div, oldDiv, expressionResolver)
-        view.bindFontFeatureSettings(div, oldDiv, expressionResolver)
-        view.bindTextColor(div, oldDiv, expressionResolver)
-        view.bindUnderline(div, oldDiv, expressionResolver)
-        view.bindStrikethrough(div, oldDiv, expressionResolver)
-        view.bindMaxLines(div, oldDiv, expressionResolver)
-        view.bindText(context, div, oldDiv)
-        view.bindEllipsis(context, div, oldDiv)
-        view.bindAutoEllipsize(div, oldDiv, expressionResolver)
-        view.bindTextGradient(context.divView, div, oldDiv, expressionResolver)
-        view.bindTextShadow(div, oldDiv, expressionResolver)
-        view.bindSelectable(div, oldDiv, expressionResolver)
-        view.bindTightenWidth(div, oldDiv, expressionResolver)
-        view.updateFocusableState(div)
+        val expressionResolver = bindingContext.expressionResolver
+        bindTypeface(div, oldDiv, expressionResolver)
+        bindTextAlignment(div, oldDiv, expressionResolver)
+        bindFontSize(div, oldDiv, expressionResolver)
+        bindLetterSpacing(div, oldDiv, expressionResolver)
+        bindFontFeatureSettings(div, oldDiv, expressionResolver)
+        bindTextColor(div, oldDiv, expressionResolver)
+        bindUnderline(div, oldDiv, expressionResolver)
+        bindStrikethrough(div, oldDiv, expressionResolver)
+        bindMaxLines(div, oldDiv, expressionResolver)
+        bindText(bindingContext, div, oldDiv)
+        bindEllipsis(bindingContext, div, oldDiv)
+        bindEllipsize(div, oldDiv, expressionResolver)
+        bindTextGradient(bindingContext.divView, div, oldDiv, expressionResolver)
+        bindTextShadow(div, oldDiv, expressionResolver)
+        bindSelectable(div, oldDiv, expressionResolver)
+        bindTightenWidth(div, oldDiv, expressionResolver)
+        updateFocusableState(div)
     }
 
     //region Text Alignment
@@ -202,46 +196,11 @@ internal class DivTextBinder @Inject constructor(
 
     //region Font Size
 
-    private fun DivLineHeightTextView.bindFontSize(
-        newDiv: DivText,
-        oldDiv: DivText?,
-        resolver: ExpressionResolver
-    ) {
-        if (newDiv.fontSize.equalsToConstant(oldDiv?.fontSize)
-            && newDiv.fontSizeUnit.equalsToConstant(oldDiv?.fontSizeUnit)
-            && newDiv.letterSpacing.equalsToConstant(oldDiv?.letterSpacing)) {
-            return
-        }
+    private fun DivLineHeightTextView.bindFontSize(div: DivText, oldDiv: DivText?, resolver: ExpressionResolver) =
+        observeFontSize(div.fontSize, div.fontSizeUnit, oldDiv?.fontSize, oldDiv?.fontSizeUnit, resolver, this)
 
-        applyFontSize(
-            newDiv.fontSize.evaluate(resolver),
-            newDiv.fontSizeUnit.evaluate(resolver),
-            newDiv.letterSpacing.evaluate(resolver)
-        )
-
-        if (newDiv.fontSize.isConstant()
-            && newDiv.fontSizeUnit.isConstant()
-            && newDiv.letterSpacing.isConstant()) {
-            return
-        }
-
-        val callback = { _: Any ->
-            applyFontSize(
-                newDiv.fontSize.evaluate(resolver),
-                newDiv.fontSizeUnit.evaluate(resolver),
-                newDiv.letterSpacing.evaluate(resolver)
-            )
-        }
-        addSubscription(newDiv.fontSize.observe(resolver, callback))
-        addSubscription(newDiv.fontSizeUnit.observe(resolver, callback))
-        addSubscription(newDiv.letterSpacing.observe(resolver, callback))
-    }
-
-    private fun TextView.applyFontSize(size: Long, unit: DivSizeUnit, letterSpacing: Double) {
-        val fontSize = size.toIntSafely()
-        applyFontSize(fontSize, unit)
-        applyLetterSpacing(letterSpacing, fontSize)
-    }
+    private fun DivLineHeightTextView.bindLetterSpacing(div: DivText, oldDiv: DivText?, resolver: ExpressionResolver) =
+        observeLetterSpacing(div.letterSpacing, div.fontSize, oldDiv?.letterSpacing, oldDiv?.fontSize, resolver, this)
 
     //endregion
 
@@ -281,39 +240,18 @@ internal class DivTextBinder @Inject constructor(
         oldDiv: DivText?,
         resolver: ExpressionResolver,
     ) {
-        if (newDiv.fontFamily.equalsToConstant(oldDiv?.fontFamily)
-            && newDiv.fontWeight.equalsToConstant(oldDiv?.fontWeight)) {
-            return
-        }
-
-        applyTypeface(
-            newDiv.fontFamily?.evaluate(resolver),
-            newDiv.fontWeight.evaluate(resolver),
-            newDiv.fontWeightValue?.evaluate(resolver),
+        observeTypeface(
+            newDiv.fontFamily,
+            newDiv.fontWeight,
+            newDiv.fontWeightValue,
+            newDiv.fontVariationSettings,
+            oldDiv?.fontFamily,
+            oldDiv?.fontWeight,
+            oldDiv?.fontWeightValue,
+            oldDiv?.fontVariationSettings,
+            typefaceResolver,
+            resolver,
         )
-
-        if (newDiv.fontFamily.isConstantOrNull() && newDiv.fontWeight.isConstant() && newDiv.fontWeightValue.isConstantOrNull()) {
-            return
-        }
-
-        val callback = { _: Any ->
-             applyTypeface(
-                newDiv.fontFamily?.evaluate(resolver),
-                newDiv.fontWeight.evaluate(resolver),
-                newDiv.fontWeightValue?.evaluate(resolver)
-            )
-        }
-        addSubscription(newDiv.fontFamily?.observe(resolver, callback))
-        addSubscription(newDiv.fontWeight.observe(resolver, callback))
-        addSubscription(newDiv.fontWeightValue?.observe(resolver, callback))
-    }
-
-    private fun TextView.applyTypeface(
-        fontFamily: String?,
-        fontWeight: DivFontWeight,
-        fontWeightValue: Long?
-    ) {
-        typeface = typefaceResolver.getTypeface(fontFamily, fontWeight, fontWeightValue)
     }
 
     //endregion
@@ -483,7 +421,7 @@ internal class DivTextBinder @Inject constructor(
         resolver: ExpressionResolver,
     ) {
         when (val textGradient = newDiv.textGradient) {
-            null -> Unit
+            null -> paint.shader = null
             is DivTextGradient.Linear -> bindLinearTextGradient(divView, textGradient.value, oldDiv?.textGradient, resolver)
             is DivTextGradient.Radial -> bindRadialTextGradient(textGradient.value, oldDiv?.textGradient, resolver)
         }
@@ -536,6 +474,7 @@ internal class DivTextBinder @Inject constructor(
                 width = realTextWidth,
                 height = height - paddingBottom - paddingTop
             )
+            invalidate()
         }
     }
 
@@ -558,14 +497,14 @@ internal class DivTextBinder @Inject constructor(
             newTextGradient.radius.toRadialGradientDrawableRadius(displayMetrics, resolver),
             newTextGradient.centerX.toRadialGradientDrawableCenter(displayMetrics, resolver),
             newTextGradient.centerY.toRadialGradientDrawableCenter(displayMetrics, resolver),
-            newTextGradient.colors.evaluate(resolver)
+            newTextGradient.colors?.evaluate(resolver) ?: emptyList()
         )
 
-        if (newTextGradient.colors.isConstant()) {
+        if (newTextGradient.colors.isConstantOrNull()) {
             return
         }
 
-        addSubscription(newTextGradient.colors.observe(resolver) { colors ->
+        addSubscription(newTextGradient.colors?.observe(resolver) { colors ->
             applyRadialTextGradientColor(
                 newTextGradient.radius.toRadialGradientDrawableRadius(displayMetrics, resolver),
                 newTextGradient.centerX.toRadialGradientDrawableCenter(displayMetrics, resolver),
@@ -590,6 +529,7 @@ internal class DivTextBinder @Inject constructor(
                 width = realTextWidth,
                 height = height - paddingBottom - paddingTop
             )
+            invalidate()
         }
     }
 
@@ -658,8 +598,6 @@ internal class DivTextBinder @Inject constructor(
         }
     }
 
-    //region Text Color
-
     private fun DivLineHeightTextView.bindRichText(
         bindingContext: BindingContext,
         newDiv: DivText,
@@ -686,16 +624,27 @@ internal class DivTextBinder @Inject constructor(
             addSubscription(range.start.observe(resolver, callback))
             addSubscription(range.end?.observe(resolver, callback))
             addSubscription(range.alignmentVertical?.observe(resolver, callback))
+            addSubscription(range.baselineOffset.observe(resolver, callback))
             addSubscription(range.fontSize?.observe(resolver, callback))
             addSubscription(range.fontSizeUnit.observe(resolver, callback))
+            addSubscription(range.fontFamily?.observe(resolver, callback))
             addSubscription(range.fontWeight?.observe(resolver, callback))
             addSubscription(range.fontWeightValue?.observe(resolver, callback))
+            addSubscription(range.fontFeatureSettings?.observe(resolver, callback))
             addSubscription(range.letterSpacing?.observe(resolver, callback))
             addSubscription(range.lineHeight?.observe(resolver, callback))
             addSubscription(range.strike?.observe(resolver, callback))
             addSubscription(range.textColor?.observe(resolver, callback))
             addSubscription(range.topOffset?.observe(resolver, callback))
             addSubscription(range.underline?.observe(resolver, callback))
+            when (val background = range.background?.value()) {
+                is DivSolidBackground -> addSubscription(background.color.observe(resolver, callback))
+            }
+            addSubscription(range.border?.stroke?.color?.observe(resolver, callback))
+            addSubscription(range.border?.stroke?.width?.observe(resolver, callback))
+            if (supportFontVariations) {
+                addSubscription(range.fontVariationSettings?.observe(resolver, callback))
+            }
         }
         newDiv.images?.forEach { image ->
             addSubscription(image.start.observe(resolver, callback))
@@ -728,7 +677,8 @@ internal class DivTextBinder @Inject constructor(
     ) {
         if (newDiv.text.equalsToConstant(oldDiv?.text)
             && newDiv.lineHeight.equalsToConstant(oldDiv?.lineHeight)
-            && newDiv.fontSizeUnit.equalsToConstant(oldDiv?.fontSizeUnit)) {
+            && newDiv.fontSizeUnit.equalsToConstant(oldDiv?.fontSizeUnit)
+            && newDiv.extensions.compareNullableWith(oldDiv?.extensions) { new, old -> new.id == old.id }) {
             return
         }
 
@@ -766,12 +716,7 @@ internal class DivTextBinder @Inject constructor(
         val oldHyphenFreq = hyphenationFrequency
         val newHyphenFreq = when {
             !isHyphenationEnabled -> Layout.HYPHENATION_FREQUENCY_NONE
-            TextUtils.indexOf(
-                text,
-                SOFT_HYPHEN,
-                0,
-                min(text.length, LONGEST_WORD_BREAK)
-            ) > 0 -> {
+            text.contains(SOFT_HYPHEN) -> {
                 // This enables word break not only on soft hyphens, but on dashes and hyphens.
                 // See all characters that lead to word break https://cs.android.com/android/platform/superproject/+/master:frameworks/minikin/libs/minikin/Hyphenator.cpp;l=146
                 Layout.HYPHENATION_FREQUENCY_NORMAL
@@ -839,10 +784,14 @@ internal class DivTextBinder @Inject constructor(
         ellipsis.ranges?.forEach { range ->
             addSubscription(range.start.observe(resolver, callback))
             addSubscription(range.end?.observe(resolver, callback))
+            addSubscription(range.alignmentVertical?.observe(resolver, callback))
+            addSubscription(range.baselineOffset.observe(resolver, callback))
             addSubscription(range.fontSize?.observe(resolver, callback))
             addSubscription(range.fontSizeUnit.observe(resolver, callback))
+            addSubscription(range.fontFamily?.observe(resolver, callback))
             addSubscription(range.fontWeight?.observe(resolver, callback))
             addSubscription(range.fontWeightValue?.observe(resolver, callback))
+            addSubscription(range.fontFeatureSettings?.observe(resolver, callback))
             addSubscription(range.letterSpacing?.observe(resolver, callback))
             addSubscription(range.lineHeight?.observe(resolver, callback))
             addSubscription(range.strike?.observe(resolver, callback))
@@ -854,6 +803,9 @@ internal class DivTextBinder @Inject constructor(
             }
             addSubscription(range.border?.stroke?.color?.observe(resolver, callback))
             addSubscription(range.border?.stroke?.width?.observe(resolver, callback))
+            if (supportFontVariations) {
+                addSubscription(range.fontVariationSettings?.observe(resolver, callback))
+            }
         }
         ellipsis.images?.forEach { image ->
             addSubscription(image.start.observe(resolver, callback))
@@ -952,22 +904,36 @@ internal class DivTextBinder @Inject constructor(
 
     //endregion
 
-    //region Auto Ellipsize
+    //region Ellipsize
 
-    private fun DivLineHeightTextView.bindAutoEllipsize(
+    private fun DivLineHeightTextView.bindEllipsize(
         newDiv: DivText,
         oldDiv: DivText?,
         resolver: ExpressionResolver
     ) {
-        if (newDiv.autoEllipsize.equalsToConstant(oldDiv?.autoEllipsize)) {
+        if (newDiv.autoEllipsize.equalsToConstant(oldDiv?.autoEllipsize) &&
+            newDiv.truncate.equalsToConstant(oldDiv?.truncate)) {
             return
         }
 
-        applyAutoEllipsize(newDiv.autoEllipsize?.evaluate(resolver) ?: false)
+        applyEllipsize(newDiv, resolver)
+
+        if (newDiv.autoEllipsize.isConstantOrNull() && newDiv.truncate.isConstant()) return
+
+        val callback = { _: Any -> applyEllipsize(newDiv, resolver) }
+        newDiv.autoEllipsize?.let { addSubscription(it.observe(resolver, callback))}
+        addSubscription(newDiv.truncate.observe(resolver, callback))
     }
 
-    private fun DivLineHeightTextView.applyAutoEllipsize(ellipsize: Boolean) {
-        autoEllipsize = ellipsize
+    private fun DivLineHeightTextView.applyEllipsize(div: DivText, resolver: ExpressionResolver) {
+        val location = div.truncate.evaluate(resolver)
+        ellipsisLocation = when (location) {
+            DivText.Truncate.NONE -> null
+            DivText.Truncate.START -> TruncateAt.START
+            DivText.Truncate.MIDDLE -> TruncateAt.MIDDLE
+            DivText.Truncate.END -> TruncateAt.END
+        }
+        autoEllipsize = location != DivText.Truncate.NONE && div.autoEllipsize?.evaluate(resolver) ?: false
     }
 
     //endregion

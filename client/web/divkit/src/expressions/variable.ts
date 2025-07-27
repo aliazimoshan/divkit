@@ -3,6 +3,7 @@ import { writable } from 'svelte/store';
 import type { EvalValue } from './eval';
 import { parseColor } from '../utils/correctColor';
 import { bigIntZero, toBigInt } from './bigint';
+import { checkUrl } from './utils';
 
 export type VariableType = 'string' | 'number' | 'integer' | 'boolean' | 'color' | 'url' | 'dict' | 'array';
 export type VariableValue = string | number | bigint | boolean | null | undefined | object | unknown[];
@@ -129,20 +130,20 @@ export class NumberVariable extends Variable<number, 'number'> {
     }
 }
 
-export class BooleanVariable extends Variable<number, 'boolean'> {
+export class BooleanVariable extends Variable<boolean, 'boolean'> {
     protected convertValue(value: unknown) {
         if (value !== 1 && value !== 0 && value !== true && value !== false) {
             throw new Error('Incorrect variable value');
         }
 
-        return Number(value);
+        return Boolean(value);
     }
 
     protected fromString(val: string) {
         if (val === '1' || val === 'true') {
-            return 1;
+            return true;
         } else if (val === '0' || val === 'false') {
-            return 0;
+            return false;
         }
 
         throw new Error('Incorrect variable value');
@@ -177,11 +178,14 @@ export class UrlVariable extends Variable<string, 'url'> {
         if (typeof value !== 'string') {
             throw new Error('Incorrect variable value');
         }
+        checkUrl(value);
 
         return value;
     }
 
     protected fromString(val: string) {
+        checkUrl(val);
+
         return val;
     }
 
@@ -199,8 +203,12 @@ export class DictVariable extends Variable<object, 'dict'> {
         return value;
     }
 
-    protected fromString(_val: string): object {
-        throw new Error('Dict variable does not support setter from string');
+    protected fromString(val: string): object {
+        try {
+            return JSON.parse(val);
+        } catch (_err) {
+            throw new Error('Incorrect dict value');
+        }
     }
 
     getType(): 'dict' {
@@ -217,8 +225,12 @@ export class ArrayVariable extends Variable<unknown[], 'array'> {
         return value;
     }
 
-    protected fromString(_val: string): unknown[] {
-        throw new Error('Array variable does not support setter from string');
+    protected fromString(val: string): unknown[] {
+        try {
+            return JSON.parse(val);
+        } catch (_err) {
+            throw new Error('Incorrect array value');
+        }
     }
 
     getType(): 'array' {

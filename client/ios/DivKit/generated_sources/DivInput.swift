@@ -4,7 +4,7 @@ import Foundation
 import Serialization
 import VGSL
 
-public final class DivInput: DivBase, Sendable {
+public final class DivInput: DivBase, @unchecked Sendable {
   @frozen
   public enum Autocapitalization: String, CaseIterable, Sendable {
     case auto = "auto"
@@ -67,6 +67,7 @@ public final class DivInput: DivBase, Sendable {
   public let fontFamily: Expression<String>?
   public let fontSize: Expression<Int> // constraint: number >= 0; default value: 12
   public let fontSizeUnit: Expression<DivSizeUnit> // default value: sp
+  public let fontVariationSettings: Expression<[String: Any]>?
   public let fontWeight: Expression<DivFontWeight> // default value: regular
   public let fontWeightValue: Expression<Int>? // constraint: number > 0
   public let functions: [DivFunction]?
@@ -142,6 +143,10 @@ public final class DivInput: DivBase, Sendable {
 
   public func resolveFontSizeUnit(_ resolver: ExpressionResolver) -> DivSizeUnit {
     resolver.resolveEnum(fontSizeUnit) ?? DivSizeUnit.sp
+  }
+
+  public func resolveFontVariationSettings(_ resolver: ExpressionResolver) -> [String: Any]? {
+    resolver.resolveDict(fontVariationSettings)
   }
 
   public func resolveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight {
@@ -262,6 +267,7 @@ public final class DivInput: DivBase, Sendable {
     fontFamily: Expression<String>? = nil,
     fontSize: Expression<Int>? = nil,
     fontSizeUnit: Expression<DivSizeUnit>? = nil,
+    fontVariationSettings: Expression<[String: Any]>? = nil,
     fontWeight: Expression<DivFontWeight>? = nil,
     fontWeightValue: Expression<Int>? = nil,
     functions: [DivFunction]? = nil,
@@ -321,6 +327,7 @@ public final class DivInput: DivBase, Sendable {
     self.fontFamily = fontFamily
     self.fontSize = fontSize ?? .value(12)
     self.fontSizeUnit = fontSizeUnit ?? .value(.sp)
+    self.fontVariationSettings = fontVariationSettings
     self.fontWeight = fontWeight ?? .value(.regular)
     self.fontWeightValue = fontWeightValue
     self.functions = functions
@@ -365,6 +372,7 @@ public final class DivInput: DivBase, Sendable {
 }
 
 #if DEBUG
+// WARNING: this == is incomplete because of [String: Any] in class fields
 extension DivInput: Equatable {
   public static func ==(lhs: DivInput, rhs: DivInput) -> Bool {
     guard
@@ -532,6 +540,7 @@ extension DivInput: Serializable {
     result["font_family"] = fontFamily?.toValidSerializationValue()
     result["font_size"] = fontSize.toValidSerializationValue()
     result["font_size_unit"] = fontSizeUnit.toValidSerializationValue()
+    result["font_variation_settings"] = fontVariationSettings?.toValidSerializationValue()
     result["font_weight"] = fontWeight.toValidSerializationValue()
     result["font_weight_value"] = fontWeightValue?.toValidSerializationValue()
     result["functions"] = functions?.map { $0.toDictionary() }

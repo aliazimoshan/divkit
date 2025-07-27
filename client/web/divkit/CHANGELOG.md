@@ -1,3 +1,131 @@
+## 32.3.0 (June 9, 2025)
+
+* Fixed a issue with incorrect priority of `url` over `typed` in `actions` in rare cases.
+
+
+## 32.2.0 (June 2, 2025)
+
+* Fixed a bug with an `animator` that could be accessed from a sibling component (the `animator` should be found only from the element itself or a child).
+
+
+## 32.0.0 (May 19, 2025)
+
+* Breaking change. The `input` component will now apply `focus` styles to each focus, regardless of whether it is a keyboard or not.
+* Breaking change. The `url` value should now be a valid URL, as it already was on Android/iOS.
+* Breaking change. The `value` of a `variable` can now take expressions. The result of this expression will be used as the initial value of the variable.
+* Breaking change. The order of evaluation of expressions in actions has been changed so that multiple actions in the same array behave as expected.
+* Breaking change. The scrolling logic and behavior of the `pager` component have been changed.
+* Breaking change: The `boolean` variable now contains a boolean value, rather than the number 0/1. This means that any `subscribe` methods will output a boolean value instead of a number.
+* Added support for the `atan2` function.
+* Added support for the `infinite_scroll` property in the `pager`.
+* Added the ability to scroll the `pager` using the mouse. This behavior can be disabled using the `pagerMouseDragEnabled` configuration property.
+* The incorrect size of the `page` with the "percentage" markup has been fixed.
+
+
+## 31.14.0 (May 5, 2025)
+
+* Fixed an error with the `integer` variables in the `submit` action (the bigint variable could not be converted to a string).
+* Fixed and issue with the `start` and `end` positions of the background.
+* Fixed the behavior of the `pager` with elements that have `visibility` = `gone`.
+
+
+## 31.13.0 (April 28, 2025)
+
+* Fixed an erroneous situation where an action with a `scope_id` was launched and no such scope was found, the action will now fail.
+* Fixed the logic of the size of the `image` with `aspect` and `wrap_content`.
+* Fixed the overflow logic of the `tabs` component with the height of `match_parent` and `fixed`.
+* The default conversion to string for the values `dict` and `array` has been changed to match Android/iOS.
+
+
+## 31.12.0 (April 21, 2025)
+
+* Added `cot` function.
+* Added support for the `header` value of `accessibility.type`.
+* Added support for the `high_priority_preview_show` in `image`.
+* Added support in some form for the `state_description` and `hint` properties in `accessibility`.
+* Disabled support for expressions in the `type` property for the values `width` and `height` (support was a mistake, this change will correspond to the current behavior of Android/iOS).
+* Fixed `tooltips` with templates.
+* Fixed an issue with the incorrect custom `height` of the `tooltips`.
+* Fixed the priority of `text_radient` over `text_color` in `text`.
+* The `pager_id` in `indicator` and the `id` in `pager` are now optional.
+* The accessibility of modal `tooltips` has been updated: now modal tooltips will loop focus inside the component when opening, and also return focus to the previously focused component after closing.
+* The error about `pagers` with the same `id` now issueas a warning instead of error. Please note that somebody may try to scroll them using an action, and this action will lead to unexpected behaviour.
+* The lookup logic for the `indicator` and `pager` has been changed, so `indicator` will find the nearest `pager`.
+
+
+## 31.11.0 (April 14, 2025)
+
+* Added support for the `accessibility` `mode` = `exclude`. Interactive components are prohibited in it.
+* Added support for the `capture_focus_on_action` property.
+* `input` / `select` / `switch` is now prohibited inside components with actions (as is `select`, as well as any other interactive components with actions).
+
+
+## 31.10.0 (April 7, 2025)
+
+* Added support for the `color_map` in `radial_gradient`.
+* Added support for the `scroll_axis_alignment` in `pager`.
+* Fixed an issue with an incorrect default state in `pager` when `default_item` is provided.
+* The case when the `videoPlayerProvider` does not return anything is better handled.
+* The elements in the `pager` now use the `paddings` values when snapping the scroll.
+
+
+## 31.9.0 (March 31, 2025)
+
+* Added support for `functions` in the `card` (div data). Previously, they were supported only in components.
+* Added support for the `animation_type` and `animation_duration` in `tabs`.
+* Fixed a bug with the importance of properties in action, now `typed` is more important than `url`.
+* Fixed an error message when a local function was found, but the arguments were incorrect.
+* The logic of the "nested actions" warning has been updated, nested `<button>` will no longer be rendered.
+
+
+## 31.8.0 (March 24, 2025)
+
+* Added support for `background_accessibility_description` for the `tooltip`. If specified, the backdrop (background) of the `tooltip` is converted to a button with the specified text.
+* Added support for the `mask` in `text`.
+* Added the ability to provide a custom implementation of the video player using the `videoPlayerProvider` property.
+* Fixed a bug that caused the `indicator` elements to be non-clickable on the `desktop` platform.
+* Fixed a bug where the `video` component was not available for mouse/touch events (context menu, etc.).
+* Fixed an error with blinking the height of the `indicator` when changing the elements of the `pager`.
+* Fixed the `cloud` background of the `text` in Firefox (for the background of the entire text only).
+* Fixed the issue with the `pager` hanging if `default_item` was specified.
+* Fixed typings for the package.
+* The `indicator` has been updated, which will be hidden if there is one element or less in the `pager`.
+* The tooltip accessibility has been updated: it now has the appropriate ARIA role and closes when the `Escape` key is pressed.
+
+
+## 31.7.0 (March 17, 2025)
+
+* Added support for the `phone` `input` mask.
+* Added support for the `ranges` in `slider`.
+* Added support for the `scroll_to` and `scroll_by` actions.
+
+
+## 31.6.0 (March 10, 2025)
+
+* Added `animated` parameter to `set_current_item`, `set_next_item`, `set_previous_item`, `scroll_forward`, `scroll_backward`, `scroll_to_position`, `scroll_to_end`, `scroll_to_start` actions.
+* Added support for parsing `array` and `dict` from a string (including both the `div-action://set_variable` and the `variable.set('value')` programming api). The format is json.
+* Added support for the `tap_outside_actions` and `close_by_tap_outside` in `tooltip`.
+* Fixed `switch` in rtl layout.
+* Fixed an error with an incorrect number of actions and `log_limit` (`visibility_actions` / `disappear_actions`).
+
+
+## 31.5.0 (March 3, 2025)
+
+* Added a warning for the `transition_id` / `transition_out` / `transition_change` properties without the required `id` property when changing state.
+* Added configuration flag `pagerChildrenClipEnabled`. It can be useful in cases with shadow elements of a `pager`.
+* Added support for the `color_map` property in the linear gradient.
+* Added support for the `cross_axis_alignment` in `pager`.
+* Added support for the `dashed` stroke style.
+* Added support for the `non_modal` mode in `tooltip`.
+* Added support for the `submit` action.
+* Added support for the `wrap_content` `layout_mode` in `pager`.
+* Fixed an issue with the tapable content inside `tabs`.
+* Fixed the default value of `column_count` for the `grid` component. Now it's required, as written in the schema.
+* Fixed the recreation of neighboring components when using the patch.
+* Fixed the styles of `menu_items`.
+* Fixed virtual keyboard in `input` with `keyboard_type` = `number`.
+
+
 ## 31.4.0 (February 24, 2025)
 
 * Added `applyPatch` api for an DivKit instance.

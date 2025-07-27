@@ -49,11 +49,16 @@
         VariableTrigger,
         DownloadCallbacks,
         ActionSubmit,
-        SubmitCallback
+        SubmitCallback,
+        ActionScrollTo,
+        ActionScrollBy,
+        Overflow,
+        VideoPlayerProvider,
+        DivFunction
     } from '../../typings/common';
     import type { CustomComponentDescription } from '../../typings/custom';
-    import type { Animator, AppearanceTransition, DivBaseData, DivFunction, Tooltip, TransitionChange } from '../types/base';
-    import type { SwitchElements, Overflow } from '../types/switch-elements';
+    import type { Animator, AppearanceTransition, DivBaseData, Tooltip, TransitionChange } from '../types/base';
+    import type { SwitchElements } from '../types/switch-elements';
     import type { TintMode } from '../types/image';
     import type { VideoElements } from '../types/video';
     import type { ComponentContext, StateSetter } from '../types/componentContext';
@@ -72,7 +77,6 @@
         type MaybeMissing,
         prepareVars
     } from '../expressions/json';
-    import { storesMap } from '../stores';
     import { evalExpression } from '../expressions/eval';
     import { parse } from '../expressions/expressions';
     import { gatherVarsFromAst } from '../expressions/utils';
@@ -118,7 +122,9 @@
     export let direction: Direction = 'ltr';
     export let store: Store | undefined = undefined;
     export let pagerChildrenClipEnabled = true;
+    export let pagerMouseDragEnabled = true;
     export let weekStartDay = 0;
+    export let videoPlayerProvider: VideoPlayerProvider | undefined = undefined;
 
     let isMounted = true;
 
@@ -194,7 +200,7 @@
     const builtinSet = new Set(builtinProtocols);
 
     let hasError = false;
-    let hsaIdError = false;
+    let hasIdError = false;
 
     $: {
         hasError = false;
@@ -207,7 +213,7 @@
     }
 
     if (!id) {
-        hsaIdError = true;
+        hasIdError = true;
         logError(wrapError(new Error('"id" prop is required')));
     }
 
@@ -584,7 +590,11 @@
         }
     }
 
-    async function callSubmit(componentContext: ComponentContext | undefined, action: MaybeMissing<ActionSubmit>) {
+    async function callSubmit(
+        componentContext: ComponentContext | undefined,
+        action: MaybeMissing<ActionSubmit>,
+        origAction: MaybeMissing<ActionSubmit>
+    ) {
         const log = (componentContext?.logError || logError);
 
         if (!checkSubmitAction(action)) {
@@ -612,7 +622,13 @@
 
         if (ctx.variables) {
             for (const [key, variable] of ctx.variables) {
-                vals[key] = variable.getValue();
+                const val = variable.getValue();
+
+                if (typeof val === 'bigint') {
+                    vals[key] = Number(val);
+                } else {
+                    vals[key] = val;
+                }
             }
         }
 
@@ -620,10 +636,10 @@
             Promise.resolve()
                 .then(() => onSubmit(action, vals))
                 .then(() => {
-                    execAnyActions(action.on_success_actions);
+                    execAnyActions(origAction.on_success_actions);
                 })
                 .catch(() => {
-                    execAnyActions(action.on_fail_actions);
+                    execAnyActions(origAction.on_fail_actions);
                 });
 
             return;
@@ -658,7 +674,7 @@
             if (!res.ok) {
                 throw new Error('Response is not ok');
             }
-            execAnyActions(action.on_success_actions);
+            execAnyActions(origAction.on_success_actions);
         }).catch(err => {
             log(wrapError(new Error('Failed to submit'), {
                 additional: {
@@ -666,7 +682,98 @@
                     originalError: err
                 }
             }));
-            execAnyActions(action.on_fail_actions);
+            execAnyActions(origAction.on_fail_actions);
+        });
+    }
+
+    function callScrollTo(
+        componentContext: ComponentContext | undefined,
+        actionTyped: MaybeMissing<ActionScrollTo>
+    ): void {
+        const log = (componentContext?.logError || logError);
+
+        const instance = actionTyped.id && getInstance<SwitchElements>(actionTyped.id);
+        if (!instance) {
+            log(wrapError(new Error('Missing component for "scroll_to" action'), {
+                additional: {
+                    id: actionTyped.id
+                }
+            }));
+            return;
+        }
+        if (actionTyped.animated !== undefined && typeof actionTyped.animated !== 'boolean') {
+            log(wrapError(new Error('Missing properties for "scroll_to" action'), {
+                additional: {
+                    id: actionTyped.id
+                }
+            }));
+            return;
+        }
+        switch (actionTyped.destination?.type) {
+            case 'index': {
+                if (typeof actionTyped.destination.value === 'number') {
+                    instance.setCurrentItem(actionTyped.destination.value, actionTyped.animated ?? true);
+                }
+                break;
+            }
+            case 'offset': {
+                if (typeof actionTyped.destination.value === 'number') {
+                    instance.scrollToPosition?.(actionTyped.destination.value, actionTyped.animated ?? true);
+                }
+                break;
+            }
+            case 'start': {
+                instance.scrollToStart?.(actionTyped.animated ?? true);
+                break;
+            }
+            case 'end': {
+                instance.scrollToEnd?.(actionTyped.animated ?? true);
+                break;
+            }
+            default: {
+                log(wrapError(new Error('Unknown destination for "scroll_to" action'), {
+                    additional: {
+                        id: actionTyped.id,
+                        destination: actionTyped.destination?.type
+                    }
+                }));
+            }
+        }
+    }
+
+    function callScrollBy(
+        componentContext: ComponentContext | undefined,
+        actionTyped: MaybeMissing<ActionScrollBy>
+    ): void {
+        const log = (componentContext?.logError || logError);
+
+        const instance = actionTyped.id && getInstance<SwitchElements>(actionTyped.id);
+        if (!instance) {
+            log(wrapError(new Error('Missing component for "scroll_by" action'), {
+                additional: {
+                    id: actionTyped.id
+                }
+            }));
+            return;
+        }
+        if (
+            typeof actionTyped.item_count !== 'number' && actionTyped.item_count !== undefined ||
+            typeof actionTyped.offset !== 'number' && actionTyped.offset !== undefined ||
+            actionTyped.overflow !== undefined && actionTyped.overflow !== 'clamp' && actionTyped.overflow !== 'ring' ||
+            actionTyped.animated !== undefined && typeof actionTyped.animated !== 'boolean'
+        ) {
+            log(wrapError(new Error('Missing properties for "scroll_by" action'), {
+                additional: {
+                    id: actionTyped.id
+                }
+            }));
+            return;
+        }
+        instance.scrollCombined?.({
+            step: actionTyped.item_count,
+            offset: actionTyped.offset,
+            overflow: actionTyped.overflow,
+            animated: actionTyped.animated
         });
     }
 
@@ -677,11 +784,13 @@
         {
             item,
             step,
-            overflow
+            overflow,
+            animated
         }: {
             item?: string | null;
             step?: string | null;
             overflow?: string | null;
+            animated?: string | null;
         }
     ): void {
         if (!id) {
@@ -709,6 +818,8 @@
         }
         overflow = overflow || 'clamp';
 
+        const isAnimated = animated === null || animated !== '0' && animated !== 'false';
+
         const instance = getInstance<SwitchElements>(id);
         if (!instance) {
             return;
@@ -716,28 +827,36 @@
 
         switch (type) {
             case 'set_current_item':
-                instance.setCurrentItem(itemVal);
+                instance.setCurrentItem(itemVal, isAnimated);
                 return;
             case 'set_previous_item':
-                instance.setPreviousItem(stepVal, overflow as Overflow);
+                instance.setPreviousItem(stepVal, overflow as Overflow, isAnimated);
                 return;
             case 'set_next_item':
-                instance.setNextItem(stepVal, overflow as Overflow);
+                instance.setNextItem(stepVal, overflow as Overflow, isAnimated);
                 return;
             case 'scroll_to_start':
-                instance.scrollToStart?.();
+                instance.scrollToStart?.(isAnimated);
                 return;
             case 'scroll_to_end':
-                instance.scrollToEnd?.();
+                instance.scrollToEnd?.(isAnimated);
                 return;
             case 'scroll_backward':
-                instance.scrollBackward?.(stepVal, overflow as Overflow);
+                instance.scrollCombined?.({
+                    offset: -stepVal,
+                    overflow: overflow as Overflow,
+                    animated: isAnimated
+                });
                 return;
             case 'scroll_forward':
-                instance.scrollForward?.(stepVal, overflow as Overflow);
+                instance.scrollCombined?.({
+                    offset: stepVal,
+                    overflow: overflow as Overflow,
+                    animated: isAnimated
+                });
                 return;
             case 'scroll_to_position':
-                instance.scrollToPosition?.(stepVal);
+                instance.scrollToPosition?.(stepVal, isAnimated);
                 return;
         }
     }
@@ -988,11 +1107,12 @@
     }
 
     export function execAction(action: MaybeMissing<Action | VisibilityAction | DisappearAction>): void {
-        execActionInternal(getJsonWithVars(logError, action));
+        execActionInternal(getJsonWithVars(logError, action, undefined, true), action);
     }
 
     async function execActionInternal(
         action: MaybeMissing<Action | VisibilityAction | DisappearAction>,
+        origAction: MaybeMissing<Action | VisibilityAction | DisappearAction>,
         componentContext?: ComponentContext
     ): Promise<void> {
         const scopeId = action.scope_id;
@@ -1012,6 +1132,13 @@
                 if (first) {
                     componentContext = first;
                 }
+            } else {
+                log(wrapError(new Error('The scope with the specified scope_id is missing'), {
+                    additional: {
+                        scopeId
+                    }
+                }));
+                return;
             }
         }
 
@@ -1022,111 +1149,7 @@
             return;
         }
 
-        if (actionUrl) {
-            try {
-                const url = actionUrl.replace(/div-action:\/\//, '');
-                const parts = /([^?]+)\?(.+)/.exec(url);
-                if (!parts) {
-                    return;
-                }
-                const params = new URLSearchParams(parts[2]);
-
-                switch (parts[1]) {
-                    case 'set_state':
-                        await setState(params.get('state_id'), componentContext);
-                        break;
-                    case 'set_current_item':
-                    case 'set_previous_item':
-                    case 'set_next_item':
-                    case 'scroll_to_start':
-                    case 'scroll_to_end':
-                    case 'scroll_backward':
-                    case 'scroll_forward':
-                    case 'scroll_to_position':
-                        switchElementAction(parts[1], params.get('id'), {
-                            item: params.get('item'),
-                            step: params.get('step'),
-                            overflow: params.get('overflow')
-                        });
-                        break;
-                    case 'set_variable':
-                        const name = params.get('name');
-                        const value = params.get('value');
-
-                        if (name && value !== null) {
-                            const variableInstance = componentContext?.getVariable(name) || variables.get(name);
-                            if (variableInstance) {
-                                const type = variableInstance.getType();
-                                if (type === 'dict' || type === 'array') {
-                                    log(wrapError(new Error(`Setting ${type} variables is not supported`), {
-                                        additional: {
-                                            name
-                                        }
-                                    }));
-                                } else {
-                                    variableInstance.set(value);
-                                }
-                            } else {
-                                log(wrapError(new Error('Cannot find variable'), {
-                                    additional: {
-                                        name
-                                    }
-                                }));
-                            }
-                        } else {
-                            log(wrapError(new Error('Incorrect set_variable_action'), {
-                                additional: {
-                                    url
-                                }
-                            }));
-                        }
-                        break;
-                    case 'timer':
-                        const timerAction = params.get('action');
-                        const id = params.get('id');
-
-                        if (timersController) {
-                            timersController.execTimerAction(id, timerAction);
-                        } else {
-                            log(wrapError(new Error('Incorrect timer action'), {
-                                additional: {
-                                    id,
-                                    action: timerAction
-                                }
-                            }));
-                        }
-                        break;
-                    case 'video':
-                        callVideoAction(params.get('id'), params.get('action'), componentContext);
-                        break;
-                    case 'download':
-                        callDownloadAction(params.get('url'), action.download_callbacks, componentContext);
-                        break;
-                    case 'show_tooltip':
-                        callShowTooltip(params.get('id'), params.get('multiple'), componentContext);
-                        break;
-                    case 'hide_tooltip':
-                        callHideTooltip(params.get('id'), componentContext);
-                        break;
-                    case 'set_stored_value': {
-                        callSetStoredValue(componentContext, params.get('name'), params.get('value'), params.get('type'), params.get('lifetime'));
-                        break;
-                    }
-                    default:
-                        log(wrapError(new Error('Unknown type of action'), {
-                            additional: {
-                                url: actionUrl
-                            }
-                        }));
-                }
-            } catch (err: any) {
-                log(wrapError(err, {
-                    additional: {
-                        url: actionUrl
-                    }
-                }));
-            }
-        } else if (actionTyped) {
+        if (actionTyped) {
             switch (actionTyped.type) {
                 case 'set_variable': {
                     const { variable_name: name, value } = actionTyped;
@@ -1258,11 +1281,8 @@
                         animators.delete(animatorDef.id as string);
                     }, (actions, opts) => {
                         const fn = componentContext?.execAnyActions || execAnyActions;
-                        const evalled = componentContext ?
-                            componentContext.getJsonWithVars(actions) :
-                            getJsonWithVars(logError, actions);
 
-                        return fn(evalled, opts);
+                        return fn(actions, opts);
                     });
                     if (animator) {
                         animators.set(animatorDef.id as string, animator);
@@ -1301,7 +1321,7 @@
                     break;
                 }
                 case 'download': {
-                    callDownloadAction(actionTyped.url, actionTyped, componentContext);
+                    callDownloadAction(actionTyped.url, origAction.typed as DownloadCallbacks, componentContext);
                     break;
                 }
                 case 'video': {
@@ -1323,7 +1343,15 @@
                     break;
                 }
                 case 'submit': {
-                    await callSubmit(componentContext, actionTyped);
+                    await callSubmit(componentContext, actionTyped, origAction.typed as MaybeMissing<ActionSubmit>);
+                    break;
+                }
+                case 'scroll_to': {
+                    callScrollTo(componentContext, actionTyped);
+                    break;
+                }
+                case 'scroll_by': {
+                    callScrollBy(componentContext, actionTyped);
                     break;
                 }
                 default: {
@@ -1333,6 +1361,102 @@
                         }
                     }));
                 }
+            }
+        } else if (actionUrl) {
+            try {
+                const url = actionUrl.replace(/div-action:\/\//, '');
+                const parts = /([^?]+)\?(.+)/.exec(url);
+                if (!parts) {
+                    return;
+                }
+                const params = new URLSearchParams(parts[2]);
+
+                switch (parts[1]) {
+                    case 'set_state':
+                        await setState(params.get('state_id'), componentContext);
+                        break;
+                    case 'set_current_item':
+                    case 'set_previous_item':
+                    case 'set_next_item':
+                    case 'scroll_to_start':
+                    case 'scroll_to_end':
+                    case 'scroll_backward':
+                    case 'scroll_forward':
+                    case 'scroll_to_position':
+                        switchElementAction(parts[1], params.get('id'), {
+                            item: params.get('item'),
+                            step: params.get('step'),
+                            overflow: params.get('overflow'),
+                            animated: params.get('animated')
+                        });
+                        break;
+                    case 'set_variable':
+                        const name = params.get('name');
+                        const value = params.get('value');
+
+                        if (name && value !== null) {
+                            const variableInstance = componentContext?.getVariable(name) || variables.get(name);
+                            if (variableInstance) {
+                                variableInstance.set(value);
+                            } else {
+                                log(wrapError(new Error('Cannot find variable'), {
+                                    additional: {
+                                        name
+                                    }
+                                }));
+                            }
+                        } else {
+                            log(wrapError(new Error('Incorrect set_variable_action'), {
+                                additional: {
+                                    url
+                                }
+                            }));
+                        }
+                        break;
+                    case 'timer':
+                        const timerAction = params.get('action');
+                        const id = params.get('id');
+
+                        if (timersController) {
+                            timersController.execTimerAction(id, timerAction);
+                        } else {
+                            log(wrapError(new Error('Incorrect timer action'), {
+                                additional: {
+                                    id,
+                                    action: timerAction
+                                }
+                            }));
+                        }
+                        break;
+                    case 'video':
+                        callVideoAction(params.get('id'), params.get('action'), componentContext);
+                        break;
+                    case 'download':
+                        callDownloadAction(params.get('url'), origAction.download_callbacks, componentContext);
+                        break;
+                    case 'show_tooltip':
+                        callShowTooltip(params.get('id'), params.get('multiple'), componentContext);
+                        break;
+                    case 'hide_tooltip':
+                        callHideTooltip(params.get('id'), componentContext);
+                        break;
+                    case 'set_stored_value': {
+                        callSetStoredValue(componentContext, params.get('name'), params.get('value'), params.get('type'), params.get('lifetime'));
+                        break;
+                    }
+                    default:
+                        log(wrapError(new Error('Unknown type of action'), {
+                            additional: {
+                                url: actionUrl
+                            }
+                        }));
+                }
+            } catch (err: any) {
+                log(wrapError(err, {
+                    additional: {
+                        url: actionUrl
+                    }
+                }));
             }
         }
     }
@@ -1350,14 +1474,25 @@
             return;
         }
 
-        const filtered = actions.filter(filterEnabledActions);
+        const log = opts.componentContext?.logError || logError;
+        const getJson = (val: any) =>
+            opts.componentContext ?
+                opts.componentContext.getJsonWithVars(val, undefined, true) :
+                getJsonWithVars(log, val, undefined, true);
+        const filtered = actions.filter(action => {
+            const isEnabled = getJson(action.is_enabled);
+
+            return isEnabled !== 0 && isEnabled !== false;
+        });
 
         for (let i = 0; i < filtered.length; ++i) {
-            let action = filtered[i];
+            let action = getJson(filtered[i]);
 
             const actionUrl = action.url;
             const actionTyped = action.typed;
-            if (actionUrl) {
+            if (actionTyped) {
+                await execActionInternal(action, filtered[i], opts.componentContext);
+            } else if (actionUrl) {
                 const schema = getUrlSchema(actionUrl);
                 if (schema) {
                     if (isBuiltinSchema(schema, builtinSet)) {
@@ -1373,15 +1508,13 @@
                             }
                         }
                     } else if (schema === 'div-action') {
-                        await execActionInternal(action, opts.componentContext);
+                        await execActionInternal(action, filtered[i], opts.componentContext);
                         await tick();
                     } else if (action.log_id) {
                         execCustomAction(action as Action & { url: string });
                         await tick();
                     }
                 }
-            } else if (actionTyped) {
-                await execActionInternal(action, opts.componentContext);
             } else if (opts.node && Array.isArray(action.menu_items) && action.menu_items.length) {
                 menu = {
                     items: action.menu_items,
@@ -1498,18 +1631,13 @@
                         (mode === 'on_variable' || mode === 'on_condition' && prevConditionResult === false)
                     ) {
                         prevConditionResult = Boolean(conditionResult.value);
-                        const actions = (trigger.actions as Action[]).map(action =>
-                            componentContext ?
-                                componentContext.getJsonWithVars(action) :
-                                getJsonWithVars(logError, action)
-                        );
 
                         if (componentContext) {
-                            await componentContext.execAnyActions(actions, {
+                            await componentContext.execAnyActions(trigger.actions, {
                                 logType: 'trigger'
                             });
                         } else {
-                            await execAnyActions(actions, {
+                            await execAnyActions(trigger.actions, {
                                 logType: 'trigger'
                             });
                         }
@@ -1551,9 +1679,10 @@
         tooltip: MaybeMissing<Tooltip>;
     }> = new Map();
     const componentContextMap: Map<string, Set<ComponentContext>> = new Map();
-    function registerInstance<T>(id: string, block: T) {
+    function registerInstance<T>(id: string, block: T, duplicateErrorLevel: 'error' | 'warn' = 'error') {
         if (instancesMap.has(id)) {
             logError(wrapError(new Error('Duplicate instance id'), {
+                level: duplicateErrorLevel,
                 additional: {
                     id
                 }
@@ -1631,24 +1760,6 @@
         }
     }
 
-    const stores = new Map<string, Writable<any>>();
-
-    function setStore(id: string) {
-        if (stores.has(id)) {
-            return;
-        }
-
-        stores.set(id, storesMap[id]());
-    }
-
-    function getStore<T>(id: string): Writable<T> {
-        if (!stores.has(id)) {
-            setStore(id);
-        }
-
-        return stores.get(id) as Writable<T>;
-    }
-
     function awaitVariableChanges(variableName: string): Readable<any> {
         const store = awaitingGlobalVariables.get(variableName) || writable(undefined);
 
@@ -1706,6 +1817,32 @@
         };
     }
 
+    function prepareCustomFunctions(
+        list: MaybeMissing<DivFunction>[],
+        componentContext?: ComponentContext
+    ): CustomFunctions {
+        const customFunctions: CustomFunctions = new Map();
+        const log = (componentContext?.logError || logError);
+
+        list.forEach(desc => {
+            if (customFunctions) {
+                try {
+                    checkCustomFunction(desc);
+                } catch (err: unknown) {
+                    // Only Error thrown here
+                    log(wrapError(err as Error));
+                    return;
+                }
+                const fn = desc as DivFunction;
+                const list = customFunctions.get(fn.name) || [];
+                list.push(customFunctionWrap(fn));
+                customFunctions.set(fn.name, list);
+            }
+        });
+
+        return customFunctions;
+    }
+
     function produceComponentContext(from?: ComponentContext | undefined): ComponentContext {
         const ctx: ComponentContext = {
             id: '',
@@ -1759,10 +1896,10 @@
                 return evalExpression(mergeMaps(variables, ctx.variables), ctx.customFunctions, store, expr, opts);
             },
             produceChildContext(div, opts = {}) {
-                const componentContext = produceComponentContext(ctx);
+                const componentContext = produceComponentContext(this);
 
                 let childJson: MaybeMissing<DivBaseData> = div;
-                let childContext: TemplateContext = ctx.templateContext;
+                let childContext: TemplateContext = this.templateContext;
 
                 const {
                     templateContext: childProcessedContext,
@@ -1797,63 +1934,59 @@
                 let localVars: Map<string, Variable> | undefined;
 
                 if (Array.isArray(childProcessedJson.variables)) {
-                    localVars = new Map();
+                    localVars = mergeMaps(
+                        this.variables,
+                        mergeMaps(opts.variables, new Map())
+                    );
                     childProcessedJson.variables.forEach(desc => {
-                        const varInstance = constructVariable(desc);
+                        const varInstance = constructVariable(desc, componentContext, localVars);
                         if (varInstance && localVars) {
                             localVars.set(varInstance.getName(), varInstance);
                         }
                     });
+                } else if (opts.variables) {
+                    localVars = mergeMaps(this.variables, opts.variables);
+                } else if (this.variables) {
+                    localVars = this.variables;
                 }
-                componentContext.variables = mergeMaps(
-                    ctx.variables,
-                    mergeMaps(localVars, opts.variables)
-                );
+                componentContext.variables = localVars;
                 if (process.env.DEVTOOL && localVars) {
                     componentContext.selfVariables = new Set([...localVars.keys()]);
                 }
 
                 let localCustomFunctions: CustomFunctions | undefined;
                 if (Array.isArray(childProcessedJson.functions)) {
-                    localCustomFunctions = new Map();
-                    childProcessedJson.functions.forEach(desc => {
-                        if (localCustomFunctions) {
-                            try {
-                                checkCustomFunction(desc);
-                            } catch (err: unknown) {
-                                // Only Error thrown here
-                                ctx.logError(wrapError(err as Error));
-                                return;
-                            }
-                            const fn = desc as DivFunction;
-                            const list = localCustomFunctions.get(fn.name) || [];
-                            list.push(customFunctionWrap(fn));
-                            localCustomFunctions.set(fn.name, list);
-                        }
-                    });
+                    localCustomFunctions = prepareCustomFunctions(childProcessedJson.functions, this);
                 }
-                componentContext.customFunctions = mergeCustomFunctions(ctx.customFunctions, localCustomFunctions);
+                componentContext.customFunctions = mergeCustomFunctions(this.customFunctions, localCustomFunctions);
 
                 if (Array.isArray(childProcessedJson.animators)) {
-                    ctx.animators = childProcessedJson.animators.reduce<Record<string, MaybeMissing<Animator>>>(
-                        (acc, item) => {
-                            if (item.id) {
-                                acc[item.id] = item;
-                            }
-                            return acc;
-                        },
-                        {}
-                    );
+                    componentContext.animators = childProcessedJson.animators
+                        .reduce<Record<string, MaybeMissing<Animator>>>(
+                            (acc, item) => {
+                                if (item.id) {
+                                    acc[item.id] = item;
+                                }
+                                return acc;
+                            },
+                            {}
+                        );
                 }
 
                 if (opts.fake) {
-                    componentContext.fakeElement = true;
+                    componentContext.fakeElement = opts.fake;
                 }
                 if (opts.isRootState) {
                     componentContext.isRootState = true;
                 }
 
                 return componentContext;
+            },
+            dup(fakeReason: number) {
+                return {
+                    ...ctx,
+                    fakeElement: fakeReason
+                };
             },
             getVariable(varName, type) {
                 const variable = ctx.variables?.get(varName) || variables.get(varName);
@@ -1895,6 +2028,97 @@
                     }
                 };
             },
+            registerPager(pagerId) {
+                const targetCtx = ctx.parent;
+
+                if (!targetCtx) {
+                    return {
+                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                        update() {},
+                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                        destroy() {}
+                    };
+                }
+
+                targetCtx.pagers = targetCtx.pagers || new Map();
+                if (targetCtx.pagers.has(pagerId)) {
+                    return {
+                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                        update() {},
+                        // eslint-disable-next-line @typescript-eslint/no-empty-function
+                        destroy() {}
+                    };
+                }
+
+                targetCtx.pagers.set(pagerId, null);
+
+                return {
+                    update(data) {
+                        if (targetCtx.pagers) {
+                            targetCtx.pagers.set(pagerId, data);
+                        }
+
+                        const listeners = pagerId ? targetCtx.pagerListeners?.get(pagerId) : undefined;
+                        const listeners2 = targetCtx.pagerListeners?.get(undefined);
+                        const totalListeners = [...(listeners || []), ...(listeners2 || [])];
+
+                        if (totalListeners) {
+                            totalListeners.forEach(listener => {
+                                listener(data);
+                            });
+                        }
+                    },
+                    destroy() {
+                        if (targetCtx.pagers) {
+                            targetCtx.pagers.delete(pagerId);
+                        }
+                    }
+                };
+            },
+            listenPager(pagerId, listener) {
+                let targetCtx = ctx.parent;
+
+                while (
+                    targetCtx &&
+                    !(targetCtx.pagers && (pagerId ? targetCtx.pagers.get(pagerId) : targetCtx.pagers?.size))
+                ) {
+                    targetCtx = targetCtx.parent;
+                }
+
+                if (!targetCtx) {
+                    // eslint-disable-next-line @typescript-eslint/no-empty-function
+                    return () => {};
+                }
+
+                targetCtx.pagerListeners = ctx.pagerListeners || new Map();
+                const list = targetCtx.pagerListeners.get(pagerId) || [];
+                if (!targetCtx.pagerListeners.has(pagerId)) {
+                    targetCtx.pagerListeners.set(pagerId, list);
+                }
+                list.push(listener);
+
+                const targetPagerId = pagerId ? pagerId : (targetCtx.pagers?.keys().next().value || undefined);
+                const data = targetCtx.pagers?.get(targetPagerId);
+                if (data) {
+                    listener(data);
+                }
+
+                return () => {
+                    if (!targetCtx.pagerListeners) {
+                        return;
+                    }
+
+                    let list = targetCtx.pagerListeners.get(targetPagerId);
+                    if (list) {
+                        list = list.filter(it => it !== listener) || [];
+                        if (list.length) {
+                            targetCtx.pagerListeners.set(pagerId, list);
+                        } else {
+                            targetCtx.pagerListeners.delete(pagerId);
+                        }
+                    }
+                };
+            },
             destroy() {
                 const set = componentContextMap.get(ctx.id);
                 if (set) {
@@ -1911,7 +2135,7 @@
             ctx.path = from.path.slice();
 
             if (from.fakeElement) {
-                ctx.fakeElement = true;
+                ctx.fakeElement = from.fakeElement;
             }
         } else {
             ctx.json = {
@@ -1941,6 +2165,7 @@
         isRunning,
         setRunning,
         pagerChildrenClipEnabled,
+        pagerMouseDragEnabled,
         registerInstance,
         unregisterInstance,
         registerParentOf,
@@ -1956,7 +2181,6 @@
         registerId,
         getComponentId,
         preparePrototypeVariables,
-        getStore,
         getCustomization,
         getBuiltinProtocols,
         getExtension,
@@ -1967,6 +2191,7 @@
         isPointerFocus,
         customComponents,
         direction: directionStore,
+        videoPlayerProvider,
         componentDevtool: process.env.DEVTOOL ? componentDevtoolReal : undefined
     });
 
@@ -2044,27 +2269,40 @@
         }
     }
 
-    function constructVariable(variable: MaybeMissing<DivVariable>): Variable | undefined {
+    function constructVariable(
+        variable: MaybeMissing<DivVariable>,
+        componentContext?: ComponentContext,
+        additionalVars?: Map<string, Variable>
+    ): Variable | undefined {
         if (!variable.type || !variable.name || !(variable.type in TYPE_TO_CLASS)) {
             // Skip unknown types (from the future versions maybe)
             return;
         }
 
+        let value = componentContext ?
+            componentContext.getJsonWithVars(variable.value, additionalVars, true) :
+            getJsonWithVars(logError, variable.value, additionalVars, true);
+
+        if (variable.value && typeof variable.value === 'string' && value === undefined) {
+            // Expression error - already logged inside getJsonWithVars
+            return;
+        }
+
         if (
-            variable.type === 'integer' && typeof variable.value === 'number' &&
-            (variable.value > Number.MAX_SAFE_INTEGER || variable.value < Number.MIN_SAFE_INTEGER)
+            variable.type === 'integer' && typeof value === 'number' &&
+            (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER)
         ) {
             logError(wrapError(new Error('The value of the integer variable could lose accuracy'), {
                 level: 'warn',
                 additional: {
                     name: variable.name,
-                    value: variable.value
+                    value: value
                 }
             }));
         }
 
         try {
-            return createVariable(variable.name, variable.type, variable.value);
+            return createVariable(variable.name, variable.type, value);
         } catch (err: any) {
             logError(wrapError(err, {
                 additional: {
@@ -2179,8 +2417,12 @@
 
     $: states = json?.card?.states;
     const rootComponentContext = produceComponentContext();
+    if (Array.isArray(json.card?.functions)) {
+        rootComponentContext.customFunctions = prepareCustomFunctions(json.card.functions);
+    }
+
     let rootStateComponentContext: ComponentContext | undefined;
-    $: if (states && !hasError && !hsaIdError) {
+    $: if (states && !hasError && !hasIdError) {
         const rootStateDiv: DivBaseData = {
             type: 'state',
             id: 'root',
@@ -2261,7 +2503,7 @@
     });
 </script>
 
-{#if !hasError && !hsaIdError && rootStateComponentContext}
+{#if !hasError && !hasIdError && rootStateComponentContext}
     <div
         class="{css.root}{$isDesktop ? ` ${css.root_platform_desktop}` : ''}{mix ? ` ${mix}` : ''}"
         on:touchstart={emptyTouchstartHandler}

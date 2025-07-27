@@ -107,7 +107,7 @@ final class TabContentsView: BlockView {
       if let backgroundView,
          let background = model.background,
          background.canConfigureBlockView(backgroundView) {
-        background.configureBlockView(
+        background.configureBlockViewWithReporting(
           backgroundView,
           observer: observer,
           overscrollDelegate: overscrollDelegate,
@@ -199,7 +199,7 @@ final class TabContentsView: BlockView {
       pages: model.pages.map(\.block),
       footer: model.footer,
       size: collectionView.bounds.size,
-      pagesInsets: model.contentInsets.horizontalInsets
+      pagesInsets: model.contentInsets.horizontal
     )
     guard newLayout != layout else {
       return

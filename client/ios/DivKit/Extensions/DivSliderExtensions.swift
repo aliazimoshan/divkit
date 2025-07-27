@@ -5,7 +5,8 @@ import VGSL
 
 extension DivSlider: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    try applyBaseProperties(
+    let context = modifiedContextParentPath(context)
+    return try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
       actionsHolder: nil
@@ -14,7 +15,6 @@ extension DivSlider: DivBlockModeling {
 
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
     let expressionResolver = context.expressionResolver
-
     let firstThumbValue: Binding<Int> = thumbValueVariable.flatMap {
       context.makeBinding(variableName: $0, defaultValue: 0)
     } ?? .zero
@@ -100,7 +100,9 @@ extension DivSlider: DivBlockModeling {
       maxValue: maxValue,
       marksConfiguration: marksConfiguration,
       ranges: makeRanges(ranges, with: context),
-      layoutDirection: context.layoutDirection
+      layoutDirection: context.layoutDirection,
+      path: context.path,
+      isEnabled: resolveIsEnabled(expressionResolver)
     )
     return SliderBlock(
       sliderModel: sliderModel,
@@ -211,20 +213,36 @@ private func makeRoundedRectangle(
 ) -> MarksConfiguration
   .RoundedRectangle? {
   guard let mark,
-        let divShapeDrawable = mark.value as? DivShapeDrawable,
-        let shape = divShapeDrawable.shape.value as? DivRoundedRectangleShape else {
+        let divShapeDrawable = mark.value as? DivShapeDrawable else {
     return nil
   }
-  return MarksConfiguration.RoundedRectangle(
-    size: CGSize(
-      width: shape.itemWidth.resolveValue(resolver) ?? 0,
-      height: shape.itemHeight.resolveValue(resolver) ?? 0
-    ),
-    cornerRadius: CGFloat(shape.cornerRadius.resolveValue(resolver) ?? 0),
-    color: divShapeDrawable.resolveColor(resolver) ?? .clear,
-    borderWidth: CGFloat(divShapeDrawable.stroke?.resolveWidth(resolver) ?? 0),
-    borderColor: divShapeDrawable.stroke?.resolveColor(resolver) ?? .clear
-  )
+
+  let color = divShapeDrawable.resolveColor(resolver) ?? .clear
+  let borderWidth = CGFloat(divShapeDrawable.stroke?.resolveWidth(resolver) ?? 0)
+  let borderColor = divShapeDrawable.stroke?.resolveColor(resolver) ?? .clear
+  switch divShapeDrawable.shape {
+  case let .divRoundedRectangleShape(shape):
+    return MarksConfiguration.RoundedRectangle(
+      size: CGSize(
+        width: shape.itemWidth.resolveValue(resolver) ?? 0,
+        height: shape.itemHeight.resolveValue(resolver) ?? 0
+      ),
+      cornerRadius: CGFloat(shape.cornerRadius.resolveValue(resolver) ?? 0),
+      color: color,
+      borderWidth: borderWidth,
+      borderColor: borderColor
+    )
+  case let .divCircleShape(shape):
+    let cornerRadius = CGFloat(shape.radius.resolveValue(resolver) ?? 0)
+    let sideSize = cornerRadius * 2
+    return MarksConfiguration.RoundedRectangle(
+      size: CGSize(squareDimension: sideSize),
+      cornerRadius: cornerRadius,
+      color: color,
+      borderWidth: borderWidth,
+      borderColor: borderColor
+    )
+  }
 }
 
 extension DivSlider.TextStyle {
@@ -237,11 +255,13 @@ extension DivSlider.TextStyle {
       family: "",
       weight: resolveFontWeightValue(expressionResolver)
         ?? resolveFontWeight(expressionResolver).toInt(),
-      size: resolveFontSize(expressionResolver) ?? 16,
+      size: resolveFontSize(expressionResolver),
       unit: resolveFontSizeUnit(expressionResolver),
-      featureSettings: nil
+      featureSettings: nil,
+      variationSettings: resolveFontVariationSettings(expressionResolver)?
+        .mapValues { $0 as? NSNumber }.filteringNilValues()
     )
-    let typo = Typo(font: context.fontProvider.font(fontParams))
+    let typo = Typo(font: context.font(fontParams))
       .with(color: resolveTextColor(expressionResolver))
       .with(alignment: .center)
     return TextBlock(

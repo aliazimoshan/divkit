@@ -1,18 +1,18 @@
 package com.yandex.div.core.view2.divs
 
-import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
+import com.yandex.div.core.font.DivTypefaceProvider
 import com.yandex.div.core.view2.DivTypefaceResolver
 import com.yandex.div.core.view2.divs.widgets.DivLineHeightTextView
 import com.yandex.div.core.view2.spannable.SpannedTextBuilder
 import com.yandex.div.json.expressions.ExpressionResolver
-import com.yandex.div2.DivText
+import com.yandex.div2.Div
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
@@ -27,7 +27,7 @@ class DivTextBinderTest : DivBinderTest() {
 
     @Before
     fun setUp() {
-        whenever(typefaceResolver.getTypeface(any(), any(), any())).thenReturn(Typeface.DEFAULT)
+        whenever(typefaceResolver.getTypefaceProvider(anyOrNull())).thenReturn(DivTypefaceProvider.DEFAULT)
         whenever(divView.resources).thenReturn(context.resources)
     }
 
@@ -57,16 +57,6 @@ class DivTextBinderTest : DivBinderTest() {
         binder.bindView(bindingContext, view, divText)
 
         Assert.assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, view.hyphenationFrequency)
-    }
-
-    @Test
-    @Config(sdk = [Build.VERSION_CODES.O])
-    fun `set hyphenation frequency to none if word break is to long`() {
-        val (divText, view) = createTestData("with_hyphenation_long_word_break.json")
-
-        binder.bindView(bindingContext, view, divText)
-
-        Assert.assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, view.hyphenationFrequency)
     }
 
     @Test
@@ -105,12 +95,11 @@ class DivTextBinderTest : DivBinderTest() {
     }
 
 
-    private fun createTestData(filename: String): Pair<DivText, DivLineHeightTextView> {
-        val div = UnitTestData(TEXT_DIR, filename).div
-        val divText = div.value() as DivText
+    private fun createTestData(filename: String): Pair<Div.Text, DivLineHeightTextView> {
+        val div = UnitTestData(TEXT_DIR, filename).div as Div.Text
         val view = viewCreator.create(div, ExpressionResolver.EMPTY) as DivLineHeightTextView
         view.layoutParams = defaultLayoutParams()
-        return divText to view
+        return div to view
     }
 
     private fun createBinder(isHyphenationEnabled: Boolean = true) = DivTextBinder(

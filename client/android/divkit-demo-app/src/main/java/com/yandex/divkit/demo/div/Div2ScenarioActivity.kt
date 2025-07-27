@@ -23,6 +23,7 @@ import com.yandex.div.core.DivViewFacade
 import com.yandex.div.core.experiments.Experiment
 import com.yandex.div.core.util.SafeAlertDialogBuilder
 import com.yandex.div.core.view2.Div2View
+import com.yandex.div.data.DivParsingEnvironment
 import com.yandex.div.font.YandexSansDisplayDivTypefaceProvider
 import com.yandex.div.font.YandexSansDivTypefaceProvider
 import com.yandex.div.internal.Assert
@@ -46,6 +47,7 @@ import com.yandex.divkit.demo.div.editor.DivEditorUi
 import com.yandex.divkit.demo.div.editor.DivEditorWebController
 import com.yandex.divkit.demo.div.editor.list.DivEditorAdapter
 import com.yandex.divkit.demo.div.histogram.LoggingHistogramBridge
+import com.yandex.divkit.demo.font.RobotoFlexTypefaceProvider
 import com.yandex.divkit.demo.font.YandexSansCondensedTypefaceProvider
 import com.yandex.divkit.demo.utils.DivkitDemoUriHandler
 import com.yandex.divkit.demo.utils.coroutineScope
@@ -122,6 +124,7 @@ class Div2ScenarioActivity : AppCompatActivity(), Div2MetadataBottomSheet.Metada
                 mapOf(
                     "display" to YandexSansDisplayDivTypefaceProvider(this),
                     "condensed" to YandexSansCondensedTypefaceProvider(this),
+                    "roboto_flex" to RobotoFlexTypefaceProvider(this),
                 )
             )
             .build()
@@ -203,6 +206,10 @@ class Div2ScenarioActivity : AppCompatActivity(), Div2MetadataBottomSheet.Metada
                 showLoadDivJsonDialog()
                 true
             }
+            R.id.div2_close_all_tooltips -> {
+                divContext.cancelTooltips()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -279,7 +286,13 @@ class Div2ScenarioActivity : AppCompatActivity(), Div2MetadataBottomSheet.Metada
             .setPositiveButton("Perform action") { _, _ ->
                 val action = editText.text.toString()
                 preferences.edit().putString(KEY_DIV2_ACTION_URL, action).apply()
-                actionHandler.handleActionUrl(Uri.parse(action), div2View)
+                try {
+                    val env = DivParsingEnvironment(ParsingErrorLogger.LOG)
+                    val jsonObject = JSONObject(action)
+                    actionHandler.handleAction(DivAction(env, jsonObject), div2View, div2View.expressionResolver)
+                } catch (e: JSONException) {
+                    actionHandler.handleActionUrl(Uri.parse(action), div2View)
+                }
             }
         adb.create().show()
     }

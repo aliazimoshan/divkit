@@ -22,6 +22,10 @@ extension Block {
     actionAnimation: ActionAnimation? = nil,
     doubleTapActions: NonEmptyArray<UserInterfaceAction>? = nil,
     longTapActions: LongTapActions? = nil,
+    pressStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    pressEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
     analyticsURL: URL? = nil,
     visibilityParams: VisibilityParams? = nil,
     tooltips: [BlockTooltip]? = nil,
@@ -29,7 +33,9 @@ extension Block {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String?,
     path: UIElementPath?,
-    isEmpty: Bool?
+    isEmpty: Bool?,
+    isFocused: Bool?,
+    captureFocusOnAction: Bool?
   ) -> Block {
     let hasAlpha = alpha != nil && alpha?.isApproximatelyEqualTo(1) != true
     let anythingToApplyExceptBoundary =
@@ -47,6 +53,8 @@ extension Block {
         || accessibilityElement != nil
         || reuseId != nil
         || isEmpty != nil
+        || isFocused != nil
+        || captureFocusOnAction != nil
 
     let decoratingSelf = self as? DecoratingBlock
     let selfBackgroundColor = decoratingSelf?.backgroundColor
@@ -66,6 +74,10 @@ extension Block {
         actionAnimation: actionAnimation ?? block.actionAnimation,
         doubleTapActions: doubleTapActions ?? block.doubleTapActions,
         longTapActions: longTapActions ?? block.longTapActions,
+        pressStartActions: pressStartActions ?? block.pressStartActions,
+        pressEndActions: pressEndActions ?? block.pressEndActions,
+        hoverStartActions: hoverStartActions ?? block.hoverStartActions,
+        hoverEndActions: hoverEndActions ?? block.hoverEndActions,
         analyticsURL: (analyticsURL ?? block.analyticsURL) as URL?,
         boundary: boundary ?? block.boundary,
         border: (border ?? block.border) as BlockBorder?,
@@ -76,7 +88,9 @@ extension Block {
         accessibilityElement: accessibilityElement,
         reuseId: reuseId,
         path: path,
-        isEmpty: isEmpty
+        isEmpty: isEmpty,
+        isFocused: isFocused,
+        captureFocusOnAction: captureFocusOnAction ?? block.captureFocusOnAction
       )
     }
 
@@ -93,6 +107,10 @@ extension Block {
       actionAnimation: actionAnimation,
       doubleTapActions: doubleTapActions,
       longTapActions: longTapActions,
+      pressStartActions: pressStartActions,
+      pressEndActions: pressEndActions,
+      hoverStartActions: hoverStartActions,
+      hoverEndActions: hoverEndActions,
       analyticsURL: analyticsURL,
       boundary: boundary ?? DecoratingBlock.defaultBoundary,
       border: border,
@@ -103,7 +121,9 @@ extension Block {
       accessibilityElement: accessibilityElement,
       reuseId: reuseId,
       path: path,
-      isEmpty: isEmpty ?? false
+      isEmpty: isEmpty ?? false,
+      isFocused: isFocused ?? false,
+      captureFocusOnAction: captureFocusOnAction ?? DecoratingBlock.defaultCaptureFocusOnAction
     )
   }
 
@@ -126,6 +146,10 @@ extension Block {
     actionAnimation: ActionAnimation? = nil,
     doubleTapActions: NonEmptyArray<UserInterfaceAction>? = nil,
     longTapActions: LongTapActions? = nil,
+    pressStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    pressEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
     analyticsURL: URL? = nil,
     shadow: BlockShadow? = nil,
     visibilityParams: VisibilityParams? = nil,
@@ -134,7 +158,9 @@ extension Block {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String? = nil,
     path: UIElementPath? = nil,
-    isEmpty: Bool? = nil
+    isEmpty: Bool? = nil,
+    isFocused: Bool? = nil,
+    captureFocusOnAction: Bool? = nil
   ) -> Block {
     let decoratedBlock = applyDecoratingBlockProperties(
       boundary: boundary,
@@ -147,6 +173,10 @@ extension Block {
       actionAnimation: actionAnimation,
       doubleTapActions: doubleTapActions,
       longTapActions: longTapActions,
+      pressStartActions: pressStartActions,
+      pressEndActions: pressEndActions,
+      hoverStartActions: hoverStartActions,
+      hoverEndActions: hoverEndActions,
       analyticsURL: analyticsURL,
       visibilityParams: visibilityParams,
       tooltips: tooltips,
@@ -154,7 +184,9 @@ extension Block {
       accessibilityElement: accessibilityElement,
       reuseId: reuseId,
       path: path,
-      isEmpty: isEmpty
+      isEmpty: isEmpty,
+      isFocused: isFocused,
+      captureFocusOnAction: captureFocusOnAction
     )
     return decoratedBlock.shaded(with: shadow)
   }

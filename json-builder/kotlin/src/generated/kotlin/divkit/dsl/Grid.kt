@@ -46,6 +46,7 @@ data class Grid internal constructor(
             animators = additive.animators ?: properties.animators,
             background = additive.background ?: properties.background,
             border = additive.border ?: properties.border,
+            captureFocusOnAction = additive.captureFocusOnAction ?: properties.captureFocusOnAction,
             columnCount = additive.columnCount ?: properties.columnCount,
             columnSpan = additive.columnSpan ?: properties.columnSpan,
             contentAlignmentHorizontal = additive.contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
@@ -127,6 +128,11 @@ data class Grid internal constructor(
          * Element stroke.
          */
         val border: Property<Border>?,
+        /**
+         * If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+         * Default value: `true`.
+         */
+        val captureFocusOnAction: Property<Boolean>?,
         /**
          * Number of columns.
          */
@@ -286,6 +292,7 @@ data class Grid internal constructor(
             result.tryPutProperty("animators", animators)
             result.tryPutProperty("background", background)
             result.tryPutProperty("border", border)
+            result.tryPutProperty("capture_focus_on_action", captureFocusOnAction)
             result.tryPutProperty("column_count", columnCount)
             result.tryPutProperty("column_span", columnSpan)
             result.tryPutProperty("content_alignment_horizontal", contentAlignmentHorizontal)
@@ -337,6 +344,7 @@ data class Grid internal constructor(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -386,6 +394,7 @@ fun DivScope.grid(
     animators: List<Animator>? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnCount: Int? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
@@ -433,6 +442,7 @@ fun DivScope.grid(
         animators = valueOrNull(animators),
         background = valueOrNull(background),
         border = valueOrNull(border),
+        captureFocusOnAction = valueOrNull(captureFocusOnAction),
         columnCount = valueOrNull(columnCount),
         columnSpan = valueOrNull(columnSpan),
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
@@ -482,6 +492,7 @@ fun DivScope.grid(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -531,6 +542,7 @@ fun DivScope.gridProps(
     animators: List<Animator>? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnCount: Int? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
@@ -577,6 +589,7 @@ fun DivScope.gridProps(
     animators = valueOrNull(animators),
     background = valueOrNull(background),
     border = valueOrNull(border),
+    captureFocusOnAction = valueOrNull(captureFocusOnAction),
     columnCount = valueOrNull(columnCount),
     columnSpan = valueOrNull(columnSpan),
     contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
@@ -625,6 +638,7 @@ fun DivScope.gridProps(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -674,6 +688,7 @@ fun TemplateScope.gridRefs(
     animators: ReferenceProperty<List<Animator>>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnCount: ReferenceProperty<Int>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
@@ -720,6 +735,7 @@ fun TemplateScope.gridRefs(
     animators = animators,
     background = background,
     border = border,
+    captureFocusOnAction = captureFocusOnAction,
     columnCount = columnCount,
     columnSpan = columnSpan,
     contentAlignmentHorizontal = contentAlignmentHorizontal,
@@ -768,6 +784,7 @@ fun TemplateScope.gridRefs(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -817,6 +834,7 @@ fun Grid.override(
     animators: List<Animator>? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnCount: Int? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
@@ -864,6 +882,7 @@ fun Grid.override(
         animators = valueOrNull(animators) ?: properties.animators,
         background = valueOrNull(background) ?: properties.background,
         border = valueOrNull(border) ?: properties.border,
+        captureFocusOnAction = valueOrNull(captureFocusOnAction) ?: properties.captureFocusOnAction,
         columnCount = valueOrNull(columnCount) ?: properties.columnCount,
         columnSpan = valueOrNull(columnSpan) ?: properties.columnSpan,
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal) ?: properties.contentAlignmentHorizontal,
@@ -913,6 +932,7 @@ fun Grid.override(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -962,6 +982,7 @@ fun Grid.defer(
     animators: ReferenceProperty<List<Animator>>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnCount: ReferenceProperty<Int>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
@@ -1009,6 +1030,155 @@ fun Grid.defer(
         animators = animators ?: properties.animators,
         background = background ?: properties.background,
         border = border ?: properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
+        columnCount = columnCount ?: properties.columnCount,
+        columnSpan = columnSpan ?: properties.columnSpan,
+        contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
+        contentAlignmentVertical = contentAlignmentVertical ?: properties.contentAlignmentVertical,
+        disappearActions = disappearActions ?: properties.disappearActions,
+        doubletapActions = doubletapActions ?: properties.doubletapActions,
+        extensions = extensions ?: properties.extensions,
+        focus = focus ?: properties.focus,
+        functions = functions ?: properties.functions,
+        height = height ?: properties.height,
+        hoverEndActions = hoverEndActions ?: properties.hoverEndActions,
+        hoverStartActions = hoverStartActions ?: properties.hoverStartActions,
+        id = id ?: properties.id,
+        items = items ?: properties.items,
+        layoutProvider = layoutProvider ?: properties.layoutProvider,
+        longtapActions = longtapActions ?: properties.longtapActions,
+        margins = margins ?: properties.margins,
+        paddings = paddings ?: properties.paddings,
+        pressEndActions = pressEndActions ?: properties.pressEndActions,
+        pressStartActions = pressStartActions ?: properties.pressStartActions,
+        reuseId = reuseId ?: properties.reuseId,
+        rowSpan = rowSpan ?: properties.rowSpan,
+        selectedActions = selectedActions ?: properties.selectedActions,
+        tooltips = tooltips ?: properties.tooltips,
+        transform = transform ?: properties.transform,
+        transitionChange = transitionChange ?: properties.transitionChange,
+        transitionIn = transitionIn ?: properties.transitionIn,
+        transitionOut = transitionOut ?: properties.transitionOut,
+        transitionTriggers = transitionTriggers ?: properties.transitionTriggers,
+        variableTriggers = variableTriggers ?: properties.variableTriggers,
+        variables = variables ?: properties.variables,
+        visibility = visibility ?: properties.visibility,
+        visibilityAction = visibilityAction ?: properties.visibilityAction,
+        visibilityActions = visibilityActions ?: properties.visibilityActions,
+        width = width ?: properties.width,
+    )
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param action One action when clicking on an element. Not used if the `actions` parameter is set.
+ * @param actionAnimation Click animation. The web only supports the following values: `fade`, `scale`, `native`, `no_animation` and `set`.
+ * @param actions Multiple actions when clicking on an element.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+ * @param columnCount Number of columns.
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
+ * @param contentAlignmentVertical Vertical alignment of grid contents.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param doubletapActions Action when double-clicking on an element.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param functions User functions.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param hoverEndActions Actions performed after hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param hoverStartActions Actions performed when hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param items Contents.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param longtapActions Action when long-clicking an element. Doesn't work on devices that don't support touch gestures.
+ * @param margins External margins from the element stroke.
+ * @param paddings Internal margins from the element stroke.
+ * @param pressEndActions Actions performed after clicking/tapping an element.
+ * @param pressStartActions Actions performed at the start of a click/tap on an element.
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun Grid.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    action: Property<Action>? = null,
+    actionAnimation: Property<Animation>? = null,
+    actions: Property<List<Action>>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    captureFocusOnAction: Property<Boolean>? = null,
+    columnCount: Property<Int>? = null,
+    columnSpan: Property<Int>? = null,
+    contentAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    contentAlignmentVertical: Property<AlignmentVertical>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    doubletapActions: Property<List<Action>>? = null,
+    extensions: Property<List<Extension>>? = null,
+    focus: Property<Focus>? = null,
+    functions: Property<List<Function>>? = null,
+    height: Property<Size>? = null,
+    hoverEndActions: Property<List<Action>>? = null,
+    hoverStartActions: Property<List<Action>>? = null,
+    id: Property<String>? = null,
+    items: Property<List<Div>>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    longtapActions: Property<List<Action>>? = null,
+    margins: Property<EdgeInsets>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    pressEndActions: Property<List<Action>>? = null,
+    pressStartActions: Property<List<Action>>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): Grid = Grid(
+    Grid.Properties(
+        accessibility = accessibility ?: properties.accessibility,
+        action = action ?: properties.action,
+        actionAnimation = actionAnimation ?: properties.actionAnimation,
+        actions = actions ?: properties.actions,
+        alignmentHorizontal = alignmentHorizontal ?: properties.alignmentHorizontal,
+        alignmentVertical = alignmentVertical ?: properties.alignmentVertical,
+        alpha = alpha ?: properties.alpha,
+        animators = animators ?: properties.animators,
+        background = background ?: properties.background,
+        border = border ?: properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
         columnCount = columnCount ?: properties.columnCount,
         columnSpan = columnSpan ?: properties.columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
@@ -1051,6 +1221,7 @@ fun Grid.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -1065,6 +1236,7 @@ fun Grid.evaluate(
     alignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     alignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
     alpha: ExpressionProperty<Double>? = null,
+    captureFocusOnAction: ExpressionProperty<Boolean>? = null,
     columnCount: ExpressionProperty<Int>? = null,
     columnSpan: ExpressionProperty<Int>? = null,
     contentAlignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
@@ -1084,6 +1256,7 @@ fun Grid.evaluate(
         animators = properties.animators,
         background = properties.background,
         border = properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
         columnCount = columnCount ?: properties.columnCount,
         columnSpan = columnSpan ?: properties.columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
@@ -1133,6 +1306,7 @@ fun Grid.evaluate(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -1182,6 +1356,7 @@ fun Component<Grid>.override(
     animators: List<Animator>? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnCount: Int? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
@@ -1230,6 +1405,7 @@ fun Component<Grid>.override(
         animators = valueOrNull(animators),
         background = valueOrNull(background),
         border = valueOrNull(border),
+        captureFocusOnAction = valueOrNull(captureFocusOnAction),
         columnCount = valueOrNull(columnCount),
         columnSpan = valueOrNull(columnSpan),
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
@@ -1279,6 +1455,7 @@ fun Component<Grid>.override(
  * @param animators Declaration of animators that change variable values over time.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -1328,6 +1505,7 @@ fun Component<Grid>.defer(
     animators: ReferenceProperty<List<Animator>>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnCount: ReferenceProperty<Int>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
@@ -1376,6 +1554,7 @@ fun Component<Grid>.defer(
         animators = animators,
         background = background,
         border = border,
+        captureFocusOnAction = captureFocusOnAction,
         columnCount = columnCount,
         columnSpan = columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal,
@@ -1418,6 +1597,7 @@ fun Component<Grid>.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnCount Number of columns.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
@@ -1432,6 +1612,7 @@ fun Component<Grid>.evaluate(
     alignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     alignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
     alpha: ExpressionProperty<Double>? = null,
+    captureFocusOnAction: ExpressionProperty<Boolean>? = null,
     columnCount: ExpressionProperty<Int>? = null,
     columnSpan: ExpressionProperty<Int>? = null,
     contentAlignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
@@ -1452,6 +1633,7 @@ fun Component<Grid>.evaluate(
         animators = null,
         background = null,
         border = null,
+        captureFocusOnAction = captureFocusOnAction,
         columnCount = columnCount,
         columnSpan = columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal,
@@ -1487,6 +1669,155 @@ fun Component<Grid>.evaluate(
         visibilityAction = null,
         visibilityActions = null,
         width = null,
+    ).mergeWith(properties)
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param action One action when clicking on an element. Not used if the `actions` parameter is set.
+ * @param actionAnimation Click animation. The web only supports the following values: `fade`, `scale`, `native`, `no_animation` and `set`.
+ * @param actions Multiple actions when clicking on an element.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+ * @param columnCount Number of columns.
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param contentAlignmentHorizontal Horizontal alignment of grid contents.
+ * @param contentAlignmentVertical Vertical alignment of grid contents.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param doubletapActions Action when double-clicking on an element.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param functions User functions.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param hoverEndActions Actions performed after hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param hoverStartActions Actions performed when hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param items Contents.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param longtapActions Action when long-clicking an element. Doesn't work on devices that don't support touch gestures.
+ * @param margins External margins from the element stroke.
+ * @param paddings Internal margins from the element stroke.
+ * @param pressEndActions Actions performed after clicking/tapping an element.
+ * @param pressStartActions Actions performed at the start of a click/tap on an element.
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun Component<Grid>.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    action: Property<Action>? = null,
+    actionAnimation: Property<Animation>? = null,
+    actions: Property<List<Action>>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    captureFocusOnAction: Property<Boolean>? = null,
+    columnCount: Property<Int>? = null,
+    columnSpan: Property<Int>? = null,
+    contentAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    contentAlignmentVertical: Property<AlignmentVertical>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    doubletapActions: Property<List<Action>>? = null,
+    extensions: Property<List<Extension>>? = null,
+    focus: Property<Focus>? = null,
+    functions: Property<List<Function>>? = null,
+    height: Property<Size>? = null,
+    hoverEndActions: Property<List<Action>>? = null,
+    hoverStartActions: Property<List<Action>>? = null,
+    id: Property<String>? = null,
+    items: Property<List<Div>>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    longtapActions: Property<List<Action>>? = null,
+    margins: Property<EdgeInsets>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    pressEndActions: Property<List<Action>>? = null,
+    pressStartActions: Property<List<Action>>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): Component<Grid> = Component(
+    template = template,
+    properties = Grid.Properties(
+        accessibility = accessibility,
+        action = action,
+        actionAnimation = actionAnimation,
+        actions = actions,
+        alignmentHorizontal = alignmentHorizontal,
+        alignmentVertical = alignmentVertical,
+        alpha = alpha,
+        animators = animators,
+        background = background,
+        border = border,
+        captureFocusOnAction = captureFocusOnAction,
+        columnCount = columnCount,
+        columnSpan = columnSpan,
+        contentAlignmentHorizontal = contentAlignmentHorizontal,
+        contentAlignmentVertical = contentAlignmentVertical,
+        disappearActions = disappearActions,
+        doubletapActions = doubletapActions,
+        extensions = extensions,
+        focus = focus,
+        functions = functions,
+        height = height,
+        hoverEndActions = hoverEndActions,
+        hoverStartActions = hoverStartActions,
+        id = id,
+        items = items,
+        layoutProvider = layoutProvider,
+        longtapActions = longtapActions,
+        margins = margins,
+        paddings = paddings,
+        pressEndActions = pressEndActions,
+        pressStartActions = pressStartActions,
+        reuseId = reuseId,
+        rowSpan = rowSpan,
+        selectedActions = selectedActions,
+        tooltips = tooltips,
+        transform = transform,
+        transitionChange = transitionChange,
+        transitionIn = transitionIn,
+        transitionOut = transitionOut,
+        transitionTriggers = transitionTriggers,
+        variableTriggers = variableTriggers,
+        variables = variables,
+        visibility = visibility,
+        visibilityAction = visibilityAction,
+        visibilityActions = visibilityActions,
+        width = width,
     ).mergeWith(properties)
 )
 

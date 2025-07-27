@@ -18,10 +18,6 @@ final class DivBlockProvider {
 
   private(set) var id: DivViewId!
 
-  var cardId: DivCardID {
-    id.cardId
-  }
-
   private(set) var cardSize: DivViewSize? {
     didSet {
       if let cardSize, let id {
@@ -32,6 +28,7 @@ final class DivBlockProvider {
 
   private var debugParams = DebugParams()
   private var dataErrors = [DeserializationError]()
+  private var updateInProgress = false
 
   private let measurements = DebugParams.Measurements(
     divDataParsingTime: TimeMeasure(),
@@ -53,7 +50,12 @@ final class DivBlockProvider {
     }
   }
 
-  var lastVisibleBounds: CGRect = .zero
+  var cardId: DivCardID {
+    id.cardId
+  }
+
+  @ObservableProperty
+  private(set) var shouldRecalculateVisibility: Bool = true
 
   var accessibilityElementsStorage: DivAccessibilityElementsStorage?
 
@@ -177,7 +179,7 @@ final class DivBlockProvider {
     self.divData = divData
   }
 
-  private func update(reasons: [DivCardUpdateReason]) {
+  func update(reasons: [DivCardUpdateReason]) {
     guard var divData else {
       block = debugParams.isDebugInfoEnabled ? makeErrorsBlock(dataErrors) : noDataBlock
       return
@@ -187,23 +189,15 @@ final class DivBlockProvider {
       return
     }
 
-    reasons.compactMap { $0.patch(for: self.cardId) }.forEach {
-      divData = divData.applyPatch(
-        $0,
-        callbacks: Callbacks(elementChanged: { [weak self] id in
-          self?.divKitComponents.triggersStorage.reset(elementId: id)
-        })
-      )
-      $0.onAppliedActions?.forEach { action in
-        divKitComponents.actionHandler.handle(
-          action,
-          path: UIElementPath(cardId.rawValue),
-          source: .callback,
-          sender: nil
-        )
-      }
+    guard !updateInProgress else {
+      return
     }
-    self.divData = divData
+
+    updateInProgress = true
+    defer {
+      updateInProgress = false
+    }
+
     let context = divKitComponents.makeContext(
       cardId: cardId,
       additionalId: id.additionalId,
@@ -211,6 +205,20 @@ final class DivBlockProvider {
       debugParams: debugParams,
       parentScrollView: parentScrollView
     )
+
+    reasons.compactMap { $0.patch(for: self.cardId) }.forEach { patch in
+      divData = divData.applyPatchWithActions(
+        patch,
+        context: context
+      )
+    }
+
+    self.divData = divData
+
+    if reasons.filter(\.isVariable).isEmpty {
+      context.layoutProviderHandler?.resetUpdatedVariables()
+      shouldRecalculateVisibility = true
+    }
     dataErrors.forEach { context.errorsStorage.add($0) }
     do {
       block = try measurements.renderTime.updateMeasure {

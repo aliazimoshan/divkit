@@ -7,6 +7,12 @@ protocol DivActionsHolder {
   var actionAnimation: DivAnimation { get }
   var doubletapActions: [DivAction]? { get }
   var longtapActions: [DivAction]? { get }
+  var pressStartActions: [DivAction]? { get }
+  var pressEndActions: [DivAction]? { get }
+  var hoverStartActions: [DivAction]? { get }
+  var hoverEndActions: [DivAction]? { get }
+
+  func resolveCaptureFocusOnAction(_ resolver: ExpressionResolver) -> Bool
 }
 
 extension DivText: DivActionsHolder {}
@@ -29,24 +35,6 @@ extension DivActionsHolder {
 
     return NonEmptyArray(allActions)
   }
-
-  fileprivate func makeDoubleTapActions(
-    context: DivBlockModelingContext
-  ) -> NonEmptyArray<UserInterfaceAction>? {
-    if let actions = doubletapActions?.uiActions(context: context) {
-      return NonEmptyArray(actions)
-    }
-    return nil
-  }
-
-  fileprivate func makeLongTapActions(
-    context: DivBlockModelingContext
-  ) -> LongTapActions? {
-    if let actions = longtapActions?.uiActions(context: context) {
-      return NonEmptyArray(actions).map(LongTapActions.actions)
-    }
-    return nil
-  }
 }
 
 extension Block {
@@ -60,9 +48,17 @@ extension Block {
     }
 
     let actions = actionsHolder.makeActions(context: context)
-    let doubletapActions = actionsHolder.makeDoubleTapActions(context: context)
-    let longtapActions = actionsHolder.makeLongTapActions(context: context)
-    if actions == nil, doubletapActions == nil, longtapActions == nil {
+    let doubletapActions = actionsHolder.doubletapActions?.nonEmptyUIActions(context: context)
+    let longtapActions = actionsHolder.longtapActions?.nonEmptyUIActions(context: context)
+      .map(LongTapActions.actions)
+    let pressStartActions = actionsHolder.pressStartActions?.nonEmptyUIActions(context: context)
+    let pressEndActions = actionsHolder.pressEndActions?.nonEmptyUIActions(context: context)
+    let hoverStartActions = actionsHolder.hoverStartActions?.nonEmptyUIActions(context: context)
+    let hoverEndActions = actionsHolder.hoverEndActions?.nonEmptyUIActions(context: context)
+
+    if actions == nil, doubletapActions == nil, longtapActions == nil,
+       pressStartActions == nil, pressEndActions == nil,
+       hoverStartActions == nil, hoverEndActions == nil {
       return self
     }
 
@@ -73,7 +69,12 @@ extension Block {
         .resolveActionAnimation(context.expressionResolver),
       doubleTapActions: doubletapActions,
       longTapActions: longtapActions,
-      path: context.parentPath
+      pressStartActions: pressStartActions,
+      pressEndActions: pressEndActions,
+      hoverStartActions: hoverStartActions,
+      hoverEndActions: hoverEndActions,
+      path: context.path,
+      captureFocusOnAction: actionsHolder.resolveCaptureFocusOnAction(context.expressionResolver)
     )
   }
 }

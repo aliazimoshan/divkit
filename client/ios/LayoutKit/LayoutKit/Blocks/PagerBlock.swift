@@ -16,6 +16,9 @@ public final class PagerBlock: BlockWithTraits {
   public let state: PagerViewState
   public let widthTrait: LayoutTrait
   public let heightTrait: LayoutTrait
+  public var path: UIElementPath? {
+    gallery.path
+  }
 
   let selectedActions: [[UserInterfaceAction]]
 
@@ -54,7 +57,6 @@ public final class PagerBlock: BlockWithTraits {
     case let .intrinsic(_, minSize, maxSize):
       let width = gallery.intrinsicPagerSize(
         forWidth: CGFloat.greatestFiniteMagnitude,
-        pageIndex: Int(round(state.currentPage)) + gallery.infiniteCorrection,
         layoutMode: layoutMode
       ).width
       return clamp(width, min: minSize, max: maxSize)
@@ -70,7 +72,6 @@ public final class PagerBlock: BlockWithTraits {
     case let .intrinsic(_, minSize, maxSize):
       let height = gallery.intrinsicPagerSize(
         forWidth: width,
-        pageIndex: Int(round(state.currentPage)) + gallery.infiniteCorrection,
         layoutMode: layoutMode
       ).height
       return clamp(height, min: minSize, max: maxSize)
@@ -176,6 +177,28 @@ extension BlocksState {
   public func pagerViewState(for pagerPath: PagerPath?) -> PagerViewState? {
     pagerPath.flatMap { pagerPath in
       first(where: { pagerPath.matches($0.key) })?.value as? PagerViewState
+    }
+  }
+
+  func pagerViewState(
+    for pagerControlPath: UIElementPath?
+  ) -> PagerViewState? {
+    pagerControlPath.flatMap { pagerControlPath in
+      var currentPath: UIElementPath? = pagerControlPath
+
+      while let current = currentPath {
+        let relatedPaths = keys.filter { $0.starts(with: current) }
+
+        for relatedPath in relatedPaths {
+          if self[relatedPath] is PagerViewState {
+            return self[relatedPath] as? PagerViewState
+          }
+        }
+
+        currentPath = current.parent
+      }
+
+      return nil
     }
   }
 }

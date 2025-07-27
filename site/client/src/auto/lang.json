@@ -38,12 +38,14 @@
         "designComponents": "Компоненты",
         "designPalette": "Палитра",
         "designVariables": "Переменные",
+        "designTimers": "Таймеры",
         "description": "DivKit — Кроссплатформенный фреймворк для Server-driven UI с открытым кодом",
         "telegram": "Есть вопросы?",
         "telegramError": "Что-то не работает или у вас есть предложения?",
         "featureSupport": "Поддержка платформ",
         "featureSupportSmall": "Поддержка",
-        "search": "Поиск..."
+        "search": "Поиск...",
+        "docs": "Документация"
     },
     "en": {
         "name": "Eng",
@@ -84,11 +86,13 @@
         "designComponents": "Components",
         "designPalette": "Palette",
         "designVariables": "Variables",
+        "designTimers": "Timers",
         "description": "Open-source cross-platform Server-Driven UI framework",
         "telegram": "Have a question?",
         "telegramError": "Is something not working or do you have any suggestions?",
         "featureSupport": "Platforms support",
         "featureSupportSmall": "Support",
-        "search": "Search..."
+        "search": "Search...",
+        "docs": "Documentation"
     }
 }

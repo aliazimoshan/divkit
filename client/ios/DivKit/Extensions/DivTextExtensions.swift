@@ -5,6 +5,7 @@ import VGSL
 
 extension DivText: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
+    let context = modifiedContextParentPath(context)
     let expressionResolver = context.expressionResolver
     let lazyText = Lazy(getter: { [unowned self] in
       resolveText(expressionResolver) ?? ""
@@ -28,7 +29,7 @@ extension DivText: DivBlockModeling {
     let expressionResolver = context.expressionResolver
 
     let fontParams = resolveFontParams(expressionResolver)
-    var typo = Typo(font: context.fontProvider.font(fontParams)).allowHeightOverrun
+    var typo = Typo(font: context.font(fontParams)).allowHeightOverrun
 
     let alignment = resolveTextAlignmentHorizontal(expressionResolver)
       .makeTextAlignment(uiLayoutDirection: context.layoutDirection)
@@ -41,7 +42,14 @@ extension DivText: DivBlockModeling {
       typo = typo.kerned(kern)
     }
 
-    let resolvedColor: Color = resolveTextColor(expressionResolver)
+    let isFocused = context.blockStateStorage.isFocused(path: context.path)
+
+    let resolvedColor = if isFocused,
+                           let focusedTextColor = resolveFocusedTextColor(expressionResolver) {
+      focusedTextColor
+    } else {
+      resolveTextColor(expressionResolver)
+    }
 
     if resolvedColor != .black {
       typo = typo.with(color: resolvedColor)
@@ -62,6 +70,21 @@ extension DivText: DivBlockModeling {
     }
     if let textShadow = textShadow?.resolve(expressionResolver) {
       typo = typo.shaded(textShadow.typoShadow)
+    }
+
+    let truncateMode = resolveTruncate(expressionResolver)
+    let lineBreakMode: LineBreakMode? = switch truncateMode {
+    case .none:
+      .byClipping
+    case .start:
+      .byTruncatingHead
+    case .end:
+      nil
+    case .middle:
+      .byTruncatingMiddle
+    }
+    if let lineBreakMode {
+      typo = typo.with(lineBreakMode: lineBreakMode)
     }
 
     let attributedString = makeAttributedString(
@@ -120,8 +143,10 @@ extension DivText: DivBlockModeling {
       additionalTextInsets: additionalTextInsets,
       canSelect: resolveSelectable(expressionResolver),
       tightenWidth: resolveTightenWidth(expressionResolver),
-      autoEllipsize: resolveAutoEllipsize(expressionResolver) ?? context.flagsInfo
-        .defaultTextAutoEllipsize
+      autoEllipsize: resolveAutoEllipsize(expressionResolver)
+        ?? context.flagsInfo.defaultTextAutoEllipsize,
+      path: context.path,
+      isFocused: isFocused
     )
   }
 
@@ -176,6 +201,8 @@ extension DivText: DivBlockModeling {
       return
     }
 
+    let rangeVariationSettings = range.resolveFontVariationSettings(expressionResolver)?
+      .mapValues { $0 as? NSNumber }.filteringNilValues()
     let rangeFontParams = FontParams(
       family: range.resolveFontFamily(expressionResolver) ?? fontParams.family,
       weight: range.resolveFontWeightValue(expressionResolver)
@@ -184,11 +211,12 @@ extension DivText: DivBlockModeling {
       size: range.resolveFontSize(expressionResolver) ?? fontParams.size,
       unit: range.resolveFontSizeUnit(expressionResolver),
       featureSettings: range.resolveFontFeatureSettings(expressionResolver)
-        ?? fontParams.featureSettings
+        ?? fontParams.featureSettings,
+      variationSettings: rangeVariationSettings ?? fontParams.variationSettings
     )
     let fontTypo = rangeFontParams == fontParams
       ? nil
-      : Typo(font: context.fontProvider.font(rangeFontParams))
+      : Typo(font: context.font(rangeFontParams))
     let colorTypo = range.resolveTextColor(expressionResolver)
       .map { Typo(color: $0) }
     let heightTypo = range.resolveLineHeight(expressionResolver)
@@ -233,7 +261,6 @@ extension DivText: DivBlockModeling {
   }
 
   private func resolveGradient(_ context: DivBlockModelingContext) -> Gradient? {
-    let expressionResolver = context.expressionResolver
     guard let textGradient else {
       return nil
     }
@@ -241,12 +268,7 @@ extension DivText: DivBlockModeling {
     case let .divLinearGradient(gradient):
       return gradient.makeBlockLinearGradient(context).map { .linear($0) }
     case let .divRadialGradient(gradient):
-      return Gradient.Radial(
-        colors: gradient.resolveColors(expressionResolver) ?? [],
-        end: gradient.resolveRadius(expressionResolver),
-        centerX: gradient.resolveCenterX(expressionResolver),
-        centerY: gradient.resolveCenterY(expressionResolver)
-      ).map { .radial($0) }
+      return gradient.makeBlockRadialGradient(context).map { .radial($0) }
     }
   }
 

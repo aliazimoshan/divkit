@@ -30,6 +30,7 @@ class DivPreloader internal constructor(
     private val preloadFilter: PreloadFilter
 ) {
 
+    @JvmOverloads
     constructor(
         configuration: DivConfiguration,
         preloadFilter: PreloadFilter = PreloadFilter.ONLY_PRELOAD_REQUIRED_FILTER
@@ -41,6 +42,7 @@ class DivPreloader internal constructor(
         preloadFilter = preloadFilter
     )
 
+    @JvmOverloads
     constructor(
         context: Div2Context,
         preloadFilter: PreloadFilter = PreloadFilter.ONLY_PRELOAD_REQUIRED_FILTER
@@ -64,8 +66,7 @@ class DivPreloader internal constructor(
     }
 
     companion object {
-        private val NO_CALLBACK = Callback { }
-
+        internal val NO_CALLBACK = Callback { }
     }
 
     private inner class PreloadVisitor(
@@ -88,7 +89,8 @@ class DivPreloader internal constructor(
         }
 
         override fun visit(data: Div.Container, resolver: ExpressionResolver) {
-            data.value.buildItems(resolver).forEach { (item, newResolver) -> visit(item, newResolver) }
+            data.value.buildItems(divView = null, resolver = resolver)
+                .forEach { (item, newResolver) -> visit(item, newResolver) }
             defaultVisit(data, resolver)
         }
 
@@ -98,12 +100,14 @@ class DivPreloader internal constructor(
         }
 
         override fun visit(data: Div.Gallery, resolver: ExpressionResolver) {
-            data.value.buildItems(resolver).forEach { (item, newResolver) -> visit(item, newResolver) }
+            data.value.buildItems(divView = null, resolver = resolver)
+                .forEach { (item, newResolver) -> visit(item, newResolver) }
             defaultVisit(data, resolver)
         }
 
         override fun visit(data: Div.Pager, resolver: ExpressionResolver) {
-            data.value.buildItems(resolver).forEach { (item, newResolver) -> visit(item, newResolver) }
+            data.value.buildItems(divView = null, resolver = resolver)
+                .forEach { (item, newResolver) -> visit(item, newResolver) }
             defaultVisit(data, resolver)
         }
 
@@ -135,8 +139,10 @@ class DivPreloader internal constructor(
         }
     }
 
-    private class TicketImpl : Ticket {
-        val refs = mutableListOf<PreloadReference>()
+    internal class TicketImpl : Ticket {
+
+        private val refs = mutableListOf<PreloadReference>()
+
         fun addReference(reference: PreloadReference) {
             refs.add(reference)
         }

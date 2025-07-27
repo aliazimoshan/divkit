@@ -13,7 +13,8 @@ import type {
     Theme,
     TypefaceProvider,
     WrappedError,
-    Patch
+    Patch,
+    VideoPlayerProviderClient
 } from '../typings/common';
 import type { GlobalVariablesController } from './expressions/globalVariablesController';
 import type { Store } from '../typings/store';
@@ -47,6 +48,8 @@ export function render(opts: {
     store?: Store;
     weekStartDay?: number;
     pagerChildrenClipEnabled?: boolean;
+    pagerMouseDragEnabled?: boolean;
+    videoPlayerProvider?: VideoPlayerProviderClient;
 }): DivkitDebugInstance {
     const { target, hydrate, ...rest } = opts;
 

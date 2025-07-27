@@ -4,35 +4,31 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.DisplayMetrics
 import android.util.TypedValue
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.TextView
 import androidx.annotation.MainThread
+import androidx.core.graphics.scale
 import androidx.core.graphics.withSave
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.children
 import androidx.core.view.doOnNextLayout
 import androidx.core.view.doOnPreDraw
 import com.yandex.div.core.expression.local.ChildPathUnitCache
-import com.yandex.div.core.expression.local.RuntimeStore
 import com.yandex.div.core.expression.suppressExpressionErrors
-import com.yandex.div.core.font.DivTypefaceProvider
-import com.yandex.div.core.state.DivPathUtils.findDivState
+import com.yandex.div.core.state.DivPathUtils.getId
 import com.yandex.div.core.state.DivStatePath
 import com.yandex.div.core.util.AccessibilityStateProvider
 import com.yandex.div.core.util.doOnActualLayout
 import com.yandex.div.core.util.isLayoutRtl
 import com.yandex.div.core.util.toIntSafely
-import com.yandex.div.core.util.toVariables
 import com.yandex.div.core.view2.BindingContext
 import com.yandex.div.core.view2.Div2View
 import com.yandex.div.core.view2.DivBinder
@@ -44,8 +40,6 @@ import com.yandex.div.core.view2.divs.widgets.DivStateLayout
 import com.yandex.div.core.view2.reuse.InputFocusTracker
 import com.yandex.div.core.view2.spannable.TextVerticalAlignment
 import com.yandex.div.core.widget.AspectView
-import com.yandex.div.core.widget.FixedLineHeightView
-import com.yandex.div.core.widget.FixedLineHeightView.Companion.UNDEFINED_LINE_HEIGHT
 import com.yandex.div.internal.Log
 import com.yandex.div.internal.core.DivItemBuilderResult
 import com.yandex.div.internal.core.ExpressionSubscriber
@@ -83,7 +77,6 @@ import com.yandex.div2.DivDrawable
 import com.yandex.div2.DivEdgeInsets
 import com.yandex.div2.DivFilter
 import com.yandex.div2.DivFixedSize
-import com.yandex.div2.DivFontWeight
 import com.yandex.div2.DivImageScale
 import com.yandex.div2.DivIndicator
 import com.yandex.div2.DivIndicatorItemPlacement
@@ -358,9 +351,6 @@ internal fun View.applyAlpha(alpha: Double) {
 internal fun DivContainer.isHorizontal(resolver: ExpressionResolver) =
     orientation.evaluate(resolver) == DivContainer.Orientation.HORIZONTAL
 
-internal fun DivContainer.isVertical(resolver: ExpressionResolver) =
-    orientation.evaluate(resolver) == DivContainer.Orientation.VERTICAL
-
 internal fun DivContainer.isWrapContainer(resolver: ExpressionResolver) = when {
     layoutMode.evaluate(resolver) != DivContainer.LayoutMode.WRAP -> false
     orientation.evaluate(resolver) == DivContainer.Orientation.OVERLAP -> false
@@ -496,11 +486,15 @@ internal fun DivImageScale.toScaleType(): ScalingDrawable.ScaleType {
     }
 }
 
-internal fun DivAlignmentHorizontal.toHorizontalAlignment(): ScalingDrawable.AlignmentHorizontal {
+internal fun DivAlignmentHorizontal.toHorizontalAlignment(isRtl: Boolean): ScalingDrawable.AlignmentHorizontal {
     return when(this) {
+        DivAlignmentHorizontal.LEFT -> ScalingDrawable.AlignmentHorizontal.LEFT
         DivAlignmentHorizontal.CENTER -> ScalingDrawable.AlignmentHorizontal.CENTER
         DivAlignmentHorizontal.RIGHT -> ScalingDrawable.AlignmentHorizontal.RIGHT
-        else -> ScalingDrawable.AlignmentHorizontal.LEFT
+        DivAlignmentHorizontal.START ->
+            if (isRtl) ScalingDrawable.AlignmentHorizontal.RIGHT else ScalingDrawable.AlignmentHorizontal.LEFT
+        DivAlignmentHorizontal.END ->
+            if (isRtl) ScalingDrawable.AlignmentHorizontal.LEFT else ScalingDrawable.AlignmentHorizontal.RIGHT
     }
 }
 
@@ -545,6 +539,7 @@ internal fun View.applyDivActions(
     pressEndActions: List<DivAction>?,
     actionAnimation: DivAnimation,
     accessibility: DivAccessibility?,
+    captureFocusOnAction: Expression<Boolean>,
 ) {
     val actionBinder = context.divView.div2Component.actionBinder
     val tapActions = if (actions.isNullOrEmpty()) {
@@ -552,9 +547,20 @@ internal fun View.applyDivActions(
     } else {
         actions
     }
-    actionBinder.bindDivActions(context, this, tapActions, longTapActions, doubleTapActions,
-        hoverStartActions, hoverEndActions, pressStartActions, pressEndActions, actionAnimation,
-        accessibility)
+    actionBinder.bindDivActions(
+        context,
+        this,
+        tapActions,
+        longTapActions,
+        doubleTapActions,
+        hoverStartActions,
+        hoverEndActions,
+        pressStartActions,
+        pressEndActions,
+        actionAnimation,
+        accessibility,
+        captureFocusOnAction,
+    )
 }
 
 internal fun View.setAnimatedTouchListener(
@@ -573,7 +579,7 @@ internal fun View.createAnimatedTouchListener(
     // Avoid creating GestureDetector if unnecessary cause it's expensive.
     val gestureDetector = divGestureListener
         ?.takeUnless { it.onSingleTapListener == null && it.onDoubleTapListener == null }
-        ?.let { GestureDetectorCompat(context.divView.context, divGestureListener) }
+        ?.let { GestureDetector(context.divView.context, divGestureListener) }
 
     return if (animations != null || gestureDetector != null) {
         { v, event ->
@@ -585,27 +591,12 @@ internal fun View.createAnimatedTouchListener(
     }
 }
 
-internal fun TextView.applyFontSize(fontSize: Int, unit: DivSizeUnit) {
-    setTextSize(unit.toAndroidUnit(), fontSize.toFloat())
-}
-
 internal fun DivSizeUnit.toAndroidUnit(): Int {
     return when (this) {
         DivSizeUnit.DP -> TypedValue.COMPLEX_UNIT_DIP
         DivSizeUnit.SP -> TypedValue.COMPLEX_UNIT_SP
         DivSizeUnit.PX -> TypedValue.COMPLEX_UNIT_PX
     }
-}
-
-internal fun <T> T.applyLineHeight(
-    lineHeight: Long?,
-    unit: DivSizeUnit
-) where T : TextView, T : FixedLineHeightView {
-    fixedLineHeight = lineHeight?.unitToPx(resources.displayMetrics, unit) ?: UNDEFINED_LINE_HEIGHT
-}
-
-internal fun TextView.applyLetterSpacing(letterSpacing: Double, fontSize: Int) {
-    this.letterSpacing = letterSpacing.toFloat() / fontSize
 }
 
 internal fun View.applyId(divId: String?, viewId: Int = View.NO_ID) {
@@ -616,14 +607,18 @@ internal fun View.applyId(divId: String?, viewId: Int = View.NO_ID) {
 internal val DivBase.hasSightActions: Boolean
     get() = visibilityAction != null || !visibilityActions.isNullOrEmpty() || !disappearActions.isNullOrEmpty()
 
-internal val DivBase.allVisibilityActions: List<DivVisibilityAction>
+internal val DivBase.allAppearActions: List<DivVisibilityAction>
     get() = visibilityActions ?: visibilityAction?.let { listOf(it) }.orEmpty()
 
 internal val DivBase.allDisappearActions: List<DivDisappearAction>
     get() = disappearActions.orEmpty()
 
 internal val DivBase.allSightActions: List<DivSightAction>
-    get() = this.allDisappearActions + this.allVisibilityActions
+    get() = this.allDisappearActions + this.allAppearActions
+
+internal fun <T : DivSightAction> List<T>.filterEnabled(resolver: ExpressionResolver): List<T> {
+    return filter { action -> action.isEnabled.evaluate(resolver) }
+}
 
 internal fun View.bindLayoutParams(div: DivBase, resolver: ExpressionResolver) = suppressExpressionErrors {
     applyWidth(div, resolver)
@@ -632,71 +627,30 @@ internal fun View.bindLayoutParams(div: DivBase, resolver: ExpressionResolver) =
         div.alignmentVertical?.evaluate(resolver))
 }
 
-internal fun getRuntimeFor(runtimeStore: RuntimeStore?, resolver: ExpressionResolver) =
-    runtimeStore?.getRuntimeWithOrNull(resolver)
+internal fun DivBase.getChildPathUnit(index: Int) =
+    if (this is DivState) getId() else id ?: ChildPathUnitCache.getValue(index)
 
-internal fun resolveRuntime(
-    runtimeStore: RuntimeStore?,
-    div: DivBase,
-    path: String,
-    resolver: ExpressionResolver,
-    parentResolver: ExpressionResolver,
-) = runtimeStore?.resolveRuntimeWith(
-    path = path,
-    variables = div.variables?.toVariables(),
-    triggers = div.variableTriggers,
-    functions = div.functions,
-    resolver = resolver,
-    parentResolver = parentResolver,
-)
-
-internal fun DivBase.getChildPathUnit(index: Int) = id ?: ChildPathUnitCache.getValue(index)
-
-internal fun DivBase.resolvePath(index: Int, parentPath: DivStatePath): DivStatePath {
-    return if (this is DivState) parentPath
-    else parentPath.appendDiv(getChildPathUnit(index))
-}
-
-internal fun DivBase.resolvePath(pathUnit: String, parentPath: DivStatePath): DivStatePath {
-    return if (this is DivState) parentPath
-    else parentPath.appendDiv(pathUnit)
-}
+internal fun DivBase.resolvePath(index: Int, parentPath: DivStatePath) = parentPath.appendDiv(getChildPathUnit(index))
 
 /**
  * Binds all descendants of [this] which are [DivStateLayout]s corresponding to DivStates in [div]
  */
-internal fun View.bindStates(
-    div: Div?,
-    context: BindingContext,
-    resolver: ExpressionResolver,
-    binder: DivBinder,
-) {
-    if (div == null) return
-    val statesByPath = mutableMapOf<DivStatePath, DivStateLayout>()
-    traverseViewHierarhy(this) { currentView ->
-        if (currentView !is DivStateLayout) {
-            return@traverseViewHierarhy true
-        }
-        currentView.path?.let { path ->
-            statesByPath[path] = currentView
-        }
+internal fun View.bindStates(bindingContext: BindingContext, binder: DivBinder) {
+    traverseViewHierarchy(this) { currentView ->
+        if (currentView !is DivStateLayout) return@traverseViewHierarchy true
+        val div = currentView.div ?: return@traverseViewHierarchy false
+        val path = currentView.path ?: return@traverseViewHierarchy false
+        binder.bind(bindingContext, currentView, div, path.parentState())
         false
-    }
-    statesByPath.entries.forEach { (path, layout) ->
-        val divByPath = div.findDivState(path, resolver)
-        if (divByPath != null) {
-            val parentState = path.parentState()
-            binder.bind(context, layout, divByPath, parentState)
-        }
     }
 }
 
-private fun traverseViewHierarhy(view: View, action: (View) -> Boolean) {
+private fun traverseViewHierarchy(view: View, action: (View) -> Boolean) {
     if (!action(view) || view !is ViewGroup) {
         return
     }
     view.children.forEach {
-        traverseViewHierarhy(it, action)
+        traverseViewHierarchy(it, action)
     }
 }
 
@@ -720,13 +674,15 @@ internal fun ViewGroup.trackVisibilityActions(
         val newLogIds = newItems.flatMap { it.div.value().allSightActions }.mapTo(HashSet()) { it.logId }
 
         for (oldItem in oldItems) {
-            val actionsToRemove = oldItem.div.value().allSightActions.filter { it.logId !in newLogIds }
+            val appearActionsToRemove = oldItem.div.value().allAppearActions.filter { it.logId !in newLogIds }
+            val disappearActionsToRemove = oldItem.div.value().allDisappearActions.filter { it.logId !in newLogIds }
             visibilityActionTracker.trackVisibilityActionsOf(
                 divView,
                 oldItem.expressionResolver,
                 null,
                 oldItem.div,
-                actionsToRemove
+                appearActionsToRemove,
+                disappearActionsToRemove
             )
         }
     }
@@ -745,36 +701,12 @@ internal fun ViewGroup.trackVisibilityActions(
     }
 }
 
-internal fun getTypefaceValue(fontWeight: DivFontWeight?, fontWeightValue: Int?): Int {
-    return fontWeightValue ?: when (fontWeight) {
-        DivFontWeight.LIGHT -> 300
-        DivFontWeight.REGULAR -> 400
-        DivFontWeight.MEDIUM -> 500
-        DivFontWeight.BOLD -> 700
-        else -> 400
-    }
-}
-
-internal fun getTypefaceValue(fontWeight: DivFontWeight?, fontWeightValue: Long?): Int {
-    return getTypefaceValue(fontWeight, fontWeightValue?.toIntSafely())
-}
-
-internal fun getTypeface(fontWeight: Int, typefaceProvider: DivTypefaceProvider): Typeface {
-    return typefaceProvider.getTypefaceFor(fontWeight) ?: Typeface.DEFAULT
-}
-
 internal fun Long.fontSizeToPx(unit: DivSizeUnit, metrics: DisplayMetrics): Float {
     return when (unit) {
         DivSizeUnit.DP -> this.dpToPx(metrics)
         DivSizeUnit.SP -> this.spToPx(metrics)
         DivSizeUnit.PX -> this
     }.toFloat()
-}
-
-internal fun ViewGroup.drawChildrenShadows(canvas: Canvas) {
-    children
-        .filter { it.visibility == View.VISIBLE }
-        .forEach { child -> child.drawShadow(canvas) }
 }
 
 internal fun View.drawShadow(canvas: Canvas) {
@@ -789,14 +721,14 @@ internal fun View.extractParentContentAlignmentVertical(
     resolver: ExpressionResolver
 ): DivContentAlignmentVertical? {
     val div = (parent as? DivHolderView<*>)?.div
-    return (div as? DivContainer)?.contentAlignmentVertical?.evaluate(resolver)
+    return (div as? Div.Container)?.value?.contentAlignmentVertical?.evaluate(resolver)
 }
 
 internal fun View.extractParentContentAlignmentHorizontal(
     resolver: ExpressionResolver
 ): DivContentAlignmentHorizontal? {
     val div = (parent as? DivHolderView<*>)?.div
-    return (div as? DivContainer)?.contentAlignmentHorizontal?.evaluate(resolver)
+    return (div as? Div.Container)?.value?.contentAlignmentHorizontal?.evaluate(resolver)
 }
 
 internal fun DivBorder?.isConstantlyEmpty(): Boolean {
@@ -914,7 +846,7 @@ internal fun View.applyBitmapFilters(
     filters: List<DivFilter>?,
     actionAfterFilters: (Bitmap) -> Unit
 ) {
-    if (filters == null) {
+    if (filters.isNullOrEmpty()) {
         actionAfterFilters(bitmap)
         return
     }
@@ -924,12 +856,7 @@ internal fun View.applyBitmapFilters(
 
     doOnActualLayout {
         val scale = max(height / bitmap.height.toFloat(), width / bitmap.width.toFloat())
-        var result = Bitmap.createScaledBitmap(
-            /* src = */ bitmap,
-            /* dstWidth = */ (scale * bitmap.width).toInt(),
-            /* dstHeight = */ (scale * bitmap.height).toInt(),
-            /* filter = */ false
-        )
+        var result = bitmap.scale((scale * bitmap.width).toInt(), (scale * bitmap.height).toInt(), false)
         for (filter in filters) {
             when (filter) {
                 is DivFilter.Blur -> {
@@ -977,7 +904,7 @@ internal val View.bindingContext get() = (this as? DivHolderView<*>)?.bindingCon
 internal fun bindItemBuilder(builder: DivCollectionItemBuilder, resolver: ExpressionResolver, callback: (Any) -> Unit) {
     builder.data.observe(resolver, callback)
 
-    val itemResolver = builder.getItemResolver(resolver)
+    val itemResolver = builder.getItemResolver(divView = null, resolver = resolver)
     builder.prototypes.forEach {
         it.selector.observe(itemResolver, callback)
     }
@@ -996,17 +923,21 @@ internal fun sendAccessibilityEventUnchecked(
     view ?: return
     if (accessibilityStateProvider.isAccessibilityEnabled(view.context)) {
         view.sendAccessibilityEventUnchecked(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) AccessibilityEvent(event)
-            else AccessibilityEvent.obtain(event)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                AccessibilityEvent(event)
+            } else {
+                @Suppress("DEPRECATION")
+                AccessibilityEvent.obtain(event)
+            }
         )
     }
 }
 
-internal fun <T> T.bindClipChildren(
+internal fun ViewGroup.bindClipChildren(
     newClipToBounds: Expression<Boolean>,
     oldClipToBounds: Expression<Boolean>?,
     resolver: ExpressionResolver
-) where T : ViewGroup, T : DivHolderView<*> {
+) {
     if (newClipToBounds.equalsToConstant(oldClipToBounds)) {
         return
     }
@@ -1017,11 +948,13 @@ internal fun <T> T.bindClipChildren(
         return
     }
 
-    addSubscription(newClipToBounds.observe(resolver) { clip -> applyClipChildren(clip) })
+    (this as? DivHolderView<*>)?.addSubscription(
+        newClipToBounds.observe(resolver) { clip -> applyClipChildren(clip) }
+    )
 }
 
-internal fun <T> T.applyClipChildren(clip: Boolean) where T : ViewGroup, T : DivHolderView<*> {
-    needClipping = clip
+internal fun ViewGroup.applyClipChildren(clip: Boolean) {
+    (this as? DivHolderView<*>)?.needClipping = clip
     val parent = parent
     if (!clip && parent is ViewGroup) {
         parent.clipChildren = false

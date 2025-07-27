@@ -37,6 +37,10 @@ extension DecoratingBlock {
       actionAnimation: actionAnimation,
       doubleTapActions: doubleTapActions,
       longTapActions: longTapActions,
+      pressStartActions: pressStartActions,
+      pressEndActions: pressEndActions,
+      hoverStartActions: hoverStartActions,
+      hoverEndActions: hoverEndActions,
       analyticsURL: analyticsURL,
       boundary: boundary,
       border: border,
@@ -48,7 +52,9 @@ extension DecoratingBlock {
       tooltips: tooltips,
       accessibility: accessibilityElement,
       reuseId: reuseId,
-      path: path
+      path: path,
+      isFocused: isFocused,
+      captureFocusOnAction: captureFocusOnAction
     )
     view.configure(
       model: model,
@@ -111,6 +117,10 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     let actionAnimation: ActionAnimation?
     let doubleTapActions: NonEmptyArray<UserInterfaceAction>?
     let longTapActions: LongTapActions?
+    let pressStartActions: NonEmptyArray<UserInterfaceAction>?
+    let pressEndActions: NonEmptyArray<UserInterfaceAction>?
+    let hoverStartActions: NonEmptyArray<UserInterfaceAction>?
+    let hoverEndActions: NonEmptyArray<UserInterfaceAction>?
     let analyticsURL: URL?
     let boundary: BoundaryTrait
     let border: BlockBorder?
@@ -123,6 +133,8 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     let accessibility: AccessibilityElement?
     let reuseId: String?
     let path: UIElementPath?
+    let isFocused: Bool?
+    let captureFocusOnAction: Bool
 
     var hasResponsiveUI: Bool {
       actions.hasPayload || longTapActions.hasPayload || doubleTapActions.hasPayload
@@ -139,6 +151,22 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     var shouldHandleDoubleTap: Bool {
       doubleTapActions != nil
     }
+
+    var shouldHandlePress: Bool {
+      pressStartActions != nil || pressEndActions != nil
+    }
+
+    var shouldHandleHover: Bool {
+      hoverStartActions != nil || hoverEndActions != nil
+    }
+
+    var shouldHandleAnyAction: Bool {
+      shouldHandleTap ||
+        shouldHandleLongTap ||
+        shouldHandleDoubleTap ||
+        shouldHandlePress ||
+        shouldHandleHover
+    }
   }
 
   fileprivate var model: Model!
@@ -154,6 +182,9 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
   private var visibilityActionPerformers: VisibilityActionPerformers?
   var visibleBoundsTrackingSubviews: [VisibleBoundsTrackingView] { childView.asArray() }
   var effectiveBackgroundColor: UIColor? { backgroundColor }
+
+  private var hasFocused = false
+  private var isViewOnWindow: Bool { window != nil }
 
   private var tapRecognizer: UITapGestureRecognizer? {
     didSet {
@@ -173,6 +204,13 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     didSet {
       oldValue.flatMap(removeGestureRecognizer(_:))
       longPressRecognizer.flatMap(addGestureRecognizer(_:))
+    }
+  }
+
+  private var hoverRecognizer: UIHoverGestureRecognizer? {
+    didSet {
+      oldValue.flatMap(removeGestureRecognizer(_:))
+      hoverRecognizer.flatMap(addGestureRecognizer(_:))
     }
   }
 
@@ -232,10 +270,11 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
   }
 
   private func configureRecognizers() {
-    guard model.shouldHandleTap else {
+    guard model.shouldHandleAnyAction else {
       tapRecognizer?.isEnabled = false
       doubleTapRecognizer?.isEnabled = false
       longPressRecognizer?.isEnabled = false
+      hoverRecognizer?.isEnabled = false
       return
     }
 
@@ -258,16 +297,24 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
       )
     }
 
+    if model.shouldHandleHover, hoverRecognizer == nil {
+      hoverRecognizer = UIHoverGestureRecognizer(
+        target: self,
+        action: #selector(handleHover)
+      )
+    }
+
     tapRecognizer?.isEnabled = model.shouldHandleTap
     doubleTapRecognizer?.isEnabled = model.shouldHandleDoubleTap
     longPressRecognizer?.isEnabled = model.shouldHandleLongTap
+    hoverRecognizer?.isEnabled = model.shouldHandleHover
   }
 
   private func checkTouchableArea() {
     guard tapRecognizer != nil || doubleTapRecognizer != nil || longPressRecognizer != nil else {
       return
     }
-    guard !bounds.size.isApproximatelyEqualTo(.zero) else { return }
+    guard bounds.width > 0 && bounds.height > 0 else { return }
     if bounds.width < 44 || bounds.height < 44 {
       renderingDelegate?.reportRenderingError(
         message: "Touchable view is too small: \(bounds.size), \(model.child)",
@@ -284,6 +331,7 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     // Sometimes there are late touches that were performed before layout.
     // This breaks UX due to UIView reusing, so just skip them here.
     guard bounds.contains(recognizer.location(in: self)) else { return }
+    captureFocusIfNeeded()
     model.analyticsURL.flatMap(AnalyticsUrlEvent.init(analyticsUrl:))?.sendFrom(self)
     let actions: [UserInterfaceAction]? = if recognizer === doubleTapRecognizer {
       model.doubleTapActions?.asArray()
@@ -299,6 +347,7 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     guard let actions = model.actions?.asArray() else {
       return false
     }
+    captureFocusIfNeeded()
     actions.perform(sendingFrom: self)
     return true
   }
@@ -306,7 +355,7 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
     let result = super.hitTest(point, with: event)
     if result === self {
-      return model.shouldHandleTap ? self : nil
+      return model.shouldHandleAnyAction ? self : nil
     } else {
       return result
     }
@@ -352,6 +401,20 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     view.transform = currentTransform
   }
 
+  override func didMoveToWindow() {
+    updateVoiceOverFocus()
+  }
+
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    super.touchesBegan(touches, with: event)
+    model.pressStartActions?.asArray().perform(sendingFrom: self)
+  }
+
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    super.touchesEnded(touches, with: event)
+    model.pressEndActions?.asArray().perform(sendingFrom: self)
+  }
+
   func configure(
     model: Model,
     observer: ElementStateObserver?,
@@ -393,6 +456,9 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     applyAccessibilityFromScratch(model.accessibility)
     model.actions?
       .forEach { applyAccessibility($0.accessibilityElement) }
+
+    hasFocused = oldModel?.isFocused == false && model.isFocused == true
+    updateVoiceOverFocus()
 
     if oldModel?.visibilityParams != model.visibilityParams {
       if let visibilityParams = model.visibilityParams {
@@ -488,7 +554,6 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     passVisibleBoundsChanged(from: from, to: to)
 
     if model.visibilityParams != nil {
-      if from == .zero, to == .zero { return }
       visibilityActionPerformers?.onVisibleBoundsChanged(to: to, bounds: bounds)
     }
   }
@@ -522,6 +587,29 @@ private final class DecoratingView: UIControl, BlockViewProtocol, VisibleBoundsT
     )
   }
 
+  private func updateVoiceOverFocus() {
+    guard hasFocused, isViewOnWindow else { return }
+
+    UIAccessibility.post(notification: .layoutChanged, argument: self)
+  }
+
+  private func captureFocusIfNeeded() {
+    if model.captureFocusOnAction {
+      observer?.clearFocus()
+    }
+  }
+
+  @objc private func handleHover(recognizer: UIHoverGestureRecognizer) {
+    switch recognizer.state {
+    case .began:
+      model.hoverStartActions?.asArray().perform(sendingFrom: self)
+    case .ended, .cancelled, .failed:
+      model.hoverEndActions?.asArray().perform(sendingFrom: self)
+    default:
+      break
+    }
+  }
+
   deinit {
     if model?.tooltips.isEmpty == false {
       renderingDelegate?.tooltipAnchorViewRemoved(anchorView: self)
@@ -534,6 +622,8 @@ extension DecoratingView {
     guard recognizer.state == .began else {
       return
     }
+
+    captureFocusIfNeeded()
 
     if let longTapActions = model.longTapActions {
       cancelTracking(with: nil)

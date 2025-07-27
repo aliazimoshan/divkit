@@ -7,7 +7,7 @@ extension ImageBlock {
 
   public func configureBlockView(
     _ view: BlockView,
-    observer _: ElementStateObserver?,
+    observer: ElementStateObserver?,
     overscrollDelegate _: ScrollDelegate?,
     renderingDelegate _: RenderingDelegate?
   ) {
@@ -27,8 +27,10 @@ extension ImageBlock {
     contentView.filter = filter
     contentView.isUserInteractionEnabled = false
     remoteImageViewContainer.contentView = contentView
-    if remoteImageViewContainer.imageHolder !== imageHolder {
-      remoteImageViewContainer.imageHolder = imageHolder
+    if compare(remoteImageViewContainer.imageHolder, imageHolder) == false {
+      remoteImageViewContainer.setImageHolder(imageHolder) { [weak self] in
+        self?.updateStateIfNeeded(observer: observer)
+      }
     }
     remoteImageViewContainer.isUserInteractionEnabled = false
     remoteImageViewContainer.applyAccessibilityFromScratch(accessibilityElement)

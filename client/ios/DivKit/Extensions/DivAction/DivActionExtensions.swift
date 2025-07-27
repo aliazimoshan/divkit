@@ -14,7 +14,7 @@ extension DivAction {
     } else {
       // don't make .divAction payloads for menu actions until DivActionHandler could handle it
       makeDivActionPayload(
-        path: context.parentPath,
+        path: context.path,
         source: .tap,
         localValues: context.localValues
       )
@@ -62,5 +62,9 @@ extension DivAction {
 extension [DivAction] {
   public func uiActions(context: DivBlockModelingContext) -> [UserInterfaceAction] {
     compactMap { $0.uiAction(context: context) }
+  }
+
+  func nonEmptyUIActions(context: DivBlockModelingContext) -> NonEmptyArray<UserInterfaceAction>? {
+    NonEmptyArray(uiActions(context: context))
   }
 }

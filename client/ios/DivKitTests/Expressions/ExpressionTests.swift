@@ -85,7 +85,13 @@ private struct ExpressionTestCase: Decodable {
       let variable = try variablesContainer.decode(DivVariable.self)
       variables.append(variable)
     }
-    self.variables = variables.extractDivVariableValues()
+    self.variables = variables.extractDivVariableValues(
+      ExpressionResolver(
+        functionsProvider: FunctionsProvider(persistentValuesStorage: DivPersistentValuesStorage()),
+        variableValueProvider: { _ in nil },
+        errorTracker: { XCTFail($0.description) }
+      )
+    )
   }
 
   var description: String {
@@ -153,7 +159,7 @@ private struct ExpressionTestCase: Decodable {
   }
 }
 
-private enum ExpectedValue: Decodable {
+enum ExpectedValue: Decodable {
   case string(String)
   case double(Double)
   case integer(Int)

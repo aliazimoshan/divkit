@@ -7,6 +7,7 @@ final class DecoratingBlock: WrapperBlock {
   static let defaultBackgroundColor: Color = .clear
   static let defaultChildAlpha: CGFloat = 1
   static let defaultHighlightedBackgroundColor: Color? = nil
+  static let defaultCaptureFocusOnAction: Bool = true
 
   let child: Block
   let backgroundColor: Color
@@ -15,6 +16,10 @@ final class DecoratingBlock: WrapperBlock {
   let actionAnimation: ActionAnimation?
   let doubleTapActions: NonEmptyArray<UserInterfaceAction>?
   let longTapActions: LongTapActions?
+  let pressStartActions: NonEmptyArray<UserInterfaceAction>?
+  let pressEndActions: NonEmptyArray<UserInterfaceAction>?
+  let hoverStartActions: NonEmptyArray<UserInterfaceAction>?
+  let hoverEndActions: NonEmptyArray<UserInterfaceAction>?
   let analyticsURL: URL?
   let boundary: BoundaryTrait
   let border: BlockBorder?
@@ -27,6 +32,8 @@ final class DecoratingBlock: WrapperBlock {
   let reuseId: String
   let path: UIElementPath?
   let isEmpty: Bool
+  let isFocused: Bool
+  let captureFocusOnAction: Bool
 
   init(
     child: Block,
@@ -36,6 +43,10 @@ final class DecoratingBlock: WrapperBlock {
     actionAnimation: ActionAnimation? = nil,
     doubleTapActions: NonEmptyArray<UserInterfaceAction>? = nil,
     longTapActions: LongTapActions? = nil,
+    pressStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    pressEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
     analyticsURL: URL? = nil,
     boundary: BoundaryTrait = DecoratingBlock.defaultBoundary,
     border: BlockBorder? = nil,
@@ -47,7 +58,9 @@ final class DecoratingBlock: WrapperBlock {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String? = nil,
     path: UIElementPath? = nil,
-    isEmpty: Bool = false
+    isEmpty: Bool = false,
+    isFocused: Bool = false,
+    captureFocusOnAction: Bool = DecoratingBlock.defaultCaptureFocusOnAction
   ) {
     self.child = child
     self.backgroundColor = backgroundColor
@@ -56,6 +69,10 @@ final class DecoratingBlock: WrapperBlock {
     self.actionAnimation = actionAnimation
     self.doubleTapActions = doubleTapActions
     self.longTapActions = longTapActions
+    self.pressStartActions = pressStartActions
+    self.pressEndActions = pressEndActions
+    self.hoverStartActions = hoverStartActions
+    self.hoverEndActions = hoverEndActions
     self.analyticsURL = analyticsURL
     self.boundary = boundary
     self.border = border
@@ -68,16 +85,18 @@ final class DecoratingBlock: WrapperBlock {
     self.reuseId = reuseId ?? DecoratingBlock.defaultReuseId
     self.path = path
     self.isEmpty = isEmpty
+    self.isFocused = isFocused
+    self.captureFocusOnAction = captureFocusOnAction
   }
 
   var intrinsicContentWidth: CGFloat {
-    child.intrinsicContentWidth.roundedToScreenScale + paddings.horizontalInsets.sum
+    child.intrinsicContentWidth.roundedToScreenScale + paddings.horizontal.sum
   }
 
   func intrinsicContentHeight(forWidth width: CGFloat) -> CGFloat {
-    let childWidth = max(0, width - paddings.horizontalInsets.sum)
+    let childWidth = max(0, width - paddings.horizontal.sum)
     return child.intrinsicContentHeight(forWidth: childWidth).roundedToScreenScale
-      + paddings.verticalInsets.sum
+      + paddings.vertical.sum
   }
 
   var widthOfHorizontallyNonResizableBlock: CGFloat {
@@ -92,11 +111,11 @@ final class DecoratingBlock: WrapperBlock {
     guard let childAscent = child.ascent(forWidth: width) else {
       return nil
     }
-    return childAscent + paddings.verticalInsets.leading
+    return childAscent + paddings.vertical.leading
   }
 
   func laidOut(for width: CGFloat) -> Block {
-    let childWidth = width - paddings.horizontalInsets.sum
+    let childWidth = width - paddings.horizontal.sum
     return updatingChild(child.laidOut(for: childWidth))
   }
 
@@ -111,6 +130,10 @@ final class DecoratingBlock: WrapperBlock {
       && actions == other.actions
       && longTapActions == other.longTapActions
       && doubleTapActions == other.doubleTapActions
+      && pressStartActions == other.pressStartActions
+      && pressEndActions == other.pressEndActions
+      && hoverStartActions == other.hoverStartActions
+      && hoverEndActions == other.hoverEndActions
       && actionAnimation == other.actionAnimation
       && analyticsURL == other.analyticsURL
       && boundary == other.boundary
@@ -124,6 +147,8 @@ final class DecoratingBlock: WrapperBlock {
       && accessibilityElement == other.accessibilityElement
       && reuseId == other.reuseId
       && isEmpty == other.isEmpty
+      && path == other.path
+      && isFocused == other.isFocused
   }
 
   func makeCopy(wrapping child: Block) -> DecoratingBlock {
@@ -145,6 +170,10 @@ extension DecoratingBlock {
     actionAnimation: ActionAnimation? = nil,
     doubleTapActions: NonEmptyArray<UserInterfaceAction>? = nil,
     longTapActions: LongTapActions? = nil,
+    pressStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    pressEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverStartActions: NonEmptyArray<UserInterfaceAction>? = nil,
+    hoverEndActions: NonEmptyArray<UserInterfaceAction>? = nil,
     analyticsURL: URL?? = nil,
     boundary: BoundaryTrait? = nil,
     border: BlockBorder?? = nil,
@@ -156,7 +185,9 @@ extension DecoratingBlock {
     accessibilityElement: AccessibilityElement? = nil,
     reuseId: String? = nil,
     path: UIElementPath? = nil,
-    isEmpty: Bool? = nil
+    isEmpty: Bool? = nil,
+    isFocused: Bool? = nil,
+    captureFocusOnAction: Bool? = nil
   ) -> DecoratingBlock {
     DecoratingBlock(
       child: child ?? self.child,
@@ -166,6 +197,10 @@ extension DecoratingBlock {
       actionAnimation: actionAnimation ?? self.actionAnimation,
       doubleTapActions: doubleTapActions ?? self.doubleTapActions,
       longTapActions: longTapActions ?? self.longTapActions,
+      pressStartActions: pressStartActions ?? self.pressStartActions,
+      pressEndActions: pressEndActions ?? self.pressEndActions,
+      hoverStartActions: hoverStartActions ?? self.hoverStartActions,
+      hoverEndActions: hoverEndActions ?? self.hoverEndActions,
       analyticsURL: analyticsURL ?? self.analyticsURL,
       boundary: boundary ?? self.boundary,
       border: border ?? self.border,
@@ -177,10 +212,14 @@ extension DecoratingBlock {
       accessibilityElement: accessibilityElement ?? self.accessibilityElement,
       reuseId: reuseId ?? self.reuseId,
       path: path ?? self.path,
-      isEmpty: isEmpty ?? self.isEmpty
+      isEmpty: isEmpty ?? self.isEmpty,
+      isFocused: isFocused ?? self.isFocused,
+      captureFocusOnAction: captureFocusOnAction ?? self.captureFocusOnAction
     )
   }
 }
+
+extension DecoratingBlock: PaddingProvidingBlock {}
 
 extension DecoratingBlock {
   var childPath: UIElementPath? {
@@ -188,7 +227,7 @@ extension DecoratingBlock {
     case let child as DecoratingBlock:
       child.childPath
 
-    case let child as PathHolder:
+    case let child as PathIdentifiable:
       child.path
 
     default:

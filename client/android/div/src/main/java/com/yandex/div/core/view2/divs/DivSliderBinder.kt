@@ -6,19 +6,21 @@ import com.yandex.div.core.Div2Logger
 import com.yandex.div.core.dagger.ExperimentFlag
 import com.yandex.div.core.experiments.Experiment
 import com.yandex.div.core.expression.variables.TwoWayIntegerVariableBinder
-import com.yandex.div.core.font.DivTypefaceProvider
 import com.yandex.div.core.state.DivStatePath
 import com.yandex.div.core.util.observeDrawable
 import com.yandex.div.core.util.toIntSafely
 import com.yandex.div.core.view2.BindingContext
+import com.yandex.div.core.view2.DivTypefaceResolver
 import com.yandex.div.core.view2.DivViewBinder
 import com.yandex.div.core.view2.divs.widgets.DivSliderView
 import com.yandex.div.core.view2.errors.ErrorCollector
 import com.yandex.div.core.view2.errors.ErrorCollectors
+import com.yandex.div.core.view2.getTypeface
 import com.yandex.div.internal.widget.slider.SliderTextStyle
 import com.yandex.div.internal.widget.slider.SliderView
 import com.yandex.div.internal.widget.slider.shapes.TextDrawable
 import com.yandex.div.json.expressions.ExpressionResolver
+import com.yandex.div2.Div
 import com.yandex.div2.DivDrawable
 import com.yandex.div2.DivEdgeInsets
 import com.yandex.div2.DivSizeUnit
@@ -30,59 +32,53 @@ import kotlin.math.roundToLong
 private const val SLIDER_TICKS_OVERLAP_WARNING = "Slider ticks overlap each other."
 
 internal class DivSliderBinder @Inject constructor(
-        private val baseBinder: DivBaseBinder,
-        private val logger: Div2Logger,
-        private val typefaceProvider: DivTypefaceProvider,
-        private val variableBinder: TwoWayIntegerVariableBinder,
-        private val errorCollectors: ErrorCollectors,
-        private val horizontalInterceptionAngle: Float,
-        @ExperimentFlag(Experiment.VISUAL_ERRORS_ENABLED) private val visualErrorsEnabled: Boolean,
-) : DivViewBinder<DivSlider, DivSliderView> {
+    baseBinder: DivBaseBinder,
+    private val logger: Div2Logger,
+    private val typefaceResolver: DivTypefaceResolver,
+    private val variableBinder: TwoWayIntegerVariableBinder,
+    private val errorCollectors: ErrorCollectors,
+    private val horizontalInterceptionAngle: Float,
+    @ExperimentFlag(Experiment.VISUAL_ERRORS_ENABLED) private val visualErrorsEnabled: Boolean,
+) : DivViewBinder<Div.Slider, DivSlider, DivSliderView>(baseBinder) {
 
     private var errorCollector: ErrorCollector? = null
 
-    override fun bindView(
-        context: BindingContext,
-        view: DivSliderView,
+    override fun DivSliderView.bind(
+        bindingContext: BindingContext,
         div: DivSlider,
+        oldDiv: DivSlider?,
         path: DivStatePath
     ) {
-        val oldDiv = view.div
-        val divView = context.divView
-        errorCollector = errorCollectors.getOrCreate(divView.dataTag, divView.divData)
-        if (div === oldDiv) return
+        val expressionResolver = bindingContext.expressionResolver
+        errorCollector = errorCollectors.getOrCreate(bindingContext.divView.dataTag, bindingContext.divView.divData)
 
-        val expressionResolver = context.expressionResolver
+        interceptionAngle = horizontalInterceptionAngle
 
-        baseBinder.bindView(context, view, div, oldDiv)
-
-        view.interceptionAngle = horizontalInterceptionAngle
-
-        view.addSubscription(
-            div.minValue.observeAndGet(expressionResolver) { minValue ->
-                view.minValue = minValue.toFloat()
-                view.checkSliderTicks()
+        addSubscription(
+            div.minValue.observeAndGet(expressionResolver) {
+                minValue = it.toFloat()
+                checkSliderTicks()
             }
         )
-        view.addSubscription(
-            div.maxValue.observeAndGet(expressionResolver) { maxValue ->
-                view.maxValue = maxValue.toFloat()
-                view.checkSliderTicks()
+        addSubscription(
+            div.maxValue.observeAndGet(expressionResolver) {
+                maxValue = it.toFloat()
+                checkSliderTicks()
             }
         )
 
-        view.addSubscription(
-            div.isEnabled.observeAndGet(expressionResolver) { view.interactive = it }
+        addSubscription(
+            div.isEnabled.observeAndGet(expressionResolver) { interactive = it }
         )
 
-        view.clearOnThumbChangedListener()
-        view.setupThumb(div, context, path)
-        view.setupSecondaryThumb(div, context, path)
+        clearOnThumbChangedListener()
+        setupThumb(div, bindingContext, path)
+        setupSecondaryThumb(div, bindingContext, path)
 
-        view.setupTrack(div, expressionResolver)
-        view.setupTickMarks(div, expressionResolver)
+        setupTrack(div, expressionResolver)
+        setupTickMarks(div, expressionResolver)
 
-        view.setupRanges(div, expressionResolver)
+        setupRanges(div, expressionResolver)
     }
 
     private fun DivSliderView.setupThumb(
@@ -163,7 +159,7 @@ internal class DivSliderBinder @Inject constructor(
         textStyle: DivSlider.TextStyle?
     ) {
         thumbTextDrawable = textStyle?.let {
-            TextDrawable(it.toSliderTextStyle(resources.displayMetrics, typefaceProvider, resolver))
+            TextDrawable(it.toSliderTextStyle(resources.displayMetrics, typefaceResolver, resolver))
         }
     }
 
@@ -187,7 +183,7 @@ internal class DivSliderBinder @Inject constructor(
         textStyle: DivSlider.TextStyle?
     ) {
         thumbSecondTextDrawable = textStyle?.let {
-            TextDrawable(it.toSliderTextStyle(resources.displayMetrics, typefaceProvider, resolver))
+            TextDrawable(it.toSliderTextStyle(resources.displayMetrics, typefaceResolver, resolver))
         }
     }
 
@@ -379,15 +375,28 @@ internal class DivSliderBinder @Inject constructor(
     private companion object {
         fun DivSlider.TextStyle.toSliderTextStyle(
             metrics: DisplayMetrics,
-            typefaceProvider: DivTypefaceProvider,
+            typefaceResolver: DivTypefaceResolver,
             resolver: ExpressionResolver
         ): SliderTextStyle {
+            val size = fontSize.evaluate(resolver)
+            val typefaceProvider = typefaceResolver.getTypefaceProvider(fontFamily?.evaluate(resolver))
+            val fontVariations = if (typefaceProvider.isVariable) {
+                getFontVariations(fontWeight, fontWeightValue, fontVariationSettings, resolver)
+            } else {
+                ""
+            }
             return SliderTextStyle(
-                fontSize = fontSize.evaluate(resolver).fontSizeToPx(fontSizeUnit.evaluate(resolver), metrics),
-                fontWeight = getTypeface(getTypefaceValue(fontWeight.evaluate(resolver), fontWeightValue?.evaluate(resolver)), typefaceProvider),
+                fontSize = size.fontSizeToPx(fontSizeUnit.evaluate(resolver), metrics),
+                spacing = letterSpacing.evaluate(resolver).toFloat() / size,
+                fontWeight = getTypeface(
+                    fontWeight.evaluate(resolver),
+                    fontWeightValue?.evaluate(resolver)?.toIntSafely(),
+                    typefaceProvider
+                ),
                 offsetX = offset?.x?.toPx(metrics, resolver)?.toFloat() ?: 0f,
                 offsetY = offset?.y?.toPx(metrics, resolver)?.toFloat() ?: 0f,
-                textColor = textColor.evaluate(resolver)
+                textColor = textColor.evaluate(resolver),
+                fontVariations = fontVariations,
             )
         }
 

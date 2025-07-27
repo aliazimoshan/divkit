@@ -6,8 +6,9 @@ extension DivTypedValue {
   ) -> DivVariableValue? {
     switch self {
     case let .arrayValue(value):
-      if let arrayValue = value.resolveValue(expressionResolver) as? DivArray {
-        return .array(arrayValue)
+      if let array = value.resolveValue(expressionResolver),
+         let divArray = DivArray.fromAny(array) {
+        return .array(divArray)
       }
       return nil
     case let .booleanValue(value):
@@ -21,8 +22,9 @@ extension DivTypedValue {
       }
       return nil
     case let .dictValue(value):
-      if let dictValue = DivDictionary.fromAny(value.value) {
-        return .dict(dictValue)
+      if let dictValue = value.resolveValue(expressionResolver),
+         let divDict = DivDictionary.fromAny(dictValue) {
+        return .dict(divDict)
       }
       return nil
     case let .integerValue(value):
@@ -53,8 +55,8 @@ extension DivTypedValue {
   ) -> AnyHashable? {
     switch self {
     case let .arrayValue(value):
-      if let arrayValue = value.resolveValue(expressionResolver) as? DivArray {
-        return arrayValue
+      if let arrayValue = value.resolveValue(expressionResolver) {
+        return DivArray.fromAny(arrayValue)
       }
       return nil
     case let .booleanValue(value):
@@ -68,9 +70,9 @@ extension DivTypedValue {
       }
       return nil
     case let .dictValue(value):
-      if let dictValue = value.value as? DivDictionary {
-        return dictValue
-      }
+        if let dictValue = value.resolveValue(expressionResolver) {
+          return DivDictionary.fromAny(dictValue)
+        }
       return nil
     case let .integerValue(value):
       if let integerValue = value.resolveValue(expressionResolver) {

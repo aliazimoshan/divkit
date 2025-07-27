@@ -1,3 +1,4 @@
+import Foundation
 import VGSL
 
 public struct FontParams: Hashable {
@@ -6,6 +7,7 @@ public struct FontParams: Hashable {
   let size: Int
   let unit: DivSizeUnit
   let featureSettings: String?
+  let variationSettings: [String: NSNumber]?
 }
 
 public protocol FontParamsProvider {
@@ -15,6 +17,7 @@ public protocol FontParamsProvider {
   func resolveFontSize(_ resolver: ExpressionResolver) -> Int
   func resolveFontSizeUnit(_ resolver: ExpressionResolver) -> DivSizeUnit
   func resolveFontFeatureSettings(_ resolver: ExpressionResolver) -> String?
+  func resolveFontVariationSettings(_ resolver: ExpressionResolver) -> [String: Any]?
 }
 
 extension FontParamsProvider {
@@ -25,27 +28,56 @@ extension FontParamsProvider {
         ?? resolveFontWeight(expressionResolver).toInt(),
       size: resolveFontSize(expressionResolver),
       unit: resolveFontSizeUnit(expressionResolver),
-      featureSettings: resolveFontFeatureSettings(expressionResolver)
+      featureSettings: resolveFontFeatureSettings(expressionResolver),
+      variationSettings: resolveFontVariationSettings(expressionResolver)?
+        .mapValues { $0 as? NSNumber }.filteringNilValues()
     )
   }
 
   public func resolveFontFeatureSettings(_: ExpressionResolver) -> String? {
     nil
   }
-}
 
-extension DivFontProvider {
-  public func font(_ params: FontParams) -> Font {
-    let font = font(
-      family: params.family,
-      weight: params.weight,
-      size: params.unit.makeScaledValue(params.size)
-    )
-    #if os(iOS)
-    if let featureSettings = params.featureSettings {
-      return font.withFontFeatureSettings(featureSettings)
-    }
-    #endif
-    return font
+  public func resolveFontVariationSettings(_: ExpressionResolver) -> [String: Any]? {
+    nil
   }
 }
+
+extension DivBlockModelingContext {
+  public func font(_ params: FontParams) -> Font {
+    if flagsInfo.fontCacheEnabled {
+      fontCache.withLock { fontCache in
+        if let cached = fontCache[params] {
+          return cached
+        }
+        let font = makeFont(provider: self.fontProvider, params: params)
+        fontCache[params] = font
+        return font
+      }
+    } else {
+      makeFont(provider: self.fontProvider, params: params)
+    }
+  }
+}
+
+private func makeFont(provider: DivFontProvider, params: FontParams) -> Font {
+  var font = provider.font(
+    family: params.family,
+    weight: params.weight,
+    size: params.unit.makeScaledValue(params.size)
+  )
+  var variationSettings = params.variationSettings ?? [:]
+  if variationSettings["wght"] == nil {
+    variationSettings["wght"] = params.weight as NSNumber
+  }
+  font = font.withVariationSettings(axisTagToValue: variationSettings)
+
+  #if os(iOS)
+  if let featureSettings = params.featureSettings {
+    return font.withFontFeatureSettings(featureSettings)
+  }
+  #endif
+  return font
+}
+
+private var fontCache = AllocatedUnfairLock<[FontParams: Font]>(uncheckedState: [:])

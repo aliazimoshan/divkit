@@ -44,6 +44,7 @@
       "$description": "translations.json#/div_tooltip_animation_in",
       "platforms": [
         "android",
+        "ios",
         "web"
       ]
     },
@@ -52,6 +53,7 @@
       "$description": "translations.json#/div_tooltip_animation_out",
       "platforms": [
         "android",
+        "ios",
         "web"
       ]
     },
@@ -72,7 +74,9 @@
       },
       "$description": "translations.json#/div_tooltip_tap_outside_actions",
       "platforms": [
-        "ios"
+        "android",
+        "ios",
+        "web"
       ]
     },
     "close_by_tap_outside": {
@@ -81,14 +85,16 @@
       "default_value": "true",
       "platforms": [
         "android",
-        "ios"
+        "ios",
+        "web"
       ]
     },
     "background_accessibility_description": {
       "type": "string",
       "$description": "translations.json#/div_tooltip_background_accessibility_description",
       "platforms": [
-        "ios"
+        "ios",
+        "web"
       ]
     }
   },

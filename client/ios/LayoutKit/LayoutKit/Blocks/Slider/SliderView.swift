@@ -16,6 +16,8 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
     }
   }
 
+  var layoutReporter: LayoutReporter?
+
   func setSliderModel(
     _ sliderModel: SliderModel,
     observer: ElementStateObserver? = nil,
@@ -78,6 +80,8 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
       firstThumbProgress = CGFloat(clampedFirstThumbValue)
       secondThumbProgress = CGFloat(clampedSecondThumbValue)
     }
+
+    isUserInteractionEnabled = sliderModel.isEnabled
 
     setNeedsLayout()
   }
@@ -268,6 +272,7 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
     }
 
     super.layoutSubviews()
+    layoutReporter?.willLayoutSubviews()
 
     configureThumb(
       thumbView: firstThumb,
@@ -304,6 +309,7 @@ final class SliderView: BlockView, VisibleBoundsTrackingLeaf {
       progressSecondThumb: sliderModel
         .secondThumb != nil ? secondThumbProgress : CGFloat(sliderModel.minValue)
     )
+    layoutReporter?.didLayoutSubviews()
   }
 
   private func configureRangeViews(

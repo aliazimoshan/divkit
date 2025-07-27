@@ -272,8 +272,8 @@
     "ru": "Параметры HTTP-запроса, которые используются для конфигурации отправки данных."
   },
   "div_action_submit_request_headers": {
-    "en": "HTTP request headers. Please note that DivKit does not clean duplicate headers, which can lead to errors in request processing. Keep this in mind when assembling actions with complex json-builders.",
-    "ru": "Заголовки HTTP-запроса. Обратите внимание, что DivKit не очищает дублирующиеся заголовки, наличие которых может приводить к ошибкам в обработке запроса. Учитывайте это при сборке action'ов сложными json-builder'ами."
+    "en": "HTTP request headers. Please note that DivKit does not clean duplicate headers, which can lead to errors in request processing. Keep this in mind when assembling actions with complex JSON-builders.",
+    "ru": "Заголовки HTTP-запроса. Обратите внимание, что DivKit не очищает дублирующиеся заголовки, наличие которых может приводить к ошибкам в обработке запроса. Учитывайте это при сборке action'ов сложными JSON-builder'ами."
   },
   "div_action_submit_request_method": {
     "en": "HTTP request method.",
@@ -330,6 +330,10 @@
   "div_actionable_actions": {
     "en": "Multiple actions when clicking on an element.",
     "ru": "Несколько действий при нажатии на элемент."
+  },
+  "div_actionable_capture_focus_on_action": {
+    "en": "If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>",
+    "ru": "Если значение:<li>`true` — при активации экшена элемента фокус будет перенесён на него. Это означает, что фокус режима доступности будет перенесён, а виртуальная клавиатура скрыта, кроме случаев, когда целевой элемент предполагает её наличие (например, `input`).</li><li>`false` — при нажатии на элемент фокус останется на текущем сфокусированном элементе.</li>"
   },
   "div_actionable_doubletap_actions": {
     "en": "Action when double-clicking on an element.",
@@ -514,6 +518,10 @@
   "div_base_border": {
     "en": "Element stroke.",
     "ru": "Рамка элемента."
+  },
+  "div_base_capture_focus_on_action": {
+    "en": "If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>",
+    "ru": "Если значение:<li>`true` — при активации экшена элемента фокус будет перенесён на него. Это означает, что фокус режима доступности будет перенесен, а виртуальная клавиатура скрыта, кроме случаев, когда целевой элемент предполагает ее наличие (например, `input`).</li><li>`false` — при нажатии на элемент фокус останется на текущем сфокусированном элементе.</li>"
   },
   "div_base_column_span": {
     "en": "Merges cells in a column of the [grid](div-grid.md) element.",
@@ -1027,6 +1035,10 @@
     "en": "Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>",
     "ru": "Единица измерения:<li>`px` — физический пиксель.</li><li>`dp` — логический пиксель, который не зависит от плотности экрана.</li><li>`sp` — логический пиксель, который зависит от размера шрифта на устройстве. Указывайте в `sp` высоту. Доступен только на Android.</li>"
   },
+  "div_font_variation_settings": {
+    "en": "List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.",
+    "ru": "Список свойств шрифтов TrueType/OpenType. Словарь состоит из пар значений тега оси и стиля. Тег оси должен содержать четыре символа ASCII."
+  },
   "div_font_weight": {
     "en": "Style.",
     "ru": "Начертание."
@@ -1131,6 +1143,22 @@
     "en": "Colors. Gradient points will be located at an equal distance from each other.",
     "ru": "Цвета. Точки градиента будут расположены на равном расстоянии друг от друга."
   },
+  "div_gradient_color_map": {
+    "en": "Colors and positions of gradient points. When using this parameter, the `colors` parameter is ignored.",
+    "ru": "Цвета и расположение точек градиента. При использовании данного параметра игнорируется параметр `colors`."
+  },
+  "div_gradient_color_point": {
+    "en": "Describes color at particular gradient position.",
+    "ru": "Определяет цвет градиента на заданной позиции."
+  },
+  "div_gradient_color_point_color": {
+    "en": "Gradient color corresponding to gradient point.",
+    "ru": "Цвет градиента, соответствующий точке градиента."
+  },
+  "div_gradient_color_point_position": {
+    "en": "The position of the gradient point.",
+    "ru": "Расположение точки градиента."
+  },
   "div_gradient_colors": {
     "en": "Colors. Gradient points are located at an equal distance from each other.",
     "ru": "Цвета. Точки градиента будут расположены на равном расстоянии друг от друга."
@@ -1142,22 +1170,6 @@
   "div_gradient_linear_angle": {
     "en": "Angle of gradient direction.",
     "ru": "Угол направления градиента."
-  },
-  "div_gradient_linear_color_map": {
-    "en": "Colors and positions of gradient points. When using this parameter, the `colors` parameter is ignored.",
-    "ru": "Цвета и расположение точек градиента. При использовании данного параметра игнорируется параметр `colors`."
-  },
-  "div_gradient_linear_color_point": {
-    "en": "Describes color at particular gradient position.",
-    "ru": "Определяет цвет градиента на заданной позиции."
-  },
-  "div_gradient_linear_color_point_color": {
-    "en": "Gradient color corresponding to gradient point.",
-    "ru": "Цвет градиента, соответствующий точке градиента."
-  },
-  "div_gradient_linear_color_point_position": {
-    "en": "The position of the gradient point.",
-    "ru": "Расположение точки градиента."
   },
   "div_gradient_radial": {
     "en": "Radial gradient.",
@@ -1360,8 +1372,8 @@
     "ru": "Элемент для ввода текста."
   },
   "div_input_autocapitalization": {
-    "en": "Text auto-capitalization type.",
-    "ru": "Тип автоматической капитализации текста."
+    "en": "Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>",
+    "ru": "Тип автоматической капитализации текста. <li>По умолчанию: `auto` - дефолтное поведение платформы;</li><li>`none` - автоматическая капитализация не применяется;</li><li>`words` - капитализация каждого слова;</li><li>`sentences` - капитализация в начале предложения;</li><li>`all_characters` - капитализация каждого символа.</li>"
   },
   "div_input_enter_key_actions": {
     "en": "Actions when pressing the 'Enter' key. Actions (if any) override the default behavior.",
@@ -2243,6 +2255,10 @@
     "en": "Background color of the active tab title.",
     "ru": "Цвет фона заголовка активного таба."
   },
+  "div_tabs_tab_title_style_active_font_variation_settings": {
+    "en": "List of TrueType/OpenType font features of the active tab title.",
+    "ru": "Список свойств шрифтов TrueType/OpenType заголовка активного таба."
+  },
   "div_tabs_tab_title_style_active_font_weight": {
     "en": "Active tab title style.",
     "ru": "Начертание заголовка активного таба."
@@ -2282,6 +2298,10 @@
   "div_tabs_tab_title_style_inactive_background_color": {
     "en": "Background color of the inactive tab title.",
     "ru": "Цвет фона заголовка неактивного таба."
+  },
+  "div_tabs_tab_title_style_inactive_font_variation_settings": {
+    "en": "List of TrueType/OpenType font features of the inactive tab title.",
+    "ru": "Список свойств шрифтов TrueType/OpenType заголовка неактивного таба."
   },
   "div_tabs_tab_title_style_inactive_font_weight": {
     "en": "Inactive tab title style.",
@@ -2536,8 +2556,8 @@
     "ru": "Ограничивать ширину текста максимальной шириной строки. Работает только с шириной `wrap_content`, `constrained=true` и выставленным `max_size`."
   },
   "div_text_truncate": {
-    "en": "Text cropping method. Use `ellipsis` instead.",
-    "ru": "Способ обрезания текста. Вместо него используйте `ellipsis`."
+    "en": "Location of text cropping marker.",
+    "ru": "Расположение маркера обрезки текста."
   },
   "div_text_underline": {
     "en": "Underline.",
@@ -2584,12 +2604,12 @@
     "ru": "Анимация исчезания подсказки. По умолчанию подсказка будет исчезать постепенно со смещением от якорной точки на 10 dp."
   },
   "div_tooltip_background_accessibility_description": {
-    "en": "Description for accessibility of the background tap action for tooltip.",
-    "ru": "Описание для доступности действия нажатия по фону тултипа."
+    "en": "Description for accessibility of the tap action on the background of the tooltip.",
+    "ru": "Описание для доступности действия нажатия на фон тултипа."
   },
   "div_tooltip_close_by_tap_outside": {
     "en": "Allows dismissing tooltip by tapping outside of it.",
-    "ru": "Позволяет закрывать подсказку при нажатии за её пределами."
+    "ru": "Позволяет закрывать подсказку при нажатии за ее пределами."
   },
   "div_tooltip_div": {
     "en": "An element that will be shown in a tooltip. If there are tooltips inside an element, they won't be shown.",
@@ -2609,11 +2629,11 @@
   },
   "div_tooltip_mode_modal": {
     "en": "Modal mode. Clicks outside do not pass through to underlying elements. Restricts focus to the tooltip. Back button on Android and back gesture on iOS close the tooltip.",
-    "ru": "Модальный режим. Клик за пределами не проходит сквозь и не доступен элементам под подсказкой. Ограничивает фокус в пределах подсказки. Кнопка назад на android и жест назад на ios закрывают подсказку"
+    "ru": "Модальный режим. Клик за пределами не проходит сквозь и не доступен элементам под подсказкой. Ограничивает фокус в пределах подсказки. Кнопка назад на Android и жест назад на iOS закрывают подсказку."
   },
   "div_tooltip_mode_non_modal": {
     "en": "Non-modal mode. Clicks outside pass through to underlying elements. Does not restrict focus to the tooltip. Back button on Android and back gesture on iOS do not close the tooltip.",
-    "ru": "Немодальный режим. Клик за пределами обрабатывается элементами под подсказкой. Не ограничивает фокус в пределах подсказки. Кнопка назад на android и жест назад на ios не закрывают подсказку."
+    "ru": "Немодальный режим. Клик за пределами обрабатывается элементами под подсказкой. Не ограничивает фокус в пределах подсказки. Кнопка назад на Android и жест назад на iOS не закрывают подсказку."
   },
   "div_tooltip_offset": {
     "en": "Shift relative to an anchor point.",
@@ -2716,8 +2736,8 @@
     "ru": "Переменная — URL в виде строки."
   },
   "div_variable_value": {
-    "en": "Value.",
-    "ru": "Значение."
+    "en": "Value. Supports expressions for variable initialization.",
+    "ru": "Значение. Поддерживает выражения для инициализации переменных."
   },
   "div_video": {
     "en": "Video.",

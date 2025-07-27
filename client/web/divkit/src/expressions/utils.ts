@@ -25,7 +25,7 @@ export function dateToString(date: Date): string {
         .replace(/\.\d{3}Z$/, '');
 }
 
-export function valToString(val: EvalValue): string {
+export function valToString(val: EvalValue, stringifyComplex: boolean): string {
     if (val.type === 'string') {
         return val.value;
     } else if (val.type === 'integer') {
@@ -52,6 +52,8 @@ export function valToString(val: EvalValue): string {
         return stringifyColor(safeConvertColor(val.value));
     } else if (val.type === 'url') {
         return val.value;
+    } else if ((val.type === 'dict' || val.type === 'array') && stringifyComplex) {
+        return JSON.stringify(val.value);
     } else if (val.type === 'dict') {
         return '<dict>';
     } else if (val.type === 'array') {
@@ -63,7 +65,7 @@ export function valToString(val: EvalValue): string {
 }
 
 export function valToPreview(val: EvalValue): string {
-    let res = valToString(val);
+    let res = valToString(val, false);
 
     if (val.type === 'string') {
         res = "'" +
@@ -90,6 +92,19 @@ export function roundInteger(_ctx: EvalContext, val: bigint): bigint {
 export function checkIntegerOverflow(_ctx: EvalContext, val: number | bigint): void {
     if (val < MIN_INT || val > MAX_INT) {
         throw new Error('Integer overflow.');
+    }
+}
+
+export function checkUrl(val: unknown): void {
+    if (typeof val !== 'string') {
+        throw new Error('Incorrect url value.');
+    }
+
+    try {
+        // eslint-disable-next-line no-new
+        new URL(val);
+    } catch (_err) {
+        throw new Error('Incorrect url value.');
     }
 }
 
@@ -194,6 +209,9 @@ export function convertJsValueToDivKit(ctx: EvalContext, val: unknown, evalType:
     }
     if (jsType === 'string' && evalType === 'color') {
         val = transformColorValue(val as string);
+    }
+    if (jsType === 'string' && evalType === 'url') {
+        checkUrl(val);
     }
 
     return {

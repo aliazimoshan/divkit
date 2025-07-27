@@ -5,12 +5,11 @@ import VGSL
 
 extension DivTabs: DivBlockModeling {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    let path = context.parentPath + (id ?? DivTabs.type)
-    let tabsContext = context.modifying(parentPath: path)
-    return try modifyError({ DivBlockModelingError($0.message, path: path) }) {
+    let context = modifiedContextParentPath(context)
+    return try modifyError({ DivBlockModelingError($0.message, path: context.path) }) {
       try applyBaseProperties(
-        to: { try makeBaseBlock(context: tabsContext) },
-        context: tabsContext,
+        to: { try makeBaseBlock(context: context) },
+        context: context,
         actionsHolder: nil
       )
     }
@@ -29,7 +28,7 @@ extension DivTabs: DivBlockModeling {
     if tabs.isEmpty {
       throw DivBlockModelingError(
         "Tabs error: missing children",
-        path: context.parentPath,
+        path: context.path,
         causes: itemContext.errorsStorage.errors
       )
     } else {
@@ -41,7 +40,8 @@ extension DivTabs: DivBlockModeling {
       tabTitles: tabs.map(\.title),
       titleStyle: titleStyle.resolve(context),
       layoutDirection: context.layoutDirection,
-      listPaddings: titlePaddings.resolve(context)
+      listPaddings: titlePaddings.resolve(context),
+      delimiterStyle: resolveTabTitleDelimiter(context)
     )
 
     let expressionResolver = context.expressionResolver
@@ -50,7 +50,7 @@ extension DivTabs: DivBlockModeling {
       pagesHeight: resolveDynamicHeight(expressionResolver)
         ? .bySelectedPage
         : .byHighestPage,
-      path: context.parentPath,
+      path: context.path,
       scrollingEnabled: resolveSwitchTabsByContentSwipeEnabled(expressionResolver),
       layoutDirection: context.layoutDirection
     )
@@ -59,7 +59,8 @@ extension DivTabs: DivBlockModeling {
       model: TabViewModel(
         listModel: listModel,
         contentsModel: contentsModel,
-        separatorStyle: resolveSeparatorStyle(context)
+        separatorStyle: resolveSeparatorStyle(context),
+        tabTitleDelimiter: resolveTabTitleDelimiter(context)
       ),
       state: makeState(context: context, tabs: tabs),
       widthTrait: resolveContentWidthTrait(context),
@@ -78,12 +79,27 @@ extension DivTabs: DivBlockModeling {
       ) : nil
   }
 
+  private func resolveTabTitleDelimiter(
+    _ context: DivBlockModelingContext
+  ) -> TabTitleDelimiterStyle? {
+    guard let delimiter = tabTitleDelimiter else { return nil }
+
+    let expressionResolver = context.expressionResolver
+    guard let imageURL = delimiter.resolveImageUrl(expressionResolver) else { return nil }
+    let imageHolder = context.imageHolderFactory.make(imageURL)
+    return TabTitleDelimiterStyle(
+      imageHolder: imageHolder,
+      width: delimiter.width.resolveScaledValue(expressionResolver, defaultValue: 12),
+      height: delimiter.height.resolveScaledValue(expressionResolver, defaultValue: 12)
+    )
+  }
+
   private func makeState(
     context: DivBlockModelingContext,
     tabs: [Tab]
   ) -> TabViewState {
     let stateStorage = context.blockStateStorage
-    let path = context.parentPath
+    let path = context.path
     let index: CGFloat = if let state: TabViewState = stateStorage.getState(path) {
       state.selectedPageIndex
     } else {
@@ -108,6 +124,7 @@ extension DivTabs.TabTitleStyle {
   private func makeTypo(
     fontProvider: DivFontProvider,
     fontWeight: DivFontWeight,
+    fontVariationSettings: [String: NSNumber]?,
     expressionResolver: ExpressionResolver
   ) -> Typo {
     let font = fontProvider.font(
@@ -115,7 +132,7 @@ extension DivTabs.TabTitleStyle {
       weight: fontWeight,
       size: resolveFontSizeUnit(expressionResolver)
         .makeScaledValue(resolveFontSize(expressionResolver))
-    )
+    ).withVariationSettings(axisTagToValue: fontVariationSettings)
     return Typo(font: font)
       .with(height: resolveLineHeight(expressionResolver))
       .kerned(CGFloat(resolveLetterSpacing(expressionResolver)))
@@ -132,11 +149,15 @@ extension DivTabs.TabTitleStyle {
       typo: makeTypo(
         fontProvider: fontProvider,
         fontWeight: resolveActiveFontWeight(expressionResolver) ?? defaultFontWeight,
+        fontVariationSettings: resolveActiveFontVariationSettings(expressionResolver)?
+          .mapValues { $0 as? NSNumber }.filteringNilValues(),
         expressionResolver: expressionResolver
       ),
       inactiveTypo: makeTypo(
         fontProvider: fontProvider,
         fontWeight: resolveInactiveFontWeight(expressionResolver) ?? defaultFontWeight,
+        fontVariationSettings: resolveInactiveFontVariationSettings(expressionResolver)?
+          .mapValues { $0 as? NSNumber }.filteringNilValues(),
         expressionResolver: expressionResolver
       ),
       paddings: paddings.resolve(context),
@@ -183,12 +204,12 @@ extension Typo {
 
 extension DivTabs.Item {
   fileprivate func makeTab(context: DivBlockModelingContext, index: Int) throws -> Tab {
-    let titleContext = context.modifying(parentPath: context.parentPath + "title\(index)")
+    let titleContext = context.modifying(pathSuffix: "title\(index)")
     let title = makeTitle(context: titleContext)
-    let pageContext = context.modifying(parentPath: context.parentPath + index)
+    let pageContext = context.modifying(pathSuffix: "\(index)")
     let page = try div.value
       .makeBlock(context: pageContext)
-      .makeTabPage(with: pageContext.parentPath)
+      .makeTabPage(with: pageContext.path)
     return (title: title, page: page)
   }
 
@@ -197,7 +218,7 @@ extension DivTabs.Item {
     return UILink(
       text: resolveTitle(context.expressionResolver) ?? "",
       url: action?.url,
-      path: context.parentPath
+      path: context.path
     )
   }
 }

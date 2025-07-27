@@ -182,6 +182,24 @@ public class DivStateManager {
     }
   }
 
+  func setBlockVisibility(
+    statePath: DivStatePath,
+    resolvedId: String,
+    div: DivBase,
+    isVisible: Bool
+  ) {
+    if case .value = div.visibility {
+      // visibility is constant
+      return
+    }
+
+    lock.withLock {
+      if div.shouldApplyTransition(.visibilityChange) {
+        _blockVisibility[statePath + resolvedId] = isVisible
+      }
+    }
+  }
+
   public func reset() {
     lock.withLock {
       _items = [:]
@@ -217,10 +235,8 @@ extension DivBase {
     if transitionIn == nil, transitionOut == nil, transitionChange == nil {
       return false
     }
-    guard let triggers = transitionTriggers else {
-      return trigger == .stateChange || trigger == .visibilityChange
-    }
-    return triggers.contains(trigger)
+
+    return transitionTriggersOrDefault.contains(trigger)
   }
 }
 

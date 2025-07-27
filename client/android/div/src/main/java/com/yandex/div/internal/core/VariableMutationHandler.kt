@@ -2,8 +2,8 @@ package com.yandex.div.internal.core
 
 import com.yandex.div.core.actions.logError
 import com.yandex.div.core.annotations.InternalApi
+import com.yandex.div.core.expression.local.variableController
 import com.yandex.div.core.view2.Div2View
-import com.yandex.div.core.view2.divs.getRuntimeFor
 import com.yandex.div.data.Variable
 import com.yandex.div.data.VariableMutationException
 import com.yandex.div.json.expressions.ExpressionResolver
@@ -22,7 +22,7 @@ class VariableMutationHandler {
             value: String,
             resolver: ExpressionResolver
         ): VariableMutationException? {
-            val mutableVariable = findVariable(div2View, name, resolver)
+            val mutableVariable = findVariable(name, resolver)
                 ?: return createAndReportError(null, div2View, "Variable '$name' not defined!")
 
             runCatching {
@@ -46,7 +46,7 @@ class VariableMutationHandler {
             resolver: ExpressionResolver,
             valueMutation: (T) -> T,
         ): VariableMutationException? {
-            val mutableVariable = findVariable(div2View, name, resolver)
+            val mutableVariable = findVariable(name, resolver)
                 ?: return createAndReportError(null, div2View, "Variable '$name' not defined!")
 
             runCatching {
@@ -59,15 +59,8 @@ class VariableMutationHandler {
             return null
         }
 
-        private fun findVariable(
-            div2View: Div2View,
-            name: String,
-            resolver: ExpressionResolver,
-        ): Variable? {
-            val runtime = getRuntimeFor(div2View.runtimeStore, resolver) ?: div2View.expressionsRuntime
-
-            return runtime?.variableController?.getMutableVariable(name)
-        }
+        private fun findVariable(name: String, resolver: ExpressionResolver) =
+            resolver.variableController?.getMutableVariable(name)
 
         private fun createAndReportError(
             e: Throwable?,

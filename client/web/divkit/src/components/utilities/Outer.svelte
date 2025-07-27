@@ -42,7 +42,7 @@
     import type { MaybeMissing } from '../../expressions/json';
     import type { EdgeInsets } from '../../types/edgeInserts';
     import type { CornersRadius } from '../../types/border';
-    import type { WrapContentSize } from '../../types/sizes';
+    import type { FixedSize, MatchParentSize, WrapContentSize } from '../../types/sizes';
     import type { Background } from '../../types/background';
     import type { Animation, AnyAnimation } from '../../types/animation';
     import type { ComponentContext } from '../../types/componentContext';
@@ -78,6 +78,8 @@
     import { layoutProvider } from '../../use/layoutProvider';
     import { ENABLED_CTX, type EnabledCtxValue } from '../../context/enabled';
     import { correctBooleanInt } from '../../utils/correctBooleanInt';
+    import { composeAccessibilityDescription } from '../../utils/composeAccessibilityDescription';
+    import { componentFakePagerDuplicate } from '../../utils/componentContext';
     import Actionable from './Actionable.svelte';
     import OuterBackground from './OuterBackground.svelte';
 
@@ -97,6 +99,7 @@
     export let parentOfSimpleMode: boolean | undefined = undefined;
     export let replaceItems: ((items: (MaybeMissing<DivBaseData> | undefined)[]) => void) | undefined = undefined;
     export let hasInnerFocusable = false;
+    export let alwaysCustomFocus = false;
 
     const rootCtx = getContext<RootCtxValue>(ROOT_CTX);
     const stateCtx = getContext<StateCtxValue>(STATE_CTX);
@@ -189,6 +192,7 @@
     let layoutProviderResizeObserver: ResizeObserver | undefined;
 
     let hasCustomFocus = false;
+    let captureFocusOnAction = true;
 
     let prevExtensionsVal: MaybeMissing<Extension>[] | undefined = undefined;
     let prevTriggersUnsubscribe: (() => void) | undefined = undefined;
@@ -211,6 +215,7 @@
         pivotYNum = 0;
         transformOrigin = undefined;
         transform = undefined;
+        captureFocusOnAction = true;
 
         jsonTransitionTriggers = componentContext.fakeElement ?
             [] :
@@ -258,33 +263,10 @@
     $: jsonAlpha = componentContext.getDerivedFromVars(componentContext.json.alpha);
     $: jsonAccessibility = componentContext.getDerivedFromVars(componentContext.json.accessibility);
     $: jsonBackground = componentContext.getDerivedFromVars(componentContext.json.background);
-    $: jsonAction = componentContext.getDerivedFromVars(
-        componentContext.json.action, undefined, true
-    );
-    $: jsonActions = componentContext.getDerivedFromVars(
-        componentContext.json.actions, undefined, true
-    );
-    $: jsonDoubleTapActions = componentContext.getDerivedFromVars(
-        componentContext.json.doubletap_actions, undefined, true
-    );
-    $: jsonLongTapActions = componentContext.getDerivedFromVars(
-        componentContext.json.longtap_actions, undefined, true
-    );
-    $: jsonPressStartActions = componentContext.getDerivedFromVars(
-        componentContext.json.press_start_actions, undefined, true
-    );
-    $: jsonPressEndActions = componentContext.getDerivedFromVars(
-        componentContext.json.press_end_actions, undefined, true
-    );
-    $: jsonHoverStartActions = componentContext.getDerivedFromVars(
-        componentContext.json.hover_start_actions, undefined, true
-    );
-    $: jsonHoverEndActions = componentContext.getDerivedFromVars(
-        componentContext.json.hover_end_actions, undefined, true
-    );
     $: jsonActionAnimation = componentContext.getDerivedFromVars(componentContext.json.action_animation);
     $: jsonVisibility = componentContext.getDerivedFromVars(componentContext.json.visibility);
     $: jsonTransform = componentContext.getDerivedFromVars(componentContext.json.transform);
+    $: jsonCaptureFocusOnAction = componentContext.getDerivedFromVars(componentContext.json.capture_focus_on_action);
 
     $: {
         prevChilds.forEach(id => {
@@ -310,7 +292,7 @@
         }
 
         if (parentOfSimpleMode) {
-            const newItemsLen = Array.isArray(items) && items.length || 0;
+            const newItemsLen = Array.isArray(items) ? items.length : 0;
             if (newItemsLen !== 1) {
                 return;
             }
@@ -423,10 +405,10 @@
         let newWidthFill = false;
         let newWidthError = false;
 
-        const type = $jsonWidth?.type;
+        const type = componentContext.json.width?.type;
 
         if (type === 'fixed') {
-            widthNum = correctNonNegativeNumber($jsonWidth?.value, widthNum);
+            widthNum = correctNonNegativeNumber(($jsonWidth as FixedSize)?.value, widthNum);
             newWidth = pxToEm(widthNum);
         } else if (
             type === 'wrap_content' ||
@@ -434,7 +416,7 @@
         ) {
             widthType = 'content';
             if (
-                type === 'wrap_content' && $jsonWidth?.constrained ||
+                type === 'wrap_content' && ($jsonWidth as WrapContentSize)?.constrained ||
                 (type === 'match_parent' || !type) && layoutParams.parentHorizontalWrapContent
             ) {
                 newWidthMods['width-constrained'] = true;
@@ -530,13 +512,13 @@
         let newHeightFill = false;
         let newHeightError = false;
 
-        const type = $jsonHeight?.type;
+        const type = componentContext.json.height?.type;
 
         if (heightByAspect) {
             // auto height
             // no special css needed, so no special heightType
         } else if (type === 'fixed') {
-            heightNum = correctNonNegativeNumber($jsonHeight?.value, heightNum);
+            heightNum = correctNonNegativeNumber(($jsonHeight as FixedSize)?.value, heightNum);
             newHeight = pxToEm(heightNum);
         } else if (type === 'match_parent' && !layoutParams.parentVerticalWrapContent) {
             heightType = 'parent';
@@ -559,7 +541,7 @@
                     newHeight = totalHeight;
                 }
             } else if (layoutParams.parentContainerOrientation === 'vertical') {
-                newFlexGrow = $jsonHeight?.weight || 1;
+                newFlexGrow = ($jsonHeight as MatchParentSize)?.weight || 1;
                 if (layoutParams.parentContainerWrap) {
                     newHeightFill = true;
                 }
@@ -567,7 +549,7 @@
         } else {
             heightType = 'content';
             if (
-                type === 'wrap_content' && $jsonHeight?.constrained ||
+                type === 'wrap_content' && ($jsonHeight as WrapContentSize)?.constrained ||
                 type === 'match_parent' && layoutParams.parentVerticalWrapContent
             ) {
                 newHeightMods['height-constrained'] = true;
@@ -636,9 +618,12 @@
 
     $: {
         attrs = undefined;
-        if ($jsonAccessibility && !customDescription && $jsonAccessibility.description) {
-            attrs = {};
-            attrs['aria-label'] = $jsonAccessibility.description;
+        if ($jsonAccessibility && !customDescription) {
+            const descr = composeAccessibilityDescription($jsonAccessibility);
+            if (descr) {
+                attrs = {};
+                attrs['aria-label'] = descr;
+            }
         }
     }
 
@@ -652,7 +637,7 @@
                 Boolean(backgroundRadius);
 
             if (!hasSeparateBg) {
-                const res = getBackground(background);
+                const res = getBackground(background, $direction);
                 backgroundStyle['background-color'] = res.color;
                 backgroundStyle['background-image'] = res.image;
                 backgroundStyle['background-size'] = res.size;
@@ -680,17 +665,18 @@
     }
 
     $: {
-        let newActions = $jsonActions || $jsonAction && [$jsonAction] || [];
-        let newDoubleTapActions = $jsonDoubleTapActions || [];
-        let newLongTapActions = $jsonLongTapActions || [];
-        let newFocusActions = $jsonFocus?.on_focus || [];
-        let newBlurActions = $jsonFocus?.on_blur || [];
-        let newPressStartActions = $jsonPressStartActions || [];
-        let newPressEndActions = $jsonPressEndActions || [];
-        let newHoverStartActions = $jsonHoverStartActions || [];
-        let newHoverEndActions = $jsonHoverEndActions || [];
+        const json = componentContext.json;
+        let newActions = json.actions || json.action && [json.action] || [];
+        let newDoubleTapActions = json.doubletap_actions || [];
+        let newLongTapActions = json.longtap_actions || [];
+        let newFocusActions = json.focus?.on_focus || [];
+        let newBlurActions = json.focus?.on_blur || [];
+        let newPressStartActions = json.press_start_actions || [];
+        let newPressEndActions = json.press_end_actions || [];
+        let newHoverStartActions = json.hover_start_actions || [];
+        let newHoverEndActions = json.hover_end_actions || [];
 
-        if (componentContext.fakeElement) {
+        if (componentContext.fakeElement && componentContext.fakeElement !== componentFakePagerDuplicate) {
             newActions = [];
             newDoubleTapActions = [];
             newLongTapActions = [];
@@ -755,15 +741,15 @@
         }
 
         // todo check parent actions with customActions
-        actions = newActions.filter(filterEnabledActions);
-        doubleTapActions = newDoubleTapActions.filter(filterEnabledActions);
-        longTapActions = newLongTapActions.filter(filterEnabledActions);
-        focusActions = newFocusActions.filter(filterEnabledActions);
-        blurActions = newBlurActions.filter(filterEnabledActions);
-        pressStartActions = newPressStartActions.filter(filterEnabledActions);
-        pressEndActions = newPressEndActions.filter(filterEnabledActions);
-        hoverStartActions = newHoverStartActions.filter(filterEnabledActions);
-        hoverEndActions = newHoverEndActions.filter(filterEnabledActions);
+        actions = newActions;
+        doubleTapActions = newDoubleTapActions;
+        longTapActions = newLongTapActions;
+        focusActions = newFocusActions;
+        blurActions = newBlurActions;
+        pressStartActions = newPressStartActions;
+        pressEndActions = newPressEndActions;
+        hoverStartActions = newHoverStartActions;
+        hoverEndActions = newHoverEndActions;
     }
 
     $: {
@@ -771,6 +757,10 @@
             actionAnimationList = flattenAnimation($jsonActionAnimation as Animation);
             actionAnimationTransition = actionAnimationList.map(parseActionAnimation).filter(Boolean).join(', ');
         }
+    }
+
+    $: if (typeof $jsonCaptureFocusOnAction === 'boolean') {
+        captureFocusOnAction = $jsonCaptureFocusOnAction;
     }
 
     function hasNativeAnimation(list: MaybeMissing<AnyAnimation>[]) {
@@ -1040,14 +1030,17 @@
             });
         }
 
-        const visibilityActions = componentContext.fakeElement ?
-            [] :
+        const isVisibilityActionsEnabled = !componentContext.fakeElement ||
+            componentContext.fakeElement === componentFakePagerDuplicate;
+
+        const visibilityActions = isVisibilityActionsEnabled ?
             (
                 componentContext.json.visibility_actions ||
                 componentContext.json.visibility_action && [componentContext.json.visibility_action]
-            );
+            ) :
+            [];
 
-        const disappearActions = componentContext.fakeElement ? [] : componentContext.json.disappear_actions;
+        const disappearActions = isVisibilityActionsEnabled ? componentContext.json.disappear_actions : [];
 
         let visAction: {
             destroy(): void;
@@ -1119,7 +1112,7 @@
             return;
         }
 
-        if (!get(rootCtx.isPointerFocus)) {
+        if (alwaysCustomFocus || !get(rootCtx.isPointerFocus)) {
             hasCustomFocus = true;
         }
 
@@ -1176,8 +1169,11 @@
         {hasInnerFocusable}
         isNativeActionAnimation={!actionAnimationList.length || hasNativeAnimation(actionAnimationList)}
         customAccessibility={$jsonAccessibility}
+        {captureFocusOnAction}
         on:focus={focusHandler}
         on:blur={blurHandler}
+        on:pointerdown
+        on:wheel
     >
         <!-- eslint-disable-next-line max-len -->
         {#if hasSeparateBg}<OuterBackground {componentContext} direction={$direction} background={background} radius={backgroundRadius} />{/if}<slot {focusHandler} {blurHandler} {hasCustomFocus} />{#if hasBorder}<span class={css.outer__border} style={makeStyle(borderElemStyle)}></span>{/if}

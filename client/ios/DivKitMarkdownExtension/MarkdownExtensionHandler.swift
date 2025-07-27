@@ -16,14 +16,16 @@ public final class MarkdownExtensionHandler: DivExtensionHandler {
       return block
     }
     let fontParams = div.resolveFontParams(context.expressionResolver)
-    let typo = Typo(font: context.fontProvider.font(fontParams)).allowHeightOverrun
-    var builder = MarkdownStringBuilder(typo: typo, path: context.parentPath)
+    let typo = Typo(font: context.font(fontParams)).allowHeightOverrun
+    var builder = MarkdownStringBuilder(typo: typo, path: context.path)
     let string = builder.attributedString(from: block.text.string)
     return TextBlock(
       widthTrait: block.widthTrait,
       heightTrait: block.heightTrait,
       text: string,
-      accessibilityElement: nil
+      accessibilityElement: nil,
+      path: block.path,
+      isFocused: block.isFocused
     )
   }
 }

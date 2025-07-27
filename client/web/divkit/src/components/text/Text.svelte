@@ -4,7 +4,7 @@
     import css from './Text.module.css';
     import rootCss from '../Root.module.css';
 
-    import type { DivTextData, TextImage, TextRange, TextStyles, TextVerticalAlignment } from '../../types/text';
+    import type { CloudBackground, DivTextData, TextImage, TextRange, TextStyles, TextVerticalAlignment } from '../../types/text';
     import type { Style } from '../../types/general';
     import type { LayoutParams } from '../../types/layoutParams';
     import type { AlignmentHorizontal } from '../../types/alignment';
@@ -23,7 +23,7 @@
     import { isPositiveNumber } from '../../utils/isPositiveNumber';
     import { correctAlignmentHorizontal } from '../../utils/correctAlignmentHorizontal';
     import { type AlignmentVerticalMapped, correctAlignmentVertical } from '../../utils/correctAlignmentVertical';
-    import { correctColor } from '../../utils/correctColor';
+    import { correctColor, parseColor } from '../../utils/correctColor';
     import { correctBooleanInt } from '../../utils/correctBooleanInt';
     import { propToString } from '../../utils/propToString';
     import { correctTintMode } from '../../utils/correctTintMode';
@@ -56,11 +56,13 @@
     let gradient = '';
     let selectable = false;
 
-    let renderList: ({
+    interface RenderItemText {
         text: string;
         textStyles: TextRange;
         actions?: MaybeMissing<Action[]>;
-    } | {
+    }
+
+    interface RenderItemImage {
         image: {
             url: string;
             width: string;
@@ -72,9 +74,14 @@
             description: string;
             a11yAttrs?: Record<string, unknown>;
         };
-    })[] = [];
+    }
+
+    let renderList: (RenderItemText | RenderItemImage)[] = [];
     let hasCloudBg = false;
+    let wholeTextCloudBgId = '';
+    let wholeTextCloudBgOpacity: number | undefined;
     let usedTintColors: [string, TintMode][] = [];
+    let rootTextStyles: typeof $jsonRootTextStyles = {};
 
     $: if (componentContext.json) {
         fontSize = 12;
@@ -127,6 +134,13 @@
             text = '';
             componentContext.logError(wrapError(new Error('Incorrect text value type')));
         }
+    }
+
+    $: {
+        rootTextStyles = gradient ? {
+            ...$jsonRootTextStyles,
+            text_color: ''
+        } : $jsonRootTextStyles;
     }
 
     $: {
@@ -189,7 +203,7 @@
         );
 
 
-    $: isOnlyOneColorDefined = Boolean($jsonTextColor) !==
+    $: isOnlyOneColorDefined = Boolean(!gradient && $jsonTextColor) !==
         Boolean($jsonRanges && $jsonRanges[0] && $jsonRanges[0].text_color);
 
     $: {
@@ -217,7 +231,7 @@
         let newGradient = '';
 
         if ($jsonTextGradient) {
-            const bg = getBackground([$jsonTextGradient]);
+            const bg = getBackground([$jsonTextGradient], $direction);
             if (bg.image) {
                 newGradient = bg.image;
             }
@@ -423,9 +437,18 @@
 
         renderList = newRenderList;
         hasCloudBg = newRenderList.some(it => 'text' in it && it.textStyles.background?.type === 'cloud');
+        // In Firefox, svg filters do not work with inline elements. If possible, we transfer them to the parent block.
+        wholeTextCloudBgId = (hasCloudBg && newRenderList.length === 1) ? rootCtx.genId('text-whole-bg') : '';
+        wholeTextCloudBgOpacity = wholeTextCloudBgId ?
+            (
+                parseColor(
+                    ((newRenderList[0] as RenderItemText).textStyles.background as CloudBackground).color
+                )?.a ?? 255
+            ) / 255 :
+            undefined;
     }
 
-    $: updateRenderList(text, $jsonRanges, $jsonImages, $jsonRootTextStyles);
+    $: updateRenderList(text, $jsonRanges, $jsonImages, rootTextStyles);
 
     $: mods = {
         singleline,
@@ -482,7 +505,9 @@
             })}
             style={makeStyle({
                 ...style,
-                padding: cloudPadding
+                padding: cloudPadding,
+                filter: wholeTextCloudBgId ? `url(#${wholeTextCloudBgId})` : undefined,
+                opacity: wholeTextCloudBgOpacity
             })}
         >
             {#each renderList as item}
@@ -495,6 +520,7 @@
                             textStyles={item.textStyles}
                             {singleline}
                             cloudBg
+                            cloudBgId={wholeTextCloudBgId}
                         />
                     {/if}
                 {:else if item.image}
@@ -559,7 +585,7 @@
                 {componentContext}
                 {text}
                 rootFontSize={fontSize}
-                textStyles={$jsonRootTextStyles}
+                textStyles={rootTextStyles}
                 {singleline}
                 {customLineHeight}
             />

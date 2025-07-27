@@ -1,20 +1,15 @@
 package com.yandex.div.core.util
 
 import android.util.DisplayMetrics
-import android.view.View
-import android.view.ViewGroup
 import android.view.animation.Interpolator
 import android.view.animation.LinearInterpolator
-import androidx.core.view.children
 import com.yandex.div.core.animation.EaseInInterpolator
 import com.yandex.div.core.animation.EaseInOutInterpolator
 import com.yandex.div.core.animation.EaseInterpolator
 import com.yandex.div.core.animation.EaseOutInterpolator
 import com.yandex.div.core.animation.SpringInterpolator
 import com.yandex.div.core.animation.reversed
-import com.yandex.div.core.expression.variables.toVariable
 import com.yandex.div.core.view2.divs.dpToPx
-import com.yandex.div.data.Variable
 import com.yandex.div.internal.core.buildItems
 import com.yandex.div.internal.core.nonNullItems
 import com.yandex.div.json.expressions.ExpressionResolver
@@ -38,7 +33,6 @@ import com.yandex.div2.DivState
 import com.yandex.div2.DivSwitch
 import com.yandex.div2.DivTabs
 import com.yandex.div2.DivText
-import com.yandex.div2.DivVariable
 import com.yandex.div2.DivVideo
 import java.util.Collections.min
 
@@ -113,13 +107,6 @@ internal val DivAnimationDirection.isAlternated: Boolean
         }
     }
 
-internal fun requestHierarchyLayout(v : View) {
-    v.requestLayout()
-    if (v is ViewGroup) {
-        v.children.forEach { requestHierarchyLayout(it) }
-    }
-}
-
 internal fun DivBorder.getCornerRadii(
     widthPx: Float,
     heightPx: Float,
@@ -161,7 +148,7 @@ internal fun Div.containsStateInnerTransitions(resolver: ExpressionResolver): Bo
         }
     }
     return when (this) {
-        is Div.Container -> value.buildItems(resolver)
+        is Div.Container -> value.buildItems(divView = null, resolver = resolver)
             .any { it.div.containsStateInnerTransitions(it.expressionResolver) }
         is Div.Grid -> value.nonNullItems.any { it.containsStateInnerTransitions(resolver) }
         is Div.Text -> false
@@ -211,9 +198,3 @@ internal val Div.isBranch: Boolean
 
 internal val Div.isLeaf: Boolean
     get() = !isBranch
-
-internal fun List<DivVariable>.toVariables(): List<Variable> {
-    return map {
-        it.toVariable()
-    }
-}

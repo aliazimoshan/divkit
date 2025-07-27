@@ -32,7 +32,8 @@ extension TextBlock {
       truncationToken: truncationToken,
       canSelect: canSelect,
       additionalTextInsets: additionalTextInsets,
-      intrinsicHeight: intrinsicHeight
+      intrinsicHeight: intrinsicHeight,
+      isFocused: isFocused
     )
   }
 
@@ -42,6 +43,7 @@ extension TextBlock {
 }
 
 private final class TextBlockContainer: BlockView, VisibleBoundsTrackingLeaf {
+  var layoutReporter: LayoutReporter?
   private let textBlockView = TextBlockView()
   private var gradientView: UIView?
 
@@ -100,6 +102,7 @@ private final class TextBlockContainer: BlockView, VisibleBoundsTrackingLeaf {
 
   override func layoutSubviews() {
     super.layoutSubviews()
+    layoutReporter?.willLayoutSubviews()
 
     let textFrame = if let intrinsicHeight = model.intrinsicHeight?(bounds.width),
                        intrinsicHeight > bounds.height {
@@ -117,6 +120,7 @@ private final class TextBlockContainer: BlockView, VisibleBoundsTrackingLeaf {
     gradientView?.frame = textFrame
 
     gradientView?.mask = textBlockView
+    layoutReporter?.didLayoutSubviews()
   }
 }
 
@@ -134,6 +138,7 @@ private final class TextBlockView: UIView {
     let canSelect: Bool
     let additionalTextInsets: EdgeInsets
     let intrinsicHeight: GetIntrinsicTextHeight?
+    let isFocused: Bool
   }
 
   private var selectedRange: Range<Int>? {
@@ -484,14 +489,18 @@ private final class TextBlockView: UIView {
 
   private func requestImage(at index: Int) -> Cancellable? {
     let modelImage = model.images[index]
+
     return modelImage.holder.requestImageWithCompletion {
       [source = model.source, weak self] in
       guard let strongSelf = self, let image = $0,
             strongSelf.model.source.value === source.value else { return }
-      strongSelf.model.attachments[index].image = image.withTintColor(
+
+      let tintedImage = image.withTintColor(
         modelImage.tintColor,
         mode: modelImage.tintMode
       )
+
+      strongSelf.model.attachments[index].image = tintedImage
       strongSelf.imagesReferences[index] = image
       strongSelf.setNeedsDisplay()
     }
@@ -512,13 +521,22 @@ extension TextBlockView: UIGestureRecognizerDelegate {
 extension Image {
   fileprivate func withTintColor(_ color: Color?, mode: TintMode) -> Image {
     guard
-      let color,
+      let color else {
+      return self
+    }
+
+    if mode == .sourceIn {
+      return self.redrawn(withTintColor: color)
+    }
+
+    guard
       let coloredImage = ImageGeneratorType.constantColor(color: color.ciColor).imageGenerator(),
       let ciImage = self.ciImage ?? CIImage(image: self) else {
       return self
     }
 
-    let tintModeFilter = { mode.composerType.imageComposer($0)(coloredImage) }
+    let tintModeFilter = { mode.composerType.imageComposer($0)(coloredImage)
+    }
 
     let contentRect = CIVector(
       x: 0,

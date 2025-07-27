@@ -2,7 +2,9 @@
   "description": "Image with wrap_content width and aspect ratio equal to 2 (height = width / 2)",
   "platforms": [
     "android",
-    "flutter"
+    "ios",
+    "flutter",
+    "web"
   ],
   "card": {
     "log_id": "snapshot_test_card",

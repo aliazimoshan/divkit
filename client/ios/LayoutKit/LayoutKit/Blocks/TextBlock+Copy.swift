@@ -24,7 +24,9 @@ extension TextBlock {
       truncationToken: nil,
       additionalTextInsets: block.additionalTextInsets,
       canSelect: block.canSelect,
-      autoEllipsize: block.autoEllipsize
+      autoEllipsize: block.autoEllipsize,
+      path: block.path,
+      isFocused: block.isFocused
     )
   }
 }

@@ -21,6 +21,7 @@ from ...schema.modeling.entities import (
     Color,
     String,
     Dictionary,
+    RawObject,
     RawArray,
     DivanGeneratorProperties,
 )
@@ -123,6 +124,8 @@ def update_property_type_base(property_type: PropertyType):
         property_type.__class__ = DivanColor
     elif isinstance(property_type, Dictionary):
         property_type.__class__ = DivanDictionary
+    elif isinstance(property_type, RawObject):
+        property_type.__class__ = DivanRawObject
     elif isinstance(property_type, RawArray):
         property_type.__class__ = DivanRawArray
     elif isinstance(property_type, Double):
@@ -305,6 +308,15 @@ class DivanEntity(Entity):
             property_declaration = f'{property.name_declaration}: ExpressionProperty<{type_name_declaration}>? = null,'
             signature_declaration += property_declaration
         return signature_declaration, has_params_except_guard
+
+    def modify_properties_signature(self) -> Text:
+        signature_declaration = Text(GUARD_INSTANCE_PARAM)
+        for property in cast(List[DivanProperty], self.instance_properties):
+            property_type = cast(DivanPropertyType, property.property_type)
+            type_name_declaration = property_type.declaration(prefixed=True, remove_prefix=self.remove_prefix)
+            property_declaration = f'{property.name_declaration}: Property<{type_name_declaration}>? = null,'
+            signature_declaration += property_declaration
+        return signature_declaration
 
     def properties_class_declaration(self, translations: Dict[str, str]) -> Text:
         declaration = Text()
@@ -517,6 +529,39 @@ class DivanEntity(Entity):
         declaration += ')'
         return declaration
 
+    @property
+    def modify_method_declaration(self) -> Text:
+        name = full_name(self, self.remove_prefix)
+        declaration = Text(f'fun {name}.modify(')
+        declaration += self.modify_properties_signature().indented(level=1, indent_width=4)
+        declaration += f'): {name} = {name}('
+        declaration += utils.indented(f'{name}.Properties(', level=1, indent_width=4)
+        for property in cast(List[DivanProperty], self.instance_properties):
+            property_name = property.name_declaration
+            declaration += utils.indented(
+                f'{property_name} = {property_name} ?: properties.{property_name},',
+                level=2,
+                indent_width=4
+            )
+        declaration += utils.indented(')', level=1, indent_width=4)
+        declaration += ')'
+        return declaration
+
+    @property
+    def modify_component_method_declaration(self) -> Text:
+        name = full_name(self, self.remove_prefix)
+        declaration = Text(f'fun Component<{name}>.modify(')
+        declaration += self.modify_properties_signature().indented(level=1, indent_width=4)
+        declaration += f'): Component<{name}> = Component('
+        declaration += utils.indented('template = template,', level=1, indent_width=4)
+        declaration += utils.indented(f'properties = {name}.Properties(', level=1, indent_width=4)
+        for property in cast(List[DivanProperty], self.instance_properties):
+            property_name = property.name_declaration
+            declaration += utils.indented(f'{property_name} = {property_name},', level=2, indent_width=4)
+        declaration += utils.indented(').mergeWith(properties)', level=1, indent_width=4)
+        declaration += ')'
+        return declaration
+
     def apply_property_reorder(self):
         if self.generator_properties is None:
             return
@@ -628,7 +673,7 @@ class DivanPropertyType(PropertyType):
             return 'Color'
         elif isinstance(self, Url):
             return 'Url'
-        elif isinstance(self, Dictionary):
+        elif isinstance(self, (Dictionary, RawObject)):
             return 'Map<String, Any>'
         elif isinstance(self, RawArray):
             return 'List<Any>'
@@ -656,7 +701,7 @@ class DivanPropertyType(PropertyType):
     def is_primitive(self) -> bool:
         if isinstance(self, (Int, Double, Bool, BoolInt, String, StaticString, Color, Url, RawArray)):
             return True
-        elif isinstance(self, (Dictionary, Array)):
+        elif isinstance(self, (Dictionary, RawObject, Array)):
             return False
         elif isinstance(self, Object):
             inner_obj = self.object
@@ -687,6 +732,10 @@ class DivanColor(DivanPropertyType, Color):
 
 
 class DivanDictionary(DivanPropertyType, Dictionary):
+    pass
+
+
+class DivanRawObject(DivanPropertyType, RawObject):
     pass
 
 

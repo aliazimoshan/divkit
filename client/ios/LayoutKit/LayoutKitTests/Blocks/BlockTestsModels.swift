@@ -61,7 +61,8 @@ enum BlockTestsModels {
       try TabsBlock(
         model: TabViewModel(
           listModel: TabListViewModel(
-            tabTitleLinks: titles.enumerated().map { UILink(text: $1, path: path + "title.\($0)") }
+            tabTitleLinks: titles.enumerated().map { UILink(text: $1, path: path + "title.\($0)") },
+            delimiterStyle: nil
           ),
           contentsModel: try! TabContentsViewModel(
             pages: blocks.enumerated().map { $1.makeTabPage(with: path + "page.\($0)") },
@@ -78,7 +79,10 @@ enum BlockTestsModels {
 
   enum Image {
     static let imageSize = CGSize(width: 80, height: 60)
-    static let image = VGSL.Image.imageWithSolidColor(.black, size: imageSize)!
+    static let image = VGSL.Image.imageOfSize(imageSize, opaque: true, scale: 1) { ctx in
+      ctx.setFillColor(Color.black.cgColor)
+      ctx.fill(CGRect(origin: .zero, size: imageSize))
+    }!
   }
 
   enum SwitchableContainer {

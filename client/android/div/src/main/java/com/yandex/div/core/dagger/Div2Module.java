@@ -4,13 +4,18 @@ import android.content.Context;
 import android.os.Build;
 import android.renderscript.RenderScript;
 import android.view.ContextThemeWrapper;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.StyleRes;
+
 import com.yandex.div.core.DivCustomContainerViewAdapter;
 import com.yandex.div.core.DivPreloader;
+import com.yandex.div.core.DivViewDataPreloader;
 import com.yandex.div.core.experiments.Experiment;
 import com.yandex.div.core.extension.DivExtensionController;
 import com.yandex.div.core.font.DivTypefaceProvider;
+import com.yandex.div.core.image.DivImageLoaderWrapper;
+import com.yandex.div.core.images.DivImageLoader;
 import com.yandex.div.core.player.DivPlayerPreloader;
 import com.yandex.div.core.resources.ContextThemeWrapperWithResourceCache;
 import com.yandex.div.core.view2.DivImagePreloader;
@@ -93,6 +98,16 @@ abstract public class Div2Module {
     @Provides
     @DivScope
     @NonNull
+    public static DivImageLoader provideDivImageLoader(
+            @NonNull @Named(Names.UNWRAPPED_IMAGE_LOADER) DivImageLoader divImageLoader,
+            @NonNull @Named(Names.CONTEXT) Context context
+    ) {
+        return new DivImageLoaderWrapper(divImageLoader, context);
+    }
+
+    @Provides
+    @DivScope
+    @NonNull
     public static DivPreloader provideDivPreloader(
             @NonNull DivImagePreloader imagePreloader,
             @NonNull DivCustomContainerViewAdapter customContainerViewAdapter,
@@ -101,6 +116,24 @@ abstract public class Div2Module {
       ) {
         return new DivPreloader(imagePreloader,
           customContainerViewAdapter, extensionController, videoPreloader,
+                DivPreloader.PreloadFilter.ONLY_PRELOAD_REQUIRED_FILTER
+        );
+    }
+
+    @Provides
+    @DivScope
+    @NonNull
+    public static DivViewDataPreloader provideDivViewDataPreloader(
+            @NonNull DivImagePreloader imagePreloader,
+            @NonNull DivCustomContainerViewAdapter customContainerViewAdapter,
+            @NonNull DivPlayerPreloader videoPreloader,
+            @NonNull DivExtensionController extensionController
+    ) {
+        return new DivViewDataPreloader(
+                imagePreloader,
+                customContainerViewAdapter,
+                extensionController,
+                videoPreloader,
                 DivPreloader.PreloadFilter.ONLY_PRELOAD_REQUIRED_FILTER
         );
     }

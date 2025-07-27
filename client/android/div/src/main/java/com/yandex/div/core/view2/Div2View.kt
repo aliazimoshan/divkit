@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.net.Uri
 import android.os.SystemClock
 import android.util.AttributeSet
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import android.view.ViewTreeObserver
 import androidx.annotation.VisibleForTesting
 import androidx.core.view.ViewCompat
 import androidx.core.view.doOnAttach
+import androidx.core.view.isVisible
 import androidx.transition.Scene
 import androidx.transition.Transition
 import androidx.transition.TransitionManager
@@ -36,12 +38,11 @@ import com.yandex.div.core.downloader.PersistentDivDataObserver
 import com.yandex.div.core.expression.ExpressionsRuntime
 import com.yandex.div.core.expression.local.RuntimeStore
 import com.yandex.div.core.expression.suppressExpressionErrors
-import com.yandex.div.core.expression.variables.VariableController
 import com.yandex.div.core.images.LoadReference
 import com.yandex.div.core.player.DivVideoActionHandler
 import com.yandex.div.core.state.DivStatePath
 import com.yandex.div.core.state.DivViewState
- import com.yandex.div.core.state.StateConflictException
+import com.yandex.div.core.state.StateConflictException
 import com.yandex.div.core.timer.DivTimerEventDispatcher
 import com.yandex.div.core.tooltip.DivTooltipController
 import com.yandex.div.core.util.SingleTimeOnAttachCallback
@@ -54,7 +55,8 @@ import com.yandex.div.core.view2.animations.doOnEnd
 import com.yandex.div.core.view2.divs.DivLayoutProviderVariablesHolder
 import com.yandex.div.core.view2.divs.bindLayoutParams
 import com.yandex.div.core.view2.divs.bindingContext
-import com.yandex.div.core.view2.divs.drawChildrenShadows
+import com.yandex.div.core.view2.divs.clearFocusOnClick
+import com.yandex.div.core.view2.divs.drawShadow
 import com.yandex.div.core.view2.divs.widgets.DivAnimator
 import com.yandex.div.core.view2.divs.widgets.MediaReleaseViewVisitor
 import com.yandex.div.core.view2.divs.widgets.ReleaseUtils.releaseAndRemoveChildren
@@ -137,12 +139,11 @@ class Div2View private constructor(
         get() = viewComponent.releaseViewVisitor
     internal val mediaReleaseViewVisitor: MediaReleaseViewVisitor
         get() = viewComponent.mediaReleaseViewVisitor
-    internal var expressionsRuntime: ExpressionsRuntime? = null
-    private var oldExpressionsRuntime: ExpressionsRuntime? = null
-    private val variableController: VariableController?
-        get() = expressionsRuntime?.variableController
+    internal val expressionsRuntime: ExpressionsRuntime?
+        get() = runtimeStore?.rootRuntime
+    private var oldRuntimeStore: RuntimeStore? = null
     internal val oldExpressionResolver: ExpressionResolver
-        get() = oldExpressionsRuntime?.expressionResolver ?: ExpressionResolver.EMPTY
+        get() = oldRuntimeStore?.rootRuntime?.expressionResolver ?: ExpressionResolver.EMPTY
     internal var runtimeStore: RuntimeStore? = null
     internal var inMiddleOfBind = false
 
@@ -184,6 +185,14 @@ class Div2View private constructor(
             renderConfig
         )
     }
+
+    private val gestureDetector = GestureDetector(this.context, object : GestureDetector.SimpleOnGestureListener() {
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
+            clearFocusOnClick(inputFocusTracker)
+            return true
+        }
+    })
+
     internal val inputFocusTracker = viewComponent.inputFocusTracker
 
     internal val layoutSizes = mutableMapOf<ExpressionResolver, MutableMap<String, Int>>()
@@ -203,28 +212,27 @@ class Div2View private constructor(
     var divData: DivData? = null
         internal set(value) {
             field = value
-            updateExpressionsRuntime()
+            updateRuntimeStore()
             updateTimers()
             bindingProvider.update(dataTag, field)
         }
 
-    private fun updateExpressionsRuntime(data: DivData? = divData, tag: DivDataTag = dataTag) {
+    private fun updateRuntimeStore(data: DivData? = divData, tag: DivDataTag = dataTag) {
         data ?: return
-        oldExpressionsRuntime = expressionsRuntime
-        expressionsRuntime = div2Component.expressionsRuntimeProvider.getOrCreate(tag, data, this)
-        expressionsRuntime?.runtimeStore?.updateSubscriptions()
-        if (oldExpressionsRuntime != expressionsRuntime) {
-            runtimeStore?.clearBindings()
+        oldRuntimeStore = runtimeStore
+        runtimeStore = div2Component.runtimeStoreProvider.getOrCreate(tag, data, this)
+        runtimeStore?.updateSubscriptions()
+        if (oldRuntimeStore != runtimeStore) {
+            oldRuntimeStore?.clearBindings(this)
         }
-        runtimeStore = expressionsRuntime?.runtimeStore
-        bindingContext = bindingContext.getFor(expressionResolver, runtimeStore)
+        bindingContext = bindingContext.getFor(expressionResolver)
     }
 
     private fun attachVariableTriggers(data: DivData) {
         val state = data.state() ?: return
         val attachTriggers = {
             viewComponent.runtimeVisitor.createAndAttachRuntimes(
-                state.div, DivStatePath.fromState(data.stateId()), this
+                state.div, DivStatePath.fromState(state), this
             )
         }
         if (bindOnAttachEnabled) {
@@ -311,11 +319,11 @@ class Div2View private constructor(
         histogramReporter.onRenderStarted()
 
         val oldData = divData ?: oldDivData
-        updateExpressionsRuntime(data, tag)
+        updateRuntimeStore(data, tag)
         dataTag = tag
 
         data.states.forEach {
-            div2Component.preloader.preload(it.div, expressionResolver)
+            div2Component.divViewDataPreloader.preload(it.div, bindingContext, DivStatePath.fromState(it))
         }
 
         val isDataReplaceable = DivComparator.isDivDataReplaceable(
@@ -347,7 +355,7 @@ class Div2View private constructor(
         div2Component.divBinder.attachIndicators()
 
         sendCreationHistograms()
-        oldExpressionsRuntime = expressionsRuntime
+        oldRuntimeStore = runtimeStore
         notifyBindEnded()
         return result
     }
@@ -373,7 +381,7 @@ class Div2View private constructor(
         histogramReporter.onRenderStarted()
 
         val oldData = divData
-        updateExpressionsRuntime(data, tag)
+        updateRuntimeStore(data, tag)
         val isDataReplaceable = DivComparator.isDivDataReplaceable(
             oldData,
             data,
@@ -385,7 +393,7 @@ class Div2View private constructor(
         dataTag = tag
 
         data.states.forEach {
-            div2Component.preloader.preload(it.div, expressionResolver)
+            div2Component.divViewDataPreloader.preload(it.div, bindingContext, DivStatePath.fromState(it))
         }
         paths.forEach { path ->
             div2Component.stateManager.updateStates(divTag.id, path, temporary)
@@ -407,7 +415,7 @@ class Div2View private constructor(
         }
         div2Component.divBinder.attachIndicators()
         sendCreationHistograms()
-        oldExpressionsRuntime = expressionsRuntime
+        oldRuntimeStore = runtimeStore
         notifyBindEnded()
         return result
     }
@@ -597,6 +605,18 @@ class Div2View private constructor(
         timeCreated = -1
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (inputFocusTracker.isFocusedOnInput()) {
+            gestureDetector.onTouchEvent(event)
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                // Capturing DOWN event to get UP event, but only if actively focused on input
+                 return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         histogramReporter.onLayoutStarted()
         super.onLayout(changed, left, top, right, bottom)
@@ -652,7 +672,7 @@ class Div2View private constructor(
             newData,
             stateId,
             expressionResolver,
-            div2Component.expressionsRuntimeProvider.getOrCreate(tag, newData, this).expressionResolver
+            div2Component.runtimeStoreProvider.getOrCreate(tag, newData, this).rootRuntime.expressionResolver
         )
         if (canBeReplaced) {
             releaseChildren(this)
@@ -893,7 +913,7 @@ class Div2View private constructor(
                 bindingContext,
                 newStateView,
                 newState.div,
-                DivStatePath.fromState(newState.stateId)
+                DivStatePath.fromState(newState)
             )
         }
 
@@ -924,7 +944,7 @@ class Div2View private constructor(
         isUpdateTemporary: Boolean = true
     ): View {
         div2Component.stateManager.updateState(dataTag, stateId, isUpdateTemporary)
-        return divBuilder.buildView(newState.div, bindingContext, DivStatePath.fromState(newState.stateId)).also {
+        return divBuilder.buildView(newState.div, bindingContext, DivStatePath.fromState(newState)).also {
             div2Component.divBinder.attachIndicators()
         }
     }
@@ -935,7 +955,7 @@ class Div2View private constructor(
         isUpdateTemporary: Boolean = true
     ): View {
         div2Component.stateManager.updateState(dataTag, stateId, isUpdateTemporary)
-        val path = DivStatePath.fromState(newState.stateId)
+        val path = DivStatePath.fromState(newState)
         val view = divBuilder.createView(newState.div, bindingContext, path)
         if (bindOnAttachEnabled) {
             bindOnAttachRunnable = SingleTimeOnAttachCallback(this) {
@@ -1073,6 +1093,13 @@ class Div2View private constructor(
 
     override fun getCurrentStateId() = stateId
 
+    internal val currentRootPath: DivStatePath
+        get() {
+            return divData?.states?.firstOrNull { it.stateId == stateId }?.let {
+                DivStatePath.fromState(it)
+            } ?: DivStatePath.fromState(stateId)
+        }
+
     override fun getCurrentState(): DivViewState? {
         val data = divData ?: return null
         val currentState = div2Component.stateManager.getState(dataTag)
@@ -1102,7 +1129,7 @@ class Div2View private constructor(
     }
 
     override fun cancelTooltips() {
-        tooltipController.cancelTooltips(bindingContext)
+        tooltipController.cancelTooltips(this)
     }
 
     override fun dispatchDraw(canvas: Canvas) {
@@ -1111,12 +1138,19 @@ class Div2View private constructor(
         if (drawWasSkipped) {
             histogramReporter.onDrawStarted()
         }
-        drawChildrenShadows(canvas)
 
         super.dispatchDraw(canvas)
+
         if (drawWasSkipped) {
             histogramReporter.onDrawFinished()
         }
+    }
+
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        if (child != null && child.isVisible) {
+            child.drawShadow(canvas)
+        }
+        return super.drawChild(canvas, child, drawingTime)
     }
 
     internal fun bindViewToDiv(view: View, div: Div) {
@@ -1179,7 +1213,7 @@ class Div2View private constructor(
             }
             divData = newData
             div2Component.stateManager.updateState(dataTag, state.stateId, true)
-            div2Component.divBinder.bind(bindingContext, rootDivView, state.div, DivStatePath.fromState(stateId))
+            div2Component.divBinder.bind(bindingContext, rootDivView, state.div, DivStatePath.fromState(state))
             requestLayout()
             if (isAutoanimations) {
                 div2Component.divStateChangeListener.onDivAnimatedStateChanged(this)
@@ -1222,7 +1256,7 @@ class Div2View private constructor(
             oldData,
             newData,
             viewToRebind,
-            DivStatePath.fromState(newData.stateId())
+            DivStatePath.fromState(stateToBind)
         )
         if (!result) {
             return false

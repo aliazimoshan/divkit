@@ -41,6 +41,8 @@ public final class TextBlock: BlockWithTraits {
   public let truncationToken: NSAttributedString?
   public let truncationImages: [InlineImage]
   public let autoEllipsize: Bool
+  public let path: UIElementPath?
+  public let isFocused: Bool
 
   let attachments: [TextAttachment]
   let truncationAttachments: [TextAttachment]
@@ -63,7 +65,9 @@ public final class TextBlock: BlockWithTraits {
     additionalTextInsets: EdgeInsets? = nil,
     canSelect: Bool = false,
     tightenWidth: Bool = false,
-    autoEllipsize: Bool = true
+    autoEllipsize: Bool = true,
+    path: UIElementPath? = nil,
+    isFocused: Bool = false
   ) {
     self.widthTrait = widthTrait
     self.heightTrait = heightTrait
@@ -87,6 +91,8 @@ public final class TextBlock: BlockWithTraits {
     }
     self.additionalTextInsets = additionalTextInsets ?? .zero
     self.autoEllipsize = autoEllipsize
+    self.path = path
+    self.isFocused = isFocused
   }
 
   public convenience init(
@@ -103,7 +109,9 @@ public final class TextBlock: BlockWithTraits {
     additionalTextInsets: EdgeInsets? = nil,
     canSelect: Bool = false,
     tightenWidth: Bool = false,
-    autoEllipsize: Bool = true
+    autoEllipsize: Bool = true,
+    path: UIElementPath? = nil,
+    isFocused: Bool = false
   ) {
     self.init(
       widthTrait: widthTrait,
@@ -120,7 +128,9 @@ public final class TextBlock: BlockWithTraits {
       additionalTextInsets: additionalTextInsets,
       canSelect: canSelect,
       tightenWidth: tightenWidth,
-      autoEllipsize: autoEllipsize
+      autoEllipsize: autoEllipsize,
+      path: path,
+      isFocused: isFocused
     )
   }
 
@@ -187,6 +197,7 @@ public final class TextBlock: BlockWithTraits {
       && lhs.accessibilityElement == rhs.accessibilityElement
       && lhs.tightenWidth == rhs.tightenWidth
       && lhs.autoEllipsize == rhs.autoEllipsize
+      && lhs.path == rhs.path
   }
 
   public func calculateTextIntrinsicContentHeight(
@@ -219,7 +230,32 @@ extension TextBlock.InlineImage {
 }
 
 extension TextBlock: LayoutCachingDefaultImpl {}
-extension TextBlock: ElementStateUpdatingDefaultImpl {}
+extension TextBlock: ElementStateUpdatingDefaultImpl {
+  public func updated(path: UIElementPath, isFocused: Bool) throws -> TextBlock {
+    if path != self.path {
+      return self
+    }
+
+    return TextBlock(
+      widthTrait: widthTrait,
+      heightTrait: heightTrait,
+      text: text,
+      textGradient: textGradient,
+      verticalAlignment: verticalAlignment,
+      maxIntrinsicNumberOfLines: maxIntrinsicNumberOfLines,
+      minNumberOfHiddenLines: minNumberOfHiddenLines,
+      images: images,
+      accessibilityElement: accessibilityElement,
+      truncationToken: truncationToken,
+      truncationImages: truncationImages,
+      additionalTextInsets: additionalTextInsets,
+      canSelect: canSelect,
+      tightenWidth: tightenWidth,
+      path: path,
+      isFocused: isFocused
+    )
+  }
+}
 
 private func setImagePlaceholders(
   for images: [TextBlock.InlineImage],

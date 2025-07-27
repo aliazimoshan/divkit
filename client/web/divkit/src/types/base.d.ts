@@ -4,21 +4,22 @@ import type { Border } from './border';
 import type { Background } from './background';
 import type { EdgeInsets } from './edgeInserts';
 import type { Dimension } from './sizes';
-import type { Action, AnimatorDirection, AnimatorRepeatCount, BooleanInt, DisappearAction, DivVariable, Interpolation, VariableTrigger, VisibilityAction } from '../../typings/common';
+import type { Action, AnimatorDirection, AnimatorRepeatCount, BooleanInt, DisappearAction, DivFunction, DivVariable, Interpolation, VariableTrigger, VisibilityAction } from '../../typings/common';
 import type { Focus } from './focus';
 import type { Animation } from './animation';
-import type { EvalTypes } from '../expressions/eval';
 
 export type AccessibilityType = 'none' | 'button' | 'image' | 'text' | 'edit_text' |
     'header' | 'tab_bar' | 'list' | 'select' | 'checkbox' | 'radio' | 'auto';
 
+export type AccessibilityMode = 'default' | 'merge' | 'exclude';
+
 export interface Accessibility {
     description?: string;
     type?: AccessibilityType;
-    // state_description
-    // hint
+    state_description?: string;
+    hint?: string;
     is_checked?: BooleanInt;
-    // mode
+    mode?: AccessibilityMode;
 }
 
 export interface TransitionBase {
@@ -121,6 +122,9 @@ export interface Tooltip {
     animation_out?: Animation;
 
     mode?: TooltipMode;
+    tap_outside_actions?: Action[];
+    close_by_tap_outside?: boolean;
+    background_accessibility_description?: string;
 }
 
 export interface DivLayoutProvider {
@@ -153,18 +157,6 @@ export interface ColorAnimator extends AnimatorBase {
 }
 
 export type Animator = NumberAnimator | ColorAnimator;
-
-export interface DivFunctionArgument {
-    name: string;
-    type: EvalTypes;
-}
-
-export interface DivFunction {
-    name: string;
-    body: string;
-    return_type: EvalTypes;
-    arguments: DivFunctionArgument[];
-}
 
 export interface DivBaseData {
     type: string;

@@ -47,7 +47,7 @@ data class ArrayVariable internal constructor(
          */
         val name: Property<String>?,
         /**
-         * Value.
+         * Value. Supports expressions for variable initialization.
          */
         val value: Property<List<Any>>?,
     ) {
@@ -63,7 +63,7 @@ data class ArrayVariable internal constructor(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.arrayVariable(
@@ -79,7 +79,7 @@ fun DivScope.arrayVariable(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.arrayVariableProps(
@@ -93,7 +93,7 @@ fun DivScope.arrayVariableProps(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun TemplateScope.arrayVariableRefs(
@@ -107,7 +107,7 @@ fun TemplateScope.arrayVariableRefs(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun ArrayVariable.override(
@@ -123,7 +123,7 @@ fun ArrayVariable.override(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun ArrayVariable.defer(
@@ -133,6 +133,36 @@ fun ArrayVariable.defer(
 ): ArrayVariable = ArrayVariable(
     ArrayVariable.Properties(
         name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param name Variable name.
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun ArrayVariable.modify(
+    `use named arguments`: Guard = Guard.instance,
+    name: Property<String>? = null,
+    value: Property<List<Any>>? = null,
+): ArrayVariable = ArrayVariable(
+    ArrayVariable.Properties(
+        name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun ArrayVariable.evaluate(
+    `use named arguments`: Guard = Guard.instance,
+    value: ExpressionProperty<List<Any>>? = null,
+): ArrayVariable = ArrayVariable(
+    ArrayVariable.Properties(
+        name = properties.name,
         value = value ?: properties.value,
     )
 )

@@ -5,7 +5,8 @@ import type {
     ImageBackground,
     SolidBackground,
     RadialBackground,
-    RadialGradientCenter
+    RadialGradientCenter,
+    GradientColorPoint
 } from '../types/background';
 import type { ImageScale } from '../types/imageScale';
 import type { MaybeMissing } from '../expressions/json';
@@ -14,7 +15,7 @@ import { htmlFilter } from './htmlFilter';
 import { Truthy } from './truthy';
 import { pxToEmWithUnits } from './pxToEm';
 
-export function getBackground(bgs: MaybeMissing<Background>[]): {
+export function getBackground(bgs: MaybeMissing<Background>[], direction: 'ltr' | 'rtl'): {
     color?: string;
     image?: string;
     size?: string;
@@ -38,7 +39,8 @@ export function getBackground(bgs: MaybeMissing<Background>[]): {
                 });
             } else if (bg.type === 'image') {
                 return image({
-                    bg
+                    bg,
+                    direction
                 });
             } else if (bg.type === 'radial_gradient') {
                 return radial({
@@ -99,6 +101,28 @@ function solidUnique(opts: {
     };
 }
 
+function colorMapToList(colorMap: MaybeMissing<GradientColorPoint[]>): string | undefined {
+    if (!colorMap.every(it => it.color && typeof it.position === 'number' && it.position >= 0 && it.position <= 1)) {
+        return;
+    }
+
+    const colors = colorMap as {
+        color: string;
+        position: number;
+    }[];
+
+    const sortedColors = colors.sort((a, b) => {
+        if (Math.abs(a.position - b.position) < 1e-6) {
+            return 0;
+        }
+        return a.position - b.position;
+    });
+
+    return sortedColors
+        .map(color => `${correctColor(color.color)} ${(color.position * 100).toFixed(2)}%`)
+        .join(',');
+}
+
 function gradient(opts: {
     bg: MaybeMissing<GradientBackground>;
 }): {
@@ -117,28 +141,15 @@ function gradient(opts: {
 
     let image: string;
     if (opts.bg.color_map) {
-        if (!opts.bg.color_map.every(it => it.color && typeof it.position === 'number' && it.position >= 0 && it.position <= 1)) {
+        const list = colorMapToList(opts.bg.color_map);
+        if (!list) {
             return;
         }
-
-        const colors = opts.bg.color_map as {
-            color: string;
-            position: number;
-        }[];
-
-        const sortedColors = colors.sort((a, b) => {
-            if (Math.abs(a.position - b.position) < 1e-6) {
-                return 0;
-            }
-            return a.position - b.position;
-        });
 
         image = 'linear-gradient(' +
             (90 - Number(opts.bg.angle || 0) + 'deg') +
             ',' +
-            sortedColors
-                .map(color => `${correctColor(color.color)} ${(color.position * 100).toFixed(2)}%`)
-                .join(',') +
+            list +
             ')';
     } else {
         if (!colors) {
@@ -187,12 +198,24 @@ function radial(opts: {
     pos: string | undefined;
     image: string;
 } | undefined {
-    if (!Array.isArray(opts.bg?.colors)) {
+    if (!Array.isArray(opts.bg?.colors) && !Array.isArray(opts.bg?.color_map)) {
         return;
     }
 
-    const colors = opts.bg.colors.filter(Truthy) as string[];
-    if (!colors.length) {
+    const colors = opts.bg.colors?.filter(Truthy);
+    if (!colors?.length && !opts.bg?.color_map) {
+        return;
+    }
+
+    let list;
+    if (opts.bg.color_map) {
+        list = colorMapToList(opts.bg.color_map);
+    } else if (colors) {
+        list = colors
+            .map(color => correctColor(color))
+            .join(',');
+    }
+    if (!list) {
         return;
     }
 
@@ -216,15 +239,14 @@ function radial(opts: {
             'radial-gradient(' +
             `circle ${size || 'farthest-corner'} at ${centerX} ${centerY}` +
             ',' +
-            colors
-                .map(color => correctColor(color))
-                .join(',') +
+            list +
             ')'
     };
 }
 
 function image(opts: {
     bg: MaybeMissing<ImageBackground>;
+    direction: 'ltr' | 'rtl'
 }): {
     size: string | undefined;
     pos: string | undefined;
@@ -238,7 +260,7 @@ function image(opts: {
 
     return {
         size: imageSize(opts.bg.scale),
-        pos: imagePos(opts.bg),
+        pos: imagePos(opts.bg, opts.direction),
         image: 'url("' + htmlFilter(image) + '")'
     };
 }
@@ -259,13 +281,21 @@ export function imageSize(scale?: ImageScale): string {
 export function imagePos(obj: {
     content_alignment_horizontal?: AlignmentHorizontal;
     content_alignment_vertical?: AlignmentVertical;
-}): string {
+}, direction: 'ltr' | 'rtl'): string {
     let hpos: string;
     let vpos: string;
 
-    if (obj.content_alignment_horizontal === 'left') {
+    if (
+        obj.content_alignment_horizontal === 'left' ||
+        direction === 'ltr' && obj.content_alignment_horizontal === 'start' ||
+        direction === 'rtl' && obj.content_alignment_horizontal === 'end'
+    ) {
         hpos = '0%';
-    } else if (obj.content_alignment_horizontal === 'right') {
+    } else if (
+        obj.content_alignment_horizontal === 'right' ||
+        direction === 'ltr' && obj.content_alignment_horizontal === 'end' ||
+        direction === 'rtl' && obj.content_alignment_horizontal === 'start'
+    ) {
         hpos = '100%';
     } else {
         hpos = '50%';

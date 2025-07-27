@@ -73,6 +73,7 @@
       ],
       "result_type": "number",
       "platforms": [
+        "android",
         "ios",
         "web"
       ]
@@ -88,6 +89,7 @@
       ],
       "result_type": "number",
       "platforms": [
+        "android",
         "ios",
         "web"
       ]
@@ -103,6 +105,7 @@
       ],
       "result_type": "number",
       "platforms": [
+        "android",
         "ios",
         "web"
       ]
@@ -118,6 +121,7 @@
       ],
       "result_type": "number",
       "platforms": [
+        "android",
         "ios",
         "web"
       ]
@@ -129,6 +133,41 @@
         {
           "type": "number",
           "doc": "Tangent value."
+        }
+      ],
+      "result_type": "number",
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "function_name": "atan2",
+      "doc": "Calculates the angle in radians for given values (y,x)",
+      "arguments": [
+        {
+          "type": "number",
+          "doc": "Y coordinate of the point"
+        },
+        {
+          "type": "number",
+          "doc": "X coordinate of the point"
+        }
+      ],
+      "result_type": "number",
+      "platforms": [
+        "android",
+        "web"
+      ]
+    },
+    {
+      "function_name": "cot",
+      "doc": "Calculates the cotangent of the given angle in radians",
+      "arguments": [
+        {
+          "type": "number",
+          "doc": "Angle in radians."
         }
       ],
       "result_type": "number",

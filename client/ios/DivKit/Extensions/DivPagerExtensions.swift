@@ -4,12 +4,11 @@ import VGSL
 
 extension DivPager: DivBlockModeling, DivGalleryProtocol {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    let path = context.parentPath + (id ?? DivPager.type)
-    let pagerContext = context.modifying(parentPath: path)
-    return try modifyError({ DivBlockModelingError($0.message, path: path) }) {
+    let context = modifiedContextParentPath(context)
+    return try modifyError({ DivBlockModelingError($0.message, path: context.path) }) {
       try applyBaseProperties(
-        to: { try makeBaseBlock(context: pagerContext) },
-        context: pagerContext,
+        to: { try makeBaseBlock(context: context) },
+        context: context,
         actionsHolder: nil,
         applyPaddings: false
       )
@@ -38,7 +37,7 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
       defaultCrossAlignment: crossAlignment,
       scrollMode: .autoPaging(inertionEnabled: false),
       infiniteScroll: resolveInfiniteScroll(expressionResolver),
-      bufferSize: layoutMode.bufferSize(itemsCount: items.count),
+      bufferSize: min(layoutMode.bufferSize(itemsCount: items.count), items.count),
       transformation: pageTransformation?.resolve(
         expressionResolver,
         scrollDirection: scrollDirection
@@ -50,7 +49,7 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
       layoutMode: layoutMode,
       gallery: gallery,
       selectedActions: items.map { $0.value.makeSelectedActions(context: context) },
-      state: getState(context: context, path: context.parentPath, numberOfPages: items.count),
+      state: getState(context: context, path: context.path, numberOfPages: items.count),
       widthTrait: resolveWidthTrait(context),
       heightTrait: resolveHeightTrait(context)
     )
@@ -68,7 +67,8 @@ extension DivPager: DivBlockModeling, DivGalleryProtocol {
     let defaultItem = resolveDefaultItem(context.expressionResolver)
     return defaultItem == 0 ? .default : PagerViewState(
       numberOfPages: numberOfPages,
-      currentPage: defaultItem
+      currentPage: defaultItem,
+      animated: true
     )
   }
 }

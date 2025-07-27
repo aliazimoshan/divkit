@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 import VGSL
 
-public protocol UIViewRenderable {
+public protocol UIViewRenderable: PathIdentifiable {
   static func makeBlockView() -> BlockView
 
   func configureBlockView(
@@ -17,13 +17,54 @@ public protocol UIViewRenderable {
 }
 
 extension UIViewRenderable {
+  func configureBlockViewWithReporting(
+    _ view: BlockView,
+    observer: ElementStateObserver?,
+    overscrollDelegate: ScrollDelegate?,
+    renderingDelegate: RenderingDelegate?
+  ) {
+    var view = view
+    view.layoutReporter = LayoutReporter(
+      willLayoutSubviews: {
+        guard let path else { return }
+        renderingDelegate?.reportViewWillLayout(path: path)
+      },
+      didLayoutSubviews: {
+        guard let path else { return }
+        renderingDelegate?.reportViewDidLayout(path: path)
+      }
+    )
+    #if DEBUG
+    view.debugID = self.path?.leaf
+    #endif
+
+    let configure = {
+      configureBlockView(
+        view,
+        observer: observer,
+        overscrollDelegate: overscrollDelegate,
+        renderingDelegate: renderingDelegate
+      )
+    }
+
+    guard let renderingDelegate, let path else {
+      configure()
+      return
+    }
+
+    renderingDelegate.reportBlockWillConfigure(path: path)
+    configure()
+    renderingDelegate.reportBlockDidConfigure(path: path)
+  }
+
   public func makeBlockView(
     observer: ElementStateObserver? = nil,
     overscrollDelegate: ScrollDelegate? = nil,
     renderingDelegate: RenderingDelegate? = nil
   ) -> BlockView {
     let result = type(of: self).makeBlockView()
-    configureBlockView(
+    renderingDelegate?.reportViewWasCreated()
+    configureBlockViewWithReporting(
       result,
       observer: observer,
       overscrollDelegate: overscrollDelegate,
@@ -37,7 +78,7 @@ extension UIViewRenderable {
   }
 
   public func configureBlockView(_ view: BlockView) {
-    configureBlockView(
+    configureBlockViewWithReporting(
       view,
       observer: nil,
       overscrollDelegate: nil,
@@ -87,7 +128,7 @@ extension UIViewRenderable {
     subviewPosition: SubviewPosition = .trailing
   ) -> BlockView {
     if let view, canConfigureBlockView(view) {
-      configureBlockView(
+      configureBlockViewWithReporting(
         view,
         observer: observer,
         overscrollDelegate: overscrollDelegate,

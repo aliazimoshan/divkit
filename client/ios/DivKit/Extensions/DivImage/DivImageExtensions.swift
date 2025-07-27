@@ -4,7 +4,8 @@ import VGSL
 
 extension DivImage: DivBlockModeling, DivImageProtocol {
   public func makeBlock(context: DivBlockModelingContext) throws -> Block {
-    try applyBaseProperties(
+    let context = modifiedContextParentPath(context)
+    return try applyBaseProperties(
       to: { try makeBaseBlock(context: context) },
       context: context,
       actionsHolder: self,
@@ -13,24 +14,25 @@ extension DivImage: DivBlockModeling, DivImageProtocol {
   }
 
   private func makeBaseBlock(context: DivBlockModelingContext) throws -> Block {
-    try checkLayoutTraits(context: context)
-
     let expressionResolver = context.expressionResolver
     let highPriority = resolveHighPriorityPreviewShow(expressionResolver)
+    let widthTrait = resolveContentWidthTrait(context)
+    let height = resolveHeight(context)
     return ImageBlock(
       imageHolder: context.imageHolderFactory.make(
         resolveImageUrl(expressionResolver),
         resolvePlaceholder(expressionResolver, highPriority: highPriority)
       ),
-      widthTrait: resolveContentWidthTrait(context),
-      height: resolveHeight(context),
+      widthTrait: widthTrait,
+      height: height,
       contentMode: resolveContentMode(context),
       tintColor: resolveTintColor(expressionResolver),
       tintMode: resolveTintMode(expressionResolver).tintMode,
       effects: resolveEffects(expressionResolver),
       appearanceAnimation: appearanceAnimation?.resolve(expressionResolver),
       blurUsingMetal: context.flagsInfo.imageBlurPreferMetal,
-      tintUsingMetal: context.flagsInfo.imageTintPreferMetal
+      tintUsingMetal: context.flagsInfo.imageTintPreferMetal,
+      path: context.path
     )
   }
 }

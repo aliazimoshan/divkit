@@ -5,6 +5,7 @@
     interface ChildInfo {
         width?: MaybeMissing<Size>;
         height?: MaybeMissing<Size>;
+        visibility?: Visibility;
     }
 
     const SIZE_MAP: Record<Size['type'], string> = {
@@ -13,7 +14,14 @@
         match_parent: 'parent'
     };
 
-    function getItemMods(orientation: Orientation, childInfo: ChildInfo): Mods {
+    const DUPLICATES_IN_INFINITE = 2;
+    const WHEEL_THROTTLE = 400;
+    const MIN_SWIPE_DISTANCE = 8;
+
+    function getItemMods(orientation: Orientation, childInfo: {
+        width?: MaybeMissing<Size>;
+        height?: MaybeMissing<Size>;
+    }): Mods {
         if (orientation === 'horizontal') {
             const heightType = childInfo.height?.type || '';
 
@@ -33,39 +41,41 @@
 </script>
 
 <script lang="ts">
-    import { getContext, onDestroy, onMount } from 'svelte';
+    import { getContext, onDestroy, onMount, tick } from 'svelte';
     import { derived, type Readable } from 'svelte/store';
 
     import css from './Pager.module.css';
     import rootCss from '../Root.module.css';
     import arrowsCss from '../utilities/Arrows.module.css';
 
-    import type { DivBaseData } from '../../types/base';
+    import type { DivBaseData, Visibility } from '../../types/base';
     import type { DivPagerData } from '../../types/pager';
     import type { LayoutParams } from '../../types/layoutParams';
     import type { Orientation } from '../../types/orientation';
-    import type { PagerData } from '../../stores/pagers';
-    import type { Overflow, SwitchElements } from '../../types/switch-elements';
-    import type { ComponentContext } from '../../types/componentContext';
+    import type { SwitchElements } from '../../types/switch-elements';
+    import type { ComponentContext, PagerRegisterData } from '../../types/componentContext';
     import type { MaybeMissing } from '../../expressions/json';
     import type { Size } from '../../types/sizes';
     import type { Variable } from '../../expressions/variable';
+    import type { Overflow } from '../../../typings/common';
+    import type { EdgeInsets } from '../../types/edgeInserts';
 
-    import Outer from '../utilities/Outer.svelte';
-    import Unknown from '../utilities/Unknown.svelte';
     import { ROOT_CTX, type RootCtxValue } from '../../context/root';
     import { wrapError } from '../../utils/wrapError';
     import { genClassName } from '../../utils/genClassName';
     import { pxToEmWithUnits } from '../../utils/pxToEm';
     import { makeStyle } from '../../utils/makeStyle';
     import { correctGeneralOrientation } from '../../utils/correctGeneralOrientation';
-    import { correctEdgeInserts } from '../../utils/correctEdgeInserts';
     import { isNonNegativeNumber } from '../../utils/isNonNegativeNumber';
-    import { debounce } from '../../utils/debounce';
     import { Truthy } from '../../utils/truthy';
     import { nonNegativeModulo } from '../../utils/nonNegativeModulo';
     import { getItemsFromItemBuilder } from '../../utils/itemBuilder';
     import { constStore } from '../../utils/constStore';
+    import { correctEdgeInsertsObject } from '../../utils/correctEdgeInsertsObject';
+    import { edgeInsertsToCss } from '../../utils/edgeInsertsToCss';
+    import { componentFakePagerDuplicate } from '../../utils/componentContext';
+    import Outer from '../utilities/Outer.svelte';
+    import Unknown from '../utilities/Unknown.svelte';
     import DevtoolHolder from '../utilities/DevtoolHolder.svelte';
 
     export let componentContext: ComponentContext<DivPagerData>;
@@ -82,8 +92,6 @@
 
     const isDesktop = rootCtx.isDesktop;
 
-    const onScrollDebounced = debounce(onScroll, 50);
-
     let prevId: string | undefined;
 
     let pagerItemsWrapper: HTMLElement;
@@ -98,21 +106,49 @@
 
     let orientation: Orientation = 'horizontal';
     let itemSpacing = '0em';
+    let paddingObj: EdgeInsets = {};
     let padding = '';
     let sizeVal = '';
 
     let childLayoutParams: LayoutParams = {};
     let crossAxisAlignment: 'start' | 'center' | 'end' = 'start';
+    let scrollAxisAlignment: 'start' | 'center' | 'end' = 'center';
 
     let items: ComponentContext[] = [];
+    let visibleItemsWithOutDuplicates = 0;
+    let visibleItems: {
+        width?: MaybeMissing<Size>;
+        height?: MaybeMissing<Size>;
+        index: number;
+        componentContext: ComponentContext;
+        duplicate?: boolean;
+    }[] = [];
+    let visibleToAllMap: Record<number, number> = {};
+    let allToVisibleMap: Record<number, number> = {};
     let prevContext: ComponentContext<DivPagerData> | undefined;
+
+    let registerData: PagerRegisterData | undefined;
+
+    let wheelFired = 0;
+    let infinite = false;
+    let hasDuplicates = false;
+    let animated = false;
+    let shouldClampDuplicates = false;
+    let transform = 0;
+    let transformStr = '';
+    let swipeTs = 0;
+    let cancelPointer: (() => void) | undefined;
 
     $: origJson = componentContext.origJson;
 
     function rebind(): void {
-        padding = '';
+        paddingObj = {};
         childLayoutParams = {};
         crossAxisAlignment = 'start';
+        scrollAxisAlignment = 'center';
+        infinite = false;
+        hasDuplicates = false;
+        shouldClampDuplicates = false;
     }
 
     $: if (origJson) {
@@ -130,6 +166,12 @@
     $: jsonPaddings = componentContext.getDerivedFromVars(componentContext.json.paddings);
     $: jsonRestrictParentScroll = componentContext.getDerivedFromVars(componentContext.json.restrict_parent_scroll);
     $: jsonCrossAxisAlignment = componentContext.getDerivedFromVars(componentContext.json.cross_axis_alignment);
+    $: jsonScrollAxisAlignment = componentContext.getDerivedFromVars(componentContext.json.scroll_axis_alignment);
+    $: jsonInfiniteScroll = componentContext.getDerivedFromVars(componentContext.json.infinite_scroll);
+
+    $: {
+        infinite = correctBooleanInt($jsonInfiniteScroll, infinite);
+    }
 
     function replaceItems(items: (MaybeMissing<DivBaseData> | undefined)[]): void {
         componentContext = prevContext = {
@@ -198,13 +240,65 @@
             children.push(
                 componentContext.getDerivedFromVars({
                     width: item.json.width,
-                    height: item.json.height
+                    height: item.json.height,
+                    visibility: item.json.visibility
                 })
             );
         });
 
         // Create a new array every time so that it is not equal to the previous one
         childStore = derived(children, val => [...val]);
+    }
+
+    $: {
+        allToVisibleMap = {};
+        visibleToAllMap = {};
+        visibleItems = $childStore.map((it, index) => {
+            return {
+                width: it.width,
+                height: it.height,
+                index,
+                componentContext: items[index]
+            };
+        }).filter((_it, index) => $childStore[index].visibility !== 'gone');
+
+        visibleItems.forEach((it, index) => {
+            visibleToAllMap[index] = it.index;
+            allToVisibleMap[it.index] = index;
+        });
+
+        visibleItemsWithOutDuplicates = visibleItems.length;
+
+        if (infinite && visibleItems.length >= DUPLICATES_IN_INFINITE) {
+            const firstDuplicates = visibleItems.slice(0, DUPLICATES_IN_INFINITE).map(it => {
+                return {
+                    ...it,
+                    componentContext: it.componentContext.dup(componentFakePagerDuplicate),
+                    duplicate: true
+                };
+            });
+            const lastDuplicates = visibleItems.slice(visibleItems.length - DUPLICATES_IN_INFINITE).map(it => {
+                return {
+                    ...it,
+                    componentContext: it.componentContext.dup(componentFakePagerDuplicate),
+                    duplicate: true
+                };
+            });
+
+            firstDuplicates.forEach((_it, index) => {
+                visibleToAllMap[visibleItems.length + index] = index;
+            });
+            lastDuplicates.forEach((_it, index) => {
+                visibleToAllMap[index - DUPLICATES_IN_INFINITE] = visibleItems.length - DUPLICATES_IN_INFINITE + index;
+            });
+
+            visibleItems = ([] as typeof visibleItems).concat(lastDuplicates, visibleItems, firstDuplicates);
+            hasDuplicates = true;
+        } else {
+            hasDuplicates = false;
+        }
+
+        resnap();
     }
 
     $: {
@@ -231,35 +325,53 @@
     }
 
     $: {
-        padding = correctEdgeInserts($jsonPaddings, $direction, padding);
+        paddingObj = correctEdgeInsertsObject($jsonPaddings, paddingObj);
+        padding = edgeInsertsToCss(paddingObj, $direction);
     }
 
-    $: gridAuto = orientation === 'horizontal' ? 'grid-auto-columns' : 'grid-auto-rows';
+    $: gridSizeProp = orientation === 'horizontal' ? 'grid-auto-columns' : 'grid-auto-rows';
+
+    $: if ($jsonScrollAxisAlignment === 'start' || $jsonScrollAxisAlignment === 'center' || $jsonScrollAxisAlignment === 'end') {
+        scrollAxisAlignment = $jsonScrollAxisAlignment;
+
+        resnap();
+    }
 
     $: {
+        const paddingStart = orientation === 'horizontal' ?
+            pxToEmWithUnits(
+                paddingObj?.start ||
+                ($direction === 'ltr' ? paddingObj?.left : paddingObj?.right) ||
+                0
+            ) :
+            pxToEmWithUnits(
+                paddingObj?.top || 0
+            );
+        const paddingEnd = orientation === 'horizontal' ?
+            pxToEmWithUnits(
+                paddingObj?.end ||
+                ($direction === 'ltr' ? paddingObj?.right : paddingObj?.left) ||
+                0
+            ) :
+            pxToEmWithUnits(
+                paddingObj?.bottom || 0
+            );
         if ($jsonLayoutMode?.type === 'fixed') {
-            const paddings = orientation === 'horizontal' ?
-                pxToEmWithUnits(
-                    (($direction === 'ltr' ?
-                        componentContext.json.paddings?.start :
-                        componentContext.json.paddings?.end
-                    ) || componentContext.json.paddings?.left || 0) +
-                    (($direction === 'ltr' ?
-                        componentContext.json.paddings?.end :
-                        componentContext.json.paddings?.start
-                    ) || componentContext.json.paddings?.right || 0)
-                ) :
-                pxToEmWithUnits(
-                    (componentContext.json.paddings?.top || 0) +
-                    (componentContext.json.paddings?.bottom || 0)
-                );
-            const neighbourPageWidth = $jsonLayoutMode.neighbour_page_width?.value;
-            sizeVal = neighbourPageWidth ?
-                `calc(100% + ${paddings} - 2 * ${pxToEmWithUnits(neighbourPageWidth)} - 2 * ${itemSpacing})` :
-                '100%';
+            const neighbourPageWidth = $jsonLayoutMode.neighbour_page_width?.value || 0;
+
+            if (scrollAxisAlignment === 'center') {
+                sizeVal = `calc(100% + ${paddingStart} + ${paddingEnd} - 2 * ${pxToEmWithUnits(neighbourPageWidth)} - 2 * ${itemSpacing})`;
+            } else if (scrollAxisAlignment === 'start') {
+                sizeVal = `calc(100% + ${paddingEnd} - ${pxToEmWithUnits(neighbourPageWidth)} - ${itemSpacing})`;
+            } else {
+                sizeVal = `calc(100% + ${paddingStart} - ${pxToEmWithUnits(neighbourPageWidth)} - ${itemSpacing})`;
+            }
         } else if ($jsonLayoutMode?.type === 'percentage') {
-            const pageWidth = $jsonLayoutMode.page_width?.value;
-            sizeVal = `${Number(pageWidth)}%`;
+            let pageWidth = $jsonLayoutMode.page_width?.value;
+            if (typeof pageWidth !== 'number' || pageWidth < 0) {
+                pageWidth = 100;
+            }
+            sizeVal = `calc(${(pageWidth / 100).toFixed(2)} * (100% + ${paddingStart} + ${paddingEnd}))`;
         } else if ($jsonLayoutMode?.type === 'wrap_content') {
             sizeVal = 'minmax(max-content, auto)';
         }
@@ -276,65 +388,44 @@
     $: style = {
         'grid-gap': itemSpacing,
         padding,
-        [gridAuto]: sizeVal
+        [gridSizeProp]: sizeVal,
+        transform: transformStr,
     };
 
     $: mods = {
+        animated,
         clip: rootCtx.pagerChildrenClipEnabled,
         orientation,
-        'cross-align': crossAxisAlignment
+        'cross-align': crossAxisAlignment,
+        'scroll-align': scrollAxisAlignment
     };
 
     $: hasError = hasLayoutModeError;
 
     $: shouldCheckArrows = $isDesktop && mounted && !hasError;
 
-    $: hasScrollLeft = $direction === 'ltr' ? currentItem > 0 : currentItem + 1 < items.length;
+    $: hasScrollLeft = hasDuplicates || (
+        $direction === 'ltr' ?
+            allToVisibleMap[currentItem] > 0 :
+            allToVisibleMap[currentItem] + 1 < visibleItems.length
+    );
 
-    $: hasScrollRight = $direction === 'ltr' ? currentItem + 1 < items.length : currentItem > 0;
-
-    function checkIsFullyIntersecting(scroller: DOMRect, item: DOMRect): boolean {
-        if (orientation === 'horizontal') {
-            return item.left >= scroller.left && item.right <= scroller.right;
-        }
-
-        return item.top >= scroller.top && item.bottom <= scroller.bottom;
-    }
-
-    function calculateCurrentElementIndex(): number {
-        const pagerElements = Array.from(pagerItemsWrapper.children) as HTMLElement[];
-        const wrapperRect = pagerItemsWrapper.getBoundingClientRect();
-
-        const firstFullyVisibleElement = pagerElements.findIndex(el =>
-            checkIsFullyIntersecting(wrapperRect, el.getBoundingClientRect())
-        );
-
-        if (firstFullyVisibleElement !== -1) {
-            return firstFullyVisibleElement;
-        }
-
-        return currentItem;
-    }
-
-    function onScroll(): void {
-        if (!mounted) {
-            // Already destroyed
-            return;
-        }
-
-        const nextItem = calculateCurrentElementIndex();
-        if (nextItem !== currentItem) {
-            currentItem = nextItem;
-        }
-    }
-
-    $: pagers = rootCtx.getStore<Map<string, PagerData>>('pagers');
+    $: hasScrollRight = hasDuplicates || (
+        $direction === 'ltr' ?
+            allToVisibleMap[currentItem] + 1 < visibleItems.length :
+            allToVisibleMap[currentItem] > 0
+    );
 
     function pagerDataUpdate(size: number, currentItem: number): void {
-        const pagerId = componentContext.id;
-        if (pagerId) {
-            const newPagersMap = new Map($pagers);
-            $pagers = newPagersMap.set(pagerId, { instId, size, currentItem, scrollToPagerItem });
+        if (registerData) {
+            registerData.update({
+                instId,
+                currentItem: allToVisibleMap[currentItem],
+                size,
+                scrollToPagerItem(index: number) {
+                    scrollToPagerItem(visibleToAllMap[index]);
+                }
+            });
         }
     }
 
@@ -345,114 +436,386 @@
         }
         prevSelectedItem = currentItem;
 
-        const actions = componentContext.getJsonWithVars(items[currentItem].json?.selected_actions);
+        if (!items[currentItem]) {
+            return;
+        }
+
+        const actions = items[currentItem].json?.selected_actions;
         if (!actions?.length) {
             return;
         }
         componentContext.execAnyActions(actions);
     }
 
-    $: pagerDataUpdate(items.length, currentItem);
+    $: pagerDataUpdate(visibleItemsWithOutDuplicates, currentItem);
 
     $: runSelectedActions(currentItem);
 
-    function scrollToPagerItem(index: number, behavior: ScrollBehavior = 'smooth'): void {
+    function getTransformPosition(visibleIndex: number): number {
+        const atStart = hasDuplicates ? false : (visibleIndex === 0);
+        const atEnd = hasDuplicates ? false : (visibleIndex === visibleItems.length - 1);
+
+        const isHorizontal = orientation === 'horizontal';
+        const pagerItem = pagerItemsWrapper.children[
+            visibleIndex + (hasDuplicates ? DUPLICATES_IN_INFINITE : 0)
+        ] as HTMLElement;
+        if (!pagerItem) {
+            return 0;
+        }
+        const elementOffset: keyof HTMLElement = isHorizontal ? 'offsetLeft' : 'offsetTop';
+        const elementSize: keyof HTMLElement = isHorizontal ? 'offsetWidth' : 'offsetHeight';
+        const containerSize = getContainerSize();
+        const startPadding = getStartPadding();
+        const endPadding = getEndPadding();
+        const scrollSize = getScrollSize();
+
+        if (containerSize >= scrollSize + startPadding + endPadding) {
+            return 0;
+        }
+
+        if (atStart) {
+            return 0;
+        } else if (atEnd) {
+            return (containerSize - startPadding - endPadding - scrollSize) * ($direction === 'rtl' ? -1 : 1);
+        }
+
+        if (
+            scrollAxisAlignment === 'start' && $direction === 'ltr' ||
+            scrollAxisAlignment === 'end' && $direction === 'rtl'
+        ) {
+            return -(pagerItem[elementOffset] - startPadding);
+        } else if (
+            scrollAxisAlignment === 'end' && $direction === 'ltr' ||
+            scrollAxisAlignment === 'start' && $direction === 'rtl'
+        ) {
+            return -(pagerItem[elementOffset] + pagerItem[elementSize] - containerSize + endPadding);
+        }
+        return pagerItemsWrapper[elementSize] / 2 - (pagerItem[elementOffset] + pagerItem[elementSize] / 2);
+    }
+
+    function scrollToVisiblePagerItem(visibleIndex: number, isAnimated: boolean): void {
         if (!pagerItemsWrapper) {
             return;
         }
 
-        const isHorizontal = orientation === 'horizontal';
-        const nextPagerItem = pagerItemsWrapper.children[index] as HTMLElement;
-        const elementOffset: keyof HTMLElement = isHorizontal ? 'offsetLeft' : 'offsetTop';
-        const elementSize: keyof HTMLElement = isHorizontal ? 'offsetWidth' : 'offsetHeight';
-        const scrollDirection: keyof ScrollToOptions = isHorizontal ? 'left' : 'top';
-        const position = nextPagerItem[elementOffset] + nextPagerItem[elementSize] / 2 -
-            pagerItemsWrapper[elementSize] / 2;
+        const position = getTransformPosition(visibleIndex);
 
-        pagerItemsWrapper.scroll({
-            [scrollDirection]: position,
-            behavior
+        animated = isAnimated;
+        tick().then(() => {
+            transform = position;
+            transformStr = transformToStr(transform);
+            currentItem = visibleToAllMap[visibleIndex] ?? 0;
+
+            shouldClampDuplicates = hasDuplicates &&
+                (visibleIndex < 0 || visibleIndex >= visibleItemsWithOutDuplicates);
         });
-        currentItem = index;
     }
 
-    function setPreviousItem(step: number, overflow: Overflow) {
-        let previousItem = currentItem - step;
-
-        if (previousItem < 0) {
-            previousItem = overflow === 'ring' ? nonNegativeModulo(previousItem, items.length) : 0;
-        }
-
-        scrollToPagerItem(previousItem);
+    function scrollToPagerItem(index: number, isAnimated = true): void {
+        scrollToVisiblePagerItem(allToVisibleMap[index] ?? 0, isAnimated);
     }
 
-    function setNextItem(step: number, overflow: Overflow) {
-        let nextItem = currentItem + step;
+    function transformToStr(transform: number): string {
+        const isHorizontal = orientation === 'horizontal';
+        const transformProp = isHorizontal ? 'translateX' : 'translateY';
 
-        if (nextItem > items.length - 1) {
-            nextItem = overflow === 'ring' ? nonNegativeModulo(nextItem, items.length) : items.length - 1;
-        }
-
-        scrollToPagerItem(nextItem);
+        return `${transformProp}(${pxToEmWithUnits(transform)})`;
     }
 
-    $: if (componentContext.json) {
-        const defaultItem = componentContext.getJsonWithVars(componentContext.json.default_item);
-        if (typeof defaultItem === 'number' && defaultItem >= 0 && defaultItem < items.length) {
-            currentItem = prevSelectedItem = defaultItem;
+    function clampIndex(visibleIndex: number, overflow: Overflow): number {
+        if (
+            hasDuplicates &&
+            visibleIndex >= -DUPLICATES_IN_INFINITE &&
+            visibleIndex < visibleItemsWithOutDuplicates + DUPLICATES_IN_INFINITE
+        ) {
+            return visibleIndex;
         }
+
+        if (visibleIndex > visibleItems.length - 1) {
+            return overflow === 'ring' ? nonNegativeModulo(visibleIndex, visibleItems.length) : visibleItems.length - 1;
+        }
+        if (visibleIndex < 0) {
+            return overflow === 'ring' ? nonNegativeModulo(visibleIndex, visibleItems.length) : 0;
+        }
+
+        return visibleIndex;
+    }
+
+    function setPreviousItem(step: number, overflow: Overflow, animated: boolean) {
+        const previousItem = clampIndex(allToVisibleMap[currentItem] - step, overflow);
+
+        scrollToVisiblePagerItem(previousItem, animated);
+    }
+
+    function setNextItem(step: number, overflow: Overflow, animated: boolean) {
+        const nextItem = clampIndex(allToVisibleMap[currentItem] + step, overflow);
+
+        scrollToVisiblePagerItem(nextItem, animated);
+    }
+
+    function init(): void {
+        registerData?.destroy();
+        registerData = undefined;
 
         if (prevId) {
             rootCtx.unregisterInstance(prevId);
             prevId = undefined;
         }
 
+        if (!componentContext.fakeElement) {
+            registerData = componentContext.registerPager(componentContext.id || undefined);
+        }
+
         if (componentContext.id && !componentContext.fakeElement) {
             prevId = componentContext.id;
             rootCtx.registerInstance<SwitchElements>(prevId, {
-                setCurrentItem(item: number) {
+                setCurrentItem(item: number, animated: boolean) {
                     if (item < 0 || item > items.length - 1) {
                         throw new Error('Item is out of range in "set-current-item" action');
                     }
 
-                    scrollToPagerItem(item);
+                    scrollToPagerItem(item, animated);
                 },
                 setPreviousItem,
                 setNextItem,
-                scrollToStart() {
-                    scrollToPagerItem(0);
+                scrollToStart(animated) {
+                    scrollToPagerItem(visibleItems[hasDuplicates ? DUPLICATES_IN_INFINITE : 0].index, animated);
                 },
-                scrollToEnd() {
-                    scrollToPagerItem(items.length - 1);
+                scrollToEnd(animated) {
+                    scrollToPagerItem(visibleItems[
+                        visibleItems.length - 1 - (hasDuplicates ? DUPLICATES_IN_INFINITE : 0)
+                    ].index, animated);
+                },
+                scrollCombined({
+                    step,
+                    overflow,
+                    animated
+                }) {
+                    if (step) {
+                        scrollToPagerItem(clampIndex(allToVisibleMap[currentItem] + step, overflow || 'clamp'), animated);
+                    }
+                },
+            }, 'warn');
+        }
+    }
+
+    $: if (componentContext.json) {
+        const defaultItem = componentContext.getJsonWithVars(componentContext.json.default_item);
+        if (typeof defaultItem === 'number' && defaultItem >= 0 && defaultItem < items.length) {
+            currentItem = prevSelectedItem = defaultItem;
+            pagerDataUpdate(items.length, defaultItem);
+        }
+
+        init();
+    }
+
+    function getStartPadding(): number {
+        const isHorizontal = orientation === 'horizontal';
+
+        if (isHorizontal) {
+            return paddingObj.start ?? ($direction === 'ltr' ? paddingObj.left : paddingObj.right) ?? 0;
+        }
+        return paddingObj.top ?? 0;
+    }
+
+    function getEndPadding(): number {
+        const isHorizontal = orientation === 'horizontal';
+
+        if (isHorizontal) {
+            return paddingObj.end ?? ($direction === 'ltr' ? paddingObj.right : paddingObj.left) ?? 0;
+        }
+        return paddingObj.bottom ?? 0;
+    }
+
+    function getContainerSize(): number {
+        if (!pagerItemsWrapper) {
+            return 0;
+        }
+
+        const isHorizontal = orientation === 'horizontal';
+
+        if (isHorizontal) {
+            return pagerItemsWrapper.parentElement?.offsetWidth || 0;
+        }
+        return pagerItemsWrapper.parentElement?.offsetHeight || 0;
+    }
+
+    function getScrollSize(): number {
+        const isHorizontal = orientation === 'horizontal';
+        const children = Array.from(pagerItemsWrapper.children) as HTMLElement[];
+        const first = children[0].getBoundingClientRect();
+        const last = children[children.length - 1].getBoundingClientRect();
+
+        if (isHorizontal) {
+            if ($direction === 'rtl') {
+                return first.right - last.left;
+            }
+            return last.right - first.left;
+        }
+        return last.bottom - first.top;
+    }
+
+    function onFocus(event: Event): void {
+        const target = event.target;
+        if (!(target instanceof Element) || !pagerItemsWrapper) {
+            return;
+        }
+
+        let node = target;
+
+        while (node.parentElement && node.parentElement !== pagerItemsWrapper) {
+            node = node.parentElement;
+        }
+        if (!node) {
+            return;
+        }
+        const index = Array.from(pagerItemsWrapper.children).indexOf(node);
+        if (index < 0) {
+            return;
+        }
+        const visibleIndex = index - (hasDuplicates ? DUPLICATES_IN_INFINITE : 0);
+
+        scrollToVisiblePagerItem(visibleIndex, true);
+    }
+
+    function onItemsClick(event: MouseEvent): void {
+        if (Date.now() - swipeTs < 300) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }
+
+    function onPointerDown(event: PointerEvent): void {
+        if (!rootCtx.pagerMouseDragEnabled && event.pointerType === 'mouse') {
+            return;
+        }
+
+        const isHorizontal = orientation === 'horizontal';
+        const start = isHorizontal ? event.pageX : event.pageY;
+
+        const startTransform = transform;
+        const containerSize = getContainerSize() - getStartPadding() - getEndPadding();
+        const scrollSize = getScrollSize();
+        const swipeStartTime = Date.now();
+
+        const onPointerMove = (event: PointerEvent) => {
+            const current = isHorizontal ? event.pageX : event.pageY;
+            let newTransform = startTransform + current - start;
+
+            if (!hasDuplicates) {
+                if ($direction === 'rtl') {
+                    if (newTransform < 0) {
+                        newTransform = newTransform * containerSize / (newTransform + containerSize * 3);
+                    } else if (newTransform + containerSize > scrollSize) {
+                        let space = newTransform + containerSize - scrollSize;
+                        space = space * containerSize / (space + containerSize * 3);
+                        newTransform = -containerSize + scrollSize + space;
+                    }
+                } else if ($direction === 'ltr') {
+                    if (newTransform > 0) {
+                        newTransform = newTransform * containerSize / (newTransform + containerSize * 3);
+                    } else if (-newTransform + containerSize > scrollSize) {
+                        let space = -newTransform + containerSize - scrollSize;
+                        space = space * containerSize / (space + containerSize * 3);
+                        newTransform = containerSize - scrollSize - space;
+                    }
                 }
+            }
+
+            transform = newTransform;
+            transformStr = transformToStr(transform);
+
+            event.preventDefault();
+        };
+        const onPointerUp = (event: PointerEvent) => {
+            cancelPointer?.();
+            cancelPointer = undefined;
+
+            // 512px limit for big screens
+            const panelsWrapperWidth = Math.min(512, containerSize);
+            const swipeDist = Math.abs(startTransform - transform);
+            if (swipeDist < MIN_SWIPE_DISTANCE) {
+                scrollToVisiblePagerItem(allToVisibleMap[currentItem], true);
+
+                return;
+            }
+
+            event.preventDefault();
+            swipeTs = Date.now();
+
+            const swipeCoefficient = Math.min(1, (Date.now() - swipeStartTime) / 750);
+            let newCurrent = allToVisibleMap[currentItem];
+            if (swipeDist > (panelsWrapperWidth / 4) * swipeCoefficient) {
+                newCurrent += (startTransform > transform ? 1 : -1) * ($direction === 'rtl' ? -1 : 1);
+            }
+            if (!hasDuplicates) {
+                if (newCurrent >= visibleItems.length) {
+                    newCurrent = visibleItems.length - 1;
+                } else if (newCurrent < 0) {
+                    newCurrent = 0;
+                }
+            }
+
+            scrollToVisiblePagerItem(newCurrent, true);
+        };
+
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+
+        cancelPointer?.();
+        cancelPointer = () => {
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', onPointerUp);
+            window.removeEventListener('pointercancel', onPointerUp);
+        };
+    }
+
+    function onWheel(event: WheelEvent): void {
+        if (!event.deltaX || Math.abs(event.deltaX) < Math.abs(event.deltaY)) {
+            return;
+        }
+
+        const now = Date.now();
+        if (now - wheelFired < WHEEL_THROTTLE) {
+            return;
+        }
+        wheelFired = now;
+
+        const dir = ($direction === 'rtl' ? -1 : 1) * event.deltaX;
+        if (dir > 0) {
+            setNextItem(1, 'clamp', true);
+        } else {
+            setPreviousItem(1, 'clamp', true);
+        }
+    }
+
+    function onTransitionEnd(): void {
+        animated = false;
+
+        if (shouldClampDuplicates) {
+            tick().then(() => {
+                scrollToPagerItem(currentItem, false);
             });
         }
+    }
+
+    function resnap(): void {
+        scrollToPagerItem(currentItem, false);
     }
 
     onMount(() => {
         mounted = true;
 
         if (pagerItemsWrapper) {
-            const isIndicatorExist = Boolean(document.getElementById(`${instId}-tab-0`));
-
-            if (isIndicatorExist) {
-                const pagerItems = [...pagerItemsWrapper.children] as HTMLElement[];
-
-                for (const [index, item] of pagerItems.entries()) {
-                    item.setAttribute('role', 'tabpanel');
-                    item.setAttribute('id', `${instId}-panel-${index}`);
-                    item.setAttribute('aria-labelledby', `${instId}-tab-${index}`);
-                }
-            }
-
-            if (currentItem > 0) {
-                scrollToPagerItem(currentItem, 'instant');
-            }
+            scrollToPagerItem(currentItem, false);
         }
     });
 
     onDestroy(() => {
         mounted = false;
+
+        cancelPointer?.();
 
         items.forEach(context => {
             context.destroy();
@@ -462,8 +825,15 @@
             rootCtx.unregisterInstance(prevId);
             prevId = undefined;
         }
+
+        registerData?.destroy();
+        registerData = undefined;
     });
 </script>
+
+<svelte:window
+    on:resize={resnap}
+/>
 
 {#if !hasError}
     <Outer
@@ -473,17 +843,28 @@
         customPaddings={true}
         parentOf={items}
         {replaceItems}
+        on:pointerdown={onPointerDown}
+        on:wheel={onWheel}
     >
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div
             class="{css.pager__items} {$jsonRestrictParentScroll ? rootCss['root_restrict-scroll'] : ''}"
             style={makeStyle(style)}
             bind:this={pagerItemsWrapper}
-            on:scroll={onScrollDebounced}
+            on:transitionend={onTransitionEnd}
+            on:focus|capture={onFocus}
+            on:click|capture={onItemsClick}
         >
-            {#each items as item, index}
-                <div class={genClassName('pager__item', css, getItemMods(orientation, $childStore[index]))}>
+            {#each visibleItems as item}
+                <div
+                    class={genClassName('pager__item', css, getItemMods(orientation, item))}
+                    role="tabpanel"
+                    id="{instId}-panel-{item.index}"
+                    aria-labelledby="{instId}-tab-{item.index}"
+                >
                     <Unknown
-                        componentContext={item}
+                        componentContext={item.componentContext}
                         layoutParams={childLayoutParams}
                     />
                 </div>
@@ -493,7 +874,7 @@
         {#if hasScrollLeft && shouldCheckArrows}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div class="{leftClass || `${css.pager__arrow} ${arrowsCss.arrow} ${arrowsCss.arrow_left}`}" on:click={() => ($direction === 'ltr' ? setPreviousItem : setNextItem)(1, 'clamp')}>
+            <div class="{leftClass || `${css.pager__arrow} ${arrowsCss.arrow} ${arrowsCss.arrow_left}`}" on:click={() => ($direction === 'ltr' ? setPreviousItem : setNextItem)(1, 'clamp', true)}>
                 {#if !leftClass}
                     <svg class={arrowsCss.arrow__icon} xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
                         <path class={css['pager__arrow-icon-path']} d="m10 16 8.3 8 1.03-1-4-6-.7-1 .7-1 4-6-1.03-1z"/>
@@ -504,7 +885,7 @@
         {#if hasScrollRight && shouldCheckArrows}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div class="{rightClass || `${css.pager__arrow} ${arrowsCss.arrow} ${arrowsCss.arrow_right}`}" on:click={() => ($direction === 'ltr' ? setNextItem : setPreviousItem)(1, 'clamp')}>
+            <div class="{rightClass || `${css.pager__arrow} ${arrowsCss.arrow} ${arrowsCss.arrow_right}`}" on:click={() => ($direction === 'ltr' ? setNextItem : setPreviousItem)(1, 'clamp', true)}>
                 {#if !rightClass}
                     <svg class={arrowsCss.arrow__icon} xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
                         <path class={css['pager__arrow-icon-path']} d="M22 16l-8.3 8-1.03-1 4-6 .7-1-.7-1-4-6 1.03-1 8.3 8z"/>

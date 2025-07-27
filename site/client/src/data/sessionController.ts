@@ -44,6 +44,7 @@ async function init() {
         isFeatures.set(true);
     } else if (design) {
         isDesign.set(true);
+        initialValueStore.set(DEFAULT_EDITOR_VALUE);
         valueStore.set(DEFAULT_EDITOR_VALUE);
     } else if (samples) {
         isSamples.set(true);
@@ -151,6 +152,12 @@ async function genLinks(uuid: string) {
     };
 }
 
+export class CustomError extends Error {
+    constructor(message?: string) {
+        super(message);
+    }
+}
+
 export async function save() {
     const curSession = get(session);
     if (curSession.uuid && curSession.writeKey) {
@@ -172,7 +179,13 @@ export async function save() {
         }).then(
             res => {
                 if (!res.ok) {
-                    throw new Error('Not ok');
+                    return res.json().then(json => {
+                        if (json && json.error) {
+                            throw new CustomError(json.error);
+                        } else {
+                            throw new Error('Not ok');
+                        }
+                    });
                 }
                 return res.json();
             }

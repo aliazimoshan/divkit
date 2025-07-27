@@ -46,10 +46,14 @@ func divData(
   )
 }
 
-func divData(_ div: Div, logId: String = UIElementPath.root.description) -> DivData {
+func divData(
+  _ div: Div,
+  logId: String = UIElementPath.root.description,
+  stateId: Int = 0
+) -> DivData {
   divData(
     logId: logId,
-    states: [.init(div: div, stateId: 0)]
+    states: [.init(div: div, stateId: stateId)]
   )
 }
 
@@ -57,22 +61,26 @@ func divGifImage(
   accessibility: DivAccessibility? = nil,
   gifUrl: String,
   height: DivSize? = nil,
+  id: String? = nil,
   width: DivSize? = nil
 ) -> Div {
   .divGifImage(DivGifImage(
     accessibility: accessibility,
     gifUrl: .value(url(gifUrl)),
     height: height,
+    id: id,
     width: width
   ))
 }
 
 func divInput(
   accessibility: DivAccessibility? = nil,
+  keyboardType: DivInput.KeyboardType? = nil,
   textVariable: String
 ) -> Div {
   .divInput(DivInput(
     accessibility: accessibility,
+    keyboardType: keyboardType.map { .value($0) },
     textVariable: textVariable
   ))
 }
@@ -80,12 +88,14 @@ func divInput(
 func divImage(
   accessibility: DivAccessibility? = nil,
   height: DivSize? = nil,
+  id: String? = nil,
   imageUrl: String,
   width: DivSize? = nil
 ) -> Div {
   .divImage(DivImage(
     accessibility: accessibility,
     height: height,
+    id: id,
     imageUrl: .value(url(imageUrl)),
     width: width
   ))
@@ -94,6 +104,7 @@ func divImage(
 func divText(
   accessibility: DivAccessibility? = nil,
   actions: [DivAction]? = nil,
+  disappearActions: [DivDisappearAction]? = nil,
   focus: DivFocus? = nil,
   fontSize: Int? = nil,
   fontWeight: DivFontWeight? = nil,
@@ -104,6 +115,7 @@ func divText(
   textExpression: String? = nil,
   tooltips: [DivTooltip]? = nil,
   width: DivSize? = nil,
+  height: DivSize? = nil,
   variables: [DivVariable]? = nil,
   visibility: Expression<DivVisibility>? = nil,
   visibilityActions: [DivVisibilityAction]? = nil
@@ -116,9 +128,11 @@ func divText(
   return .divText(DivText(
     accessibility: accessibility,
     actions: actions,
+    disappearActions: disappearActions,
     focus: focus,
     fontSize: fontSize.map { .value($0) },
     fontWeight: fontWeight.map { .value($0) },
+    height: height,
     id: id,
     margins: margins,
     paddings: paddings,
@@ -144,7 +158,8 @@ func divSeparator(
   tooltips: [DivTooltip]? = nil,
   transitionIn: DivAppearanceTransition? = nil,
   transitionTriggers: [DivTransitionTrigger]? = nil,
-  visibility: Expression<DivVisibility>? = nil
+  visibility: Expression<DivVisibility>? = nil,
+  width: DivSize? = nil
 ) -> Div {
   .divSeparator(DivSeparator(
     accessibility: accessibility,
@@ -159,11 +174,13 @@ func divSeparator(
     tooltips: tooltips,
     transitionIn: transitionIn,
     transitionTriggers: transitionTriggers,
-    visibility: visibility
+    visibility: visibility,
+    width: width
   ))
 }
 
 func divContainer(
+  id: String? = nil,
   accessibility: DivAccessibility? = nil,
   actions: [DivAction]? = nil,
   clipToBounds: Bool = true,
@@ -184,6 +201,7 @@ func divContainer(
     aspect: nil,
     background: nil,
     border: nil,
+    captureFocusOnAction: nil,
     clipToBounds: .value(clipToBounds),
     columnSpan: nil,
     contentAlignmentHorizontal: nil,
@@ -196,7 +214,7 @@ func divContainer(
     height: height,
     hoverEndActions: nil,
     hoverStartActions: nil,
-    id: nil,
+    id: id,
     itemBuilder: itemBuilder,
     items: items,
     layoutMode: nil,
@@ -228,7 +246,8 @@ func divContainer(
 }
 
 func divGallery(
-  items: [Div]
+  items: [Div],
+  id: String? = nil
 ) -> Div {
   .divGallery(DivGallery(
     accessibility: nil,
@@ -248,7 +267,7 @@ func divGallery(
     focus: nil,
     functions: nil,
     height: nil,
-    id: nil,
+    id: id,
     itemBuilder: nil,
     itemSpacing: nil,
     items: items,
@@ -292,6 +311,7 @@ func divGrid(
     animators: nil,
     background: nil,
     border: nil,
+    captureFocusOnAction: nil,
     columnCount: .value(columnCount),
     columnSpan: nil,
     contentAlignmentHorizontal: nil,
@@ -382,7 +402,9 @@ func divPager(
 }
 
 func divState(
-  divId: String,
+  divId: String?,
+  id: String? = nil,
+  defaultStateId: Expression<String>? = nil,
   states: [DivState.State]
 ) -> Div {
   .divState(DivState(
@@ -395,14 +417,14 @@ func divState(
     border: nil,
     clipToBounds: nil,
     columnSpan: nil,
-    defaultStateId: nil,
+    defaultStateId: defaultStateId,
     disappearActions: nil,
     divId: divId,
     extensions: nil,
     focus: nil,
     functions: nil,
     height: nil,
-    id: nil,
+    id: id,
     layoutProvider: nil,
     margins: nil,
     paddings: nil,
@@ -521,7 +543,7 @@ func point(x: Double, y: Double) -> DivPoint {
 }
 
 func variable(_ name: String, _ value: String) -> DivVariable {
-  .stringVariable(StringVariable(name: name, value: value))
+  .stringVariable(StringVariable(name: name, value: .value(value)))
 }
 
 func solidBackground(_ color: RGBAColor) -> DivBackground {

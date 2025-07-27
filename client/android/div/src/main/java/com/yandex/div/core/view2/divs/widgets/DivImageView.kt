@@ -7,14 +7,14 @@ import android.util.AttributeSet
 import com.yandex.div.R
 import com.yandex.div.core.extension.DivExtensionView
 import com.yandex.div.core.widget.LoadableImageView
-import com.yandex.div2.DivImage
+import com.yandex.div2.Div
 
 internal open class DivImageView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = R.attr.divImageStyle
 ): LoadableImageView(context, attrs, defStyleAttr),
-    DivHolderView<DivImage> by DivHolderViewMixin(),
+    DivHolderView<Div.Image> by DivHolderViewMixin(),
     DivExtensionView {
 
     internal var imageUrl: Uri? = null
@@ -37,9 +37,5 @@ internal open class DivImageView @JvmOverloads constructor(
 
     override fun draw(canvas: Canvas) {
         drawBorderClipped(canvas) { super.draw(it) }
-    }
-
-    override fun dispatchDraw(canvas: Canvas) {
-        dispatchDrawBorderClipped(canvas) { super.dispatchDraw(it) }
     }
 }

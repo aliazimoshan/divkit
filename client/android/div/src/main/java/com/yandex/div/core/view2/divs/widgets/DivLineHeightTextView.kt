@@ -13,7 +13,7 @@ import com.yandex.div.core.widget.AdaptiveMaxLines
 import com.yandex.div.internal.util.UiThreadHandler
 import com.yandex.div.internal.widget.TextViewWithAccessibleSpans
 import com.yandex.div.json.expressions.ExpressionResolver
-import com.yandex.div2.DivText
+import com.yandex.div2.Div
 
 @Mockable
 internal class DivLineHeightTextView @JvmOverloads constructor(
@@ -21,7 +21,7 @@ internal class DivLineHeightTextView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = R.attr.divTextStyle
 ): TextViewWithAccessibleSpans(context, attrs, defStyleAttr),
-    DivHolderView<DivText> by DivHolderViewMixin(),
+    DivHolderView<Div.Text> by DivHolderViewMixin(),
     DivAnimator {
 
     internal var adaptiveMaxLines: AdaptiveMaxLines? = null
@@ -37,10 +37,6 @@ internal class DivLineHeightTextView @JvmOverloads constructor(
 
     override fun draw(canvas: Canvas) {
         drawBorderClipped(canvas) { super.draw(it) }
-    }
-
-    override fun dispatchDraw(canvas: Canvas) {
-        dispatchDrawBorderClipped(canvas) { super.dispatchDraw(it) }
     }
 
     override fun startDivAnimation() {

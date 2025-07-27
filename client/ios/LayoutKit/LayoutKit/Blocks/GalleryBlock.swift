@@ -10,6 +10,10 @@ public final class GalleryBlock: BlockWithTraits {
   public let widthTrait: LayoutTrait
   public let heightTrait: LayoutTrait
 
+  public var path: UIElementPath? {
+    model.path
+  }
+
   public init(
     model: GalleryViewModel,
     state: GalleryViewState,
@@ -89,7 +93,10 @@ extension GalleryBlock {
 
     try self.init(
       model: model,
-      state: state ?? GalleryViewState(contentOffset: 0, itemsCount: children.count),
+      state: state ?? GalleryViewState(
+        contentOffset: 0,
+        itemsCount: children.count
+      ),
       widthTrait: widthTrait ?? (direction.isHorizontal ? .resizable : .intrinsic),
       heightTrait: heightTrait ?? (direction.isHorizontal ? .intrinsic : .resizable)
     )
@@ -119,7 +126,8 @@ extension GalleryBlock {
       state: GalleryViewState(
         contentPosition: contentPosition,
         itemsCount: children.count,
-        isScrolling: false
+        isScrolling: false,
+        animated: true
       ),
       widthTrait: widthTrait,
       heightTrait: heightTrait,

@@ -44,10 +44,30 @@ function tan(_ctx: EvalContext, rad: NumberValue): EvalValue {
     };
 }
 
+function cot(_ctx: EvalContext, rad: NumberValue): EvalValue {
+    const tan = Math.tan(rad.value);
+
+    if (Math.abs(tan) < 1e-12) {
+        throw new Error('Cotangent is undefined for the given value.');
+    }
+
+    return {
+        type: NUMBER,
+        value: 1 / tan
+    };
+}
+
 function atan(_ctx: EvalContext, rad: NumberValue): EvalValue {
     return {
         type: NUMBER,
         value: Math.atan(rad.value)
+    };
+}
+
+function atan2(_ctx: EvalContext, y: NumberValue, x: NumberValue): EvalValue {
+    return {
+        type: NUMBER,
+        value: Math.atan2(y.value, x.value)
     };
 }
 
@@ -80,7 +100,9 @@ export function registerTrigonometry(): void {
     registerFunc('sin', [NUMBER], sin);
     registerFunc('cos', [NUMBER], cos);
     registerFunc('tan', [NUMBER], tan);
+    registerFunc('cot', [NUMBER], cot);
     registerFunc('atan', [NUMBER], atan);
+    registerFunc('atan2', [NUMBER, NUMBER], atan2);
     registerFunc('asin', [NUMBER], asin);
     registerFunc('acos', [NUMBER], acos);
 }

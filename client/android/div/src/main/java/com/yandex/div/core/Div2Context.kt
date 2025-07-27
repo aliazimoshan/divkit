@@ -134,7 +134,7 @@ class Div2Context @MainThread private constructor(
 
     fun reset(@ResetFlag flags: Int = RESET_NONE, tags: List<DivDataTag> = emptyList()) {
         if (flags and RESET_EXPRESSION_RUNTIMES != 0) {
-            div2Component.expressionsRuntimeProvider.reset(tags)
+            div2Component.runtimeStoreProvider.reset(tags)
         }
         if (flags and RESET_ERROR_COLLECTORS != 0) {
             div2Component.errorCollectors.reset(tags)
@@ -145,6 +145,13 @@ class Div2Context @MainThread private constructor(
         if (flags and RESET_VISIBILITY_COUNTERS != 0) {
             div2Component.visibilityActionDispatcher.reset(tags)
         }
+    }
+
+    /**
+     * @return `true` if at least one tooltip was cancelled, `false` otherwise.
+     */
+    fun cancelTooltips(): Boolean {
+        return div2Component.tooltipController.cancelAllTooltips()
     }
 
     fun childContext(baseContext: ContextThemeWrapper): Div2Context {

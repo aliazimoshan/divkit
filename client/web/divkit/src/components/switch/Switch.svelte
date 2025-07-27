@@ -7,12 +7,14 @@
     import type { DivSwitchData } from '../../types/switch';
     import type { ComponentContext } from '../../types/componentContext';
     import { ROOT_CTX, type RootCtxValue } from '../../context/root';
+    import { ACTION_CTX, type ActionCtxValue } from '../../context/action';
     import { genClassName } from '../../utils/genClassName';
     import { wrapError } from '../../utils/wrapError';
     import { correctColor, parseColor, stringifyColorToCss } from '../../utils/correctColor';
     import { createVariable } from '../../expressions/variable';
     import { correctBooleanInt } from '../../utils/correctBooleanInt';
     import { booleanInt } from '../../utils/booleanInt';
+    import { composeAccessibilityDescription } from '../../utils/composeAccessibilityDescription';
     import Outer from '../utilities/Outer.svelte';
     import DevtoolHolder from '../utilities/DevtoolHolder.svelte';
 
@@ -20,6 +22,8 @@
     export let layoutParams: LayoutParams | undefined = undefined;
 
     const rootCtx = getContext<RootCtxValue>(ROOT_CTX);
+    const actionCtx = getContext<ActionCtxValue>(ACTION_CTX);
+    const direction = rootCtx.direction;
 
     let prevId: string | undefined;
     let input: HTMLInputElement;
@@ -50,11 +54,20 @@
     $: jsonIsEnabled = componentContext.getDerivedFromVars(componentContext.json.is_enabled);
     $: jsonOnColor = componentContext.getDerivedFromVars(componentContext.json.on_color);
 
-    $: if (variable) {
-        hasError = false;
-    } else {
-        hasError = true;
-        componentContext.logError(wrapError(new Error('Missing "is_on_variable" in "switch"')));
+    $: {
+        let newHasError = false;
+
+        if (!variable) {
+            newHasError = true;
+            componentContext.logError(wrapError(new Error('Missing "is_on_variable" in "switch"')));
+        } else if (actionCtx.hasAction() || $jsonAccessibility?.mode === 'exclude') {
+            newHasError = true;
+            componentContext.logError(wrapError(new Error('Cannot show "switch" inside component with an action or inside accessibility mode=exclude')));
+        }
+
+        if (hasError !== newHasError) {
+            hasError = newHasError;
+        }
     }
 
     $: if (booleanInt(value) !== booleanInt($valueVariable)) {
@@ -78,7 +91,7 @@
     }
 
     $: if ($jsonAccessibility?.description) {
-        description = $jsonAccessibility.description;
+        description = composeAccessibilityDescription($jsonAccessibility);
     } else {
         componentContext.logError(wrapError(new Error('Missing accessibility "description" for switch'), {
             level: 'warn'
@@ -86,7 +99,8 @@
     }
 
     $: mods = {
-        disabled: !isEnabled
+        disabled: !isEnabled,
+        direction: $direction
     };
     $: stl = {
         '--divkit-switch-on-color': onColor,

@@ -20,7 +20,8 @@ final class DivImageExtensionsTests: XCTestCase {
           imageHolder: FakeImageHolder(),
           widthTrait: .fixed(100),
           heightTrait: .fixed(200),
-          contentMode: ImageContentMode(scale: .aspectFill)
+          contentMode: ImageContentMode(scale: .aspectFill),
+          path: defaultPath
         ),
         accessibilityElement: accessibility(traits: .image)
       ),
@@ -46,7 +47,8 @@ final class DivImageExtensionsTests: XCTestCase {
           imageHolder: FakeImageHolder(),
           widthTrait: .fixed(100),
           heightTrait: .fixed(200),
-          contentMode: ImageContentMode(scale: .aspectFill)
+          contentMode: ImageContentMode(scale: .aspectFill),
+          path: defaultPath
         ),
         accessibilityElement: accessibility(
           traits: .image,
@@ -59,29 +61,56 @@ final class DivImageExtensionsTests: XCTestCase {
     assertEqual(block, expectedBlock)
   }
 
-  func test_WhenWidthIsWrapContent_ThrowsError() {
-    XCTAssertThrowsError(
-      try divData(divImage(
+  func test_WhenWidthIsWrapContent_UsesIntrinsicContentSize() {
+    let block = makeBlock(
+      divImage(
+        height: fixedSize(100),
         imageUrl: "https://image.url",
         width: wrapContentSize()
-      )).makeBlock(context: .default),
-      DivBlockModelingError(
-        "DivImage has wrap_content width",
-        path: .root + "0"
       )
     )
+
+    let expectedBlock = StateBlock(
+      child: DecoratingBlock(
+        child: ImageBlock(
+          imageHolder: FakeImageHolder(),
+          widthTrait: .intrinsic,
+          heightTrait: .fixed(100),
+          contentMode: ImageContentMode(scale: .aspectFill),
+          path: defaultPath
+        ),
+        accessibilityElement: accessibility(traits: .image)
+      ),
+      ids: []
+    )
+
+    assertEqual(block, expectedBlock)
   }
 
-  func test_WhenHeightIsWrapContent_ThrowsError() throws {
-    XCTAssertThrowsError(
-      try divData(divImage(
+  func test_WhenHeightIsWrapContent_UsesIntrinsicContentSize() {
+    let block = makeBlock(
+      divImage(
         height: wrapContentSize(),
-        imageUrl: "https://image.url"
-      )).makeBlock(context: .default),
-      DivBlockModelingError(
-        "DivImage without aspect has wrap_content height",
-        path: .root + "0"
+        imageUrl: "https://image.url",
+        width: fixedSize(100)
       )
     )
+    let expectedBlock = StateBlock(
+      child: DecoratingBlock(
+        child: ImageBlock(
+          imageHolder: FakeImageHolder(),
+          widthTrait: .fixed(100),
+          heightTrait: .intrinsic,
+          contentMode: ImageContentMode(scale: .aspectFill),
+          path: defaultPath
+        ),
+        accessibilityElement: accessibility(traits: .image)
+      ),
+      ids: []
+    )
+
+    assertEqual(block, expectedBlock)
   }
 }
+
+private let defaultPath = UIElementPath("test_card_id") + "0" + "image"

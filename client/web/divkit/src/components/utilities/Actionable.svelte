@@ -7,7 +7,8 @@
         'button',
         'image',
         'checkbox',
-        'radio'
+        'radio',
+        'header'
     ]);
 </script>
 
@@ -27,6 +28,7 @@
     import { wrapError } from '../../utils/wrapError';
     import { getUrlSchema, isBuiltinSchema } from '../../utils/url';
     import type { Coords } from '../../utils/getTouchCoords';
+    import { componentFakePagerDuplicate } from '../../utils/componentContext';
 
     export let componentContext: ComponentContext;
     export let id = '';
@@ -45,13 +47,14 @@
     export let isNativeActionAnimation = true;
     export let hasInnerFocusable = false;
     export let customAccessibility: MaybeMissing<Accessibility> | undefined = undefined;
+    export let captureFocusOnAction = true;
 
     const rootCtx = getContext<RootCtxValue>(ROOT_CTX);
     const actionCtx = getContext<ActionCtxValue>(ACTION_CTX);
 
     setContext<ActionCtxValue>(ACTION_CTX, {
         hasAction(): boolean {
-            return Boolean(actionCtx.hasAction() || actions?.length);
+            return Boolean(actionCtx.hasAction() || actions?.length || customAccessibility?.mode === 'exclude');
         }
     });
 
@@ -68,41 +71,49 @@
     let clickTimer: number;
     let role: string | undefined;
     let isChecked: boolean | undefined;
+    let ariaHidden = false;
 
     $: {
-        if (Array.isArray(actions) && actions?.length) {
-            for (let i = 0; i < actions.length; ++i) {
-                const url = actions[i].url;
+        ariaHidden = customAccessibility?.mode === 'exclude';
+    }
+
+    $: processedActions = componentContext.getDerivedFromVars(actions, undefined, true);
+
+    $: {
+        if (Array.isArray($processedActions) && $processedActions?.length) {
+            for (let i = 0; i < $processedActions.length; ++i) {
+                const url = $processedActions[i].url;
 
                 if (url) {
                     href = url;
-                    target = actions[i].target || undefined;
+                    target = $processedActions[i].target || undefined;
                     break;
                 }
             }
         }
 
-        if (Array.isArray(actions) && actions?.length && actionCtx.hasAction()) {
+        hasJSAction = Boolean(customAction);
+        if (
+            (href || Array.isArray($processedActions) && $processedActions?.length) &&
+            (actionCtx.hasAction() || ariaHidden)
+        ) {
             href = '';
-            componentContext.logError(wrapError(new Error('Actionable element is forbidden inside other actionable element'), {
+            componentContext.logError(wrapError(new Error('Actionable element is forbidden inside other actionable element or inside accessibility mode=exlucde'), {
                 level: 'warn',
                 additional: {
-                    actions
+                    actions: $processedActions
                 }
             }));
-        }
-
-        hasJSAction = Boolean(customAction);
-        if (href && !isBuiltinSchema(getUrlSchema(href), rootCtx.getBuiltinProtocols())) {
+        } else if (href && !isBuiltinSchema(getUrlSchema(href), rootCtx.getBuiltinProtocols())) {
             href = '';
             hasJSAction = true;
-        } else if (!href && Array.isArray(actions) && actions?.length) {
+        } else if (!href && Array.isArray($processedActions) && $processedActions?.length) {
             hasJSAction = true;
-            if (!actions.some(action => action.url || action.typed || action.menu_items)) {
+            if (!$processedActions.some(action => action.url || action.typed || action.menu_items)) {
                 componentContext.logError(wrapError(new Error('The component has a list of actions, but does not have a real action'), {
                     level: 'warn',
                     additional: {
-                        actions
+                        actions: $processedActions
                     }
                 }));
             }
@@ -111,7 +122,11 @@
 
     $: {
         if (customAccessibility?.type && SUPPORTED_ACCESSIBILITY_TYPES.has(customAccessibility.type)) {
-            role = customAccessibility.type;
+            if (customAccessibility.type === 'header') {
+                role = 'heading';
+            } else {
+                role = customAccessibility.type;
+            }
         } else if (href) {
             role = undefined;
         } else if (hasJSAction) {
@@ -167,6 +182,12 @@
             node.removeEventListener('pointerleave', onPointerLeave);
         }
 
+        if (captureFocusOnAction === false) {
+            node.addEventListener('mousedown', onMousedown);
+        } else {
+            node.removeEventListener('mousedown', onMousedown);
+        }
+
         hasAnyActions = Boolean(
             href ||
             hasJSAction ||
@@ -180,7 +201,7 @@
     }
 
     function hasCustomAction(): boolean {
-        return actions?.some(action => {
+        return $processedActions?.some(action => {
             if (action?.typed) {
                 return true;
             }
@@ -324,6 +345,11 @@
         componentContext.execAnyActions(hoverEndActions, { node });
     }
 
+    function onMousedown(event: MouseEvent): void {
+        // prevent focus blur
+        event.preventDefault();
+    }
+
     function onKeydown(event: KeyboardEvent): void {
         // todo check event.target is not inside current element
 
@@ -385,10 +411,13 @@
         {role}
         aria-checked={isChecked}
         class="{cls} {rootCss['root__any-actions']} {isNativeActionAnimation ? rootCss.root__clickable : rootCss['root__clickable-no-transition']} {longTapActions?.length ? rootCss['root_disabled-context-menu'] : ''}"
+        tabindex={componentContext.fakeElement === componentFakePagerDuplicate ? -1 : null}
         on:click
         on:keydown={onKeydown}
         on:focus
         on:blur
+        on:pointerdown
+        on:wheel
         {...attrs}
     >
         <slot />
@@ -402,10 +431,13 @@
         {role}
         aria-checked={isChecked}
         type="button"
+        tabindex={componentContext.fakeElement === componentFakePagerDuplicate ? -1 : null}
         on:click
         on:keydown={onKeydown}
         on:focus
         on:blur
+        on:pointerdown
+        on:wheel
         {...attrs}
     >
         <slot />
@@ -418,10 +450,13 @@
         {style}
         {role}
         aria-checked={isChecked}
+        aria-hidden={ariaHidden || undefined}
         on:click
         on:keydown={onKeydown}
         on:focus
         on:blur
+        on:pointerdown
+        on:wheel
         {...attrs}
     >
         <slot />

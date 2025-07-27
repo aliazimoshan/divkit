@@ -345,7 +345,14 @@ public final class DivKitComponents {
 
   public func setVariablesAndTriggers(divData: DivData, cardId: DivCardID) {
     updateAggregator.performWithNoUpdates {
-      let divDataVariables = divData.variables?.extractDivVariableValues() ?? [:]
+      let resolver = ExpressionResolver(
+        path: cardId.path,
+        variablesStorage: variablesStorage,
+        functionsStorage: functionsStorage,
+        persistentValuesStorage: persistentValuesStorage,
+        reporter: reporter
+      )
+      let divDataVariables = divData.variables?.extractDivVariableValues(resolver) ?? [:]
       variablesStorage.append(
         variables: divDataVariables,
         for: cardId,
@@ -377,7 +384,8 @@ public final class DivKitComponents {
     ErrorsReportingRenderingDelegate(
       wrappedRenderingDelegate: tooltipManager,
       cardId: cardId,
-      divReporter: debugErrorCollectors[cardId]
+      errorReporter: debugErrorCollectors[cardId],
+      renderingReporter: reporter
     )
   }
   #endif
@@ -418,16 +426,19 @@ let defaultPlayerFactory: PlayerFactory? = nil
 private final class ErrorsReportingRenderingDelegate: RenderingDelegate {
   private let wrappedRenderingDelegate: RenderingDelegate
   private let cardId: DivCardID
-  private let divReporter: DivReporter?
+  private let errorReporter: DivReporter?
+  private let renderingReporter: DivReporter
 
   init(
     wrappedRenderingDelegate: RenderingDelegate,
     cardId: DivCardID,
-    divReporter: DivReporter?
+    errorReporter: DivReporter?,
+    renderingReporter: DivReporter
   ) {
     self.wrappedRenderingDelegate = wrappedRenderingDelegate
     self.cardId = cardId
-    self.divReporter = divReporter
+    self.errorReporter = errorReporter
+    self.renderingReporter = renderingReporter
   }
 
   func reportRenderingError(message: String, isWarning: Bool, path: UIElementPath) {
@@ -436,13 +447,33 @@ private final class ErrorsReportingRenderingDelegate: RenderingDelegate {
       isWarning: isWarning,
       path: path
     )
-    guard let divReporter else { return }
+    guard let errorReporter else { return }
     let error: DivError = if isWarning {
       DivLayoutWarning(message, path: path)
     } else {
       DivLayoutError(message, path: path)
     }
-    divReporter.reportError(cardId: cardId, error: error)
+    errorReporter.reportError(cardId: cardId, error: error)
+  }
+
+  func reportViewWasCreated() {
+    renderingReporter.reportViewWasCreated(cardId: cardId)
+  }
+
+  func reportBlockWillConfigure(path: UIElementPath) {
+    renderingReporter.reportBlockWillConfigure(path: path)
+  }
+
+  func reportBlockDidConfigure(path: UIElementPath) {
+    renderingReporter.reportBlockDidConfigure(path: path)
+  }
+
+  func reportViewWillLayout(path: UIElementPath) {
+    renderingReporter.reportViewWillLayout(path: path)
+  }
+
+  func reportViewDidLayout(path: UIElementPath) {
+    renderingReporter.reportViewDidLayout(path: path)
   }
 
   func mapView(_ view: any LayoutKit.BlockView, to id: LayoutKit.BlockViewID) {

@@ -1,5 +1,5 @@
 import type { Readable, Writable } from 'svelte/store';
-import type { Action, Direction, DisappearAction, DivBase, DivExtension, DivExtensionContext, TemplateContext, TypefaceProvider, VariableTrigger, VisibilityAction } from '../../typings/common';
+import type { Action, Direction, DisappearAction, DivBase, DivExtension, DivExtensionContext, TemplateContext, TypefaceProvider, VariableTrigger, VideoPlayerProvider, VisibilityAction } from '../../typings/common';
 import type { DivBaseData, Tooltip } from '../types/base';
 import type { MaybeMissing } from '../expressions/json';
 import type { Variable } from '../expressions/variable';
@@ -43,7 +43,7 @@ export interface RootCtxValue {
     ): (() => void) | undefined;
     isRunning(type: Running): boolean;
     setRunning(type: Running, val: boolean): void;
-    registerInstance<T>(id: string, block: T): void;
+    registerInstance<T>(id: string, block: T, duplicateErrorLevel?: 'error' | 'warn'): void;
     unregisterInstance(id: string): void;
     registerParentOf(id: string, methods: ParentMethods): void;
     unregisterParentOf(id: string): void;
@@ -58,7 +58,6 @@ export interface RootCtxValue {
     registerId(id: string, getter: NodeGetter): () => void;
     getComponentId(id: string): string;
     preparePrototypeVariables(name: string, data: Record<string, unknown>, index: number): Map<string, Variable>;
-    getStore<T>(id: string): Writable<T>;
     getCustomization<K extends keyof Customization>(prop: K): Customization[K] | undefined;
     getBuiltinProtocols(): Set<string>;
     getExtension(id: string, params: object | undefined): DivExtension | undefined;
@@ -70,6 +69,8 @@ export interface RootCtxValue {
     direction: Readable<Direction>;
     customComponents: Map<string, CustomComponentDescription> | undefined;
     pagerChildrenClipEnabled: boolean;
+    pagerMouseDragEnabled: boolean;
+    videoPlayerProvider?: VideoPlayerProvider | undefined;
 
     // Devtool
     componentDevtool?({

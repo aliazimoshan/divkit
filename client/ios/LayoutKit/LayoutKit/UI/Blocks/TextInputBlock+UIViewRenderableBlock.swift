@@ -2,7 +2,9 @@ import UIKit
 import VGSL
 
 extension TextInputBlock {
-  public static func makeBlockView() -> BlockView { TextInputBlockView() }
+  public static func makeBlockView() -> BlockView {
+    TextInputBlockView()
+  }
 
   public func configureBlockView(
     _ view: BlockView,
@@ -14,6 +16,8 @@ extension TextInputBlock {
     inputView.setLayoutDirection(layoutDirection)
     inputView.setInputType(inputType)
     inputView.setInputAccessoryView(accessoryView)
+    inputView.setAutocorrection(autocorrection)
+    inputView.setSecure(isSecure)
     inputView.setAutocapitalizationType(autocapitalizationType)
     inputView.setEnterKeyType(enterKeyType)
     inputView.setValidators(validators)
@@ -81,6 +85,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   var paddings: EdgeInsets = .zero
 
   var effectiveBackgroundColor: UIColor? { backgroundColor }
+  var layoutReporter: LayoutReporter?
 
   override init(frame: CGRect) {
     textValue = .zero
@@ -90,14 +95,12 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     multiLineInput.isEditable = true
     multiLineInput.isSelectable = true
     multiLineInput.showsVerticalScrollIndicator = false
-    multiLineInput.autocorrectionType = .no
     multiLineInput.backgroundColor = .clear
     multiLineInput.delegate = self
     multiLineInput.textContainer.lineFragmentPadding = 0
     multiLineInput.returnKeyType = .default
 
     singleLineInput.isHidden = true
-    singleLineInput.autocorrectionType = .no
     singleLineInput.backgroundColor = .clear
     singleLineInput.delegate = self
     singleLineInput.addTarget(self, action: #selector(textFieldDidChange), for: .editingChanged)
@@ -124,6 +127,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
 
   override func layoutSubviews() {
     super.layoutSubviews()
+    layoutReporter?.willLayoutSubviews()
 
     multiLineInput.frame = bounds
     multiLineInput.textContainerInset = paddings
@@ -139,6 +143,7 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
 
     let tapGesture = UITapGestureRecognizer(target: self, action: #selector(onTapGesture(sender:)))
     addGestureRecognizer(tapGesture)
+    layoutReporter?.didLayoutSubviews()
   }
 
   @objc func onTapGesture(sender _: UITapGestureRecognizer) {
@@ -185,18 +190,34 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
       multiLineInput.inputView = nil
       multiLineInput.tintColor = nil
       selectionItems = nil
-      multiLineInput.keyboardType = type.uiType
-      singleLineInput.keyboardType = type.uiType
+      setKeyboardType(type)
     case let .selection(items):
       selectionItems = items
       multiLineInput.tintColor = multiLineInput.backgroundColor
       multiLineInput.inputView = selectionView
+      setKeyboardType(.default)
     }
+  }
+
+  private func setKeyboardType(_ type: TextInputBlock.InputType.KeyboardType) {
+    multiLineInput.keyboardType = type.uiType
+    singleLineInput.keyboardType = type.uiType
   }
 
   func setInputAccessoryView(_ accessoryView: ViewType?) {
     multiLineInput.inputAccessoryView = accessoryView
     singleLineInput.inputAccessoryView = accessoryView
+  }
+
+  func setAutocorrection(_ isEnabled: Bool) {
+    let uiType: UITextAutocorrectionType = isEnabled ? .yes : .no
+    multiLineInput.autocorrectionType = uiType
+    singleLineInput.autocorrectionType = uiType
+  }
+
+  func setSecure(_ isSecure: Bool) {
+    multiLineInput.isSecureTextEntry = isSecure
+    singleLineInput.isSecureTextEntry = isSecure
   }
 
   func setAutocapitalizationType(_ type: TextInputBlock.AutocapitalizationType) {
@@ -205,8 +226,16 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   }
 
   func setEnterKeyType(_ type: TextInputBlock.EnterKeyType) {
-    singleLineInput.returnKeyType = type.uiType
-    multiLineInput.returnKeyType = type.uiType
+    let uiType = type.uiType
+    if singleLineInput.returnKeyType != uiType {
+      singleLineInput.returnKeyType = uiType
+      singleLineInput.reloadInputViews()
+    }
+
+    if multiLineInput.returnKeyType != uiType {
+      multiLineInput.returnKeyType = uiType
+      multiLineInput.reloadInputViews()
+    }
   }
 
   func setTextAlignmentHorizontal(_ alignment: TextInputBlock.TextAlignmentHorizontal) {
@@ -240,7 +269,6 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
   }
 
   func setIsFocused(_ isFocused: Bool, shouldClear: Bool) {
-    isInputFocused = isFocused
     if isFocused {
       if allSuperviewsAreVisible() {
         focusTextInput()
@@ -371,11 +399,13 @@ private final class TextInputBlockView: BlockView, VisibleBoundsTrackingLeaf {
     guard self.maskedViewModel == nil else {
       maskedViewModel?.rawText = rawTextValue.value
       maskedViewModel?.maskValidator = mask
+      maskedViewModel?.typo = typo
       return
     }
     self.maskedViewModel = MaskedInputViewModel(
       rawText: self.rawTextValue.value,
       maskValidator: mask,
+      typo: typo,
       signal: userInputPipe.signal
     )
     maskedViewModel?.$cursorPosition.currentAndNewValues.addObserver { [weak self] range in
@@ -555,6 +585,8 @@ extension TextInputBlockView {
   }
 
   private func onFocus() {
+    guard !isInputFocused else { return }
+
     onFocusActions.perform(sendingFrom: self)
     isInputFocused = true
     guard let path else { return }
@@ -562,6 +594,8 @@ extension TextInputBlockView {
   }
 
   private func onBlur() {
+    guard isInputFocused else { return }
+
     onBlurActions.perform(sendingFrom: self)
     isInputFocused = false
     guard let path else { return }
@@ -624,7 +658,14 @@ extension TextInputBlockView: UITextViewDelegate {
     shouldChangeTextIn _: NSRange,
     replacementText text: String
   ) -> Bool {
+    defer {
+      multiLineInput.isPasting = false
+    }
     guard let range = Range(multiLineInput.selectedRange, in: currentText) else {
+      return false
+    }
+    if text == "\n", !enterKeyActions.isEmpty, !multiLineInput.isPasting {
+      enterKeyActions.perform(sendingFrom: self)
       return false
     }
     return inputViewReplaceTextIn(view: self, range: range, text: text)
@@ -769,14 +810,8 @@ extension TextInputBlock.InputType.KeyboardType {
     switch self {
     case .default:
       .default
-    case .asciiCapable:
-      .asciiCapable
-    case .numbersAndPunctuation:
-      .numbersAndPunctuation
     case .URL:
       .URL
-    case .numberPad:
-      .numberPad
     case .phonePad:
       .phonePad
     case .namePhonePad:
@@ -785,12 +820,6 @@ extension TextInputBlock.InputType.KeyboardType {
       .emailAddress
     case .decimalPad:
       .decimalPad
-    case .twitter:
-      .twitter
-    case .webSearch:
-      .webSearch
-    case .asciiCapableNumberPad:
-      .asciiCapableNumberPad
     }
   }
 }
@@ -868,9 +897,16 @@ private class PatchedUITextField: UITextField {
 }
 
 private class PatchedUITextView: UITextView {
+  var isPasting: Bool = false
+
   override func cut(_ sender: Any?) {
     copy(sender)
     super.cut(sender)
+  }
+
+  override func paste(_ sender: Any?) {
+    isPasting = true
+    super.paste(sender)
   }
 }
 

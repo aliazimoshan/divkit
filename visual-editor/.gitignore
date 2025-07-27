@@ -27,3 +27,8 @@ build/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# DivKit specific
+/LICENSE
+/src/lib/grammar/div.js
+/src/lib/grammar/div.terms.js

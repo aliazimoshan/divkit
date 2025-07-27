@@ -1,24 +1,19 @@
 package com.yandex.div.core.expression
 
 import com.yandex.div.core.DivViewFacade
-import com.yandex.div.core.expression.local.RuntimeStore
 import com.yandex.div.core.expression.triggers.TriggersController
-import com.yandex.div.core.expression.variables.VariableController
-import com.yandex.div.internal.Assert
-import com.yandex.div.json.expressions.ExpressionResolver
 
 internal class ExpressionsRuntime(
-    val expressionResolver: ExpressionResolver,
-    val variableController: VariableController,
+    val expressionResolver: ExpressionResolverImpl,
     val triggersController: TriggersController? = null,
-    val functionProvider: FunctionProviderDecorator,
-    val runtimeStore: RuntimeStore,
 ) {
-    private val expressionResolverImpl get() = expressionResolver as? ExpressionResolverImpl
     private var unsubscribed = true
 
-    fun clearBinding() {
-        triggersController?.clearBinding()
+    val variableController = expressionResolver.variableController
+    val runtimeStore = expressionResolver.runtimeStore
+
+    fun clearBinding(view: DivViewFacade) {
+        triggersController?.clearBinding(view)
     }
 
     fun onAttachedToWindow(view: DivViewFacade) {
@@ -28,17 +23,15 @@ internal class ExpressionsRuntime(
     fun updateSubscriptions() {
         if (unsubscribed) {
             unsubscribed = false
-            expressionResolverImpl?.subscribeOnVariables() ?: run {
-                Assert.fail("ExpressionRuntime must have ExpressionResolverImpl as expressionResolver.")
-            }
+            expressionResolver.subscribeOnVariables()
             variableController.restoreSubscriptions()
         }
     }
 
-    internal fun cleanup() {
+    internal fun cleanup(divView: DivViewFacade?) {
         if (!unsubscribed) {
             unsubscribed = true
-            triggersController?.clearBinding()
+            triggersController?.clearBinding(divView)
             variableController.cleanupSubscriptions()
         }
     }

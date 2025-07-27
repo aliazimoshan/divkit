@@ -47,6 +47,7 @@ data class GifImage internal constructor(
             aspect = additive.aspect ?: properties.aspect,
             background = additive.background ?: properties.background,
             border = additive.border ?: properties.border,
+            captureFocusOnAction = additive.captureFocusOnAction ?: properties.captureFocusOnAction,
             columnSpan = additive.columnSpan ?: properties.columnSpan,
             contentAlignmentHorizontal = additive.contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
             contentAlignmentVertical = additive.contentAlignmentVertical ?: properties.contentAlignmentVertical,
@@ -135,6 +136,11 @@ data class GifImage internal constructor(
          * Element stroke.
          */
         val border: Property<Border>?,
+        /**
+         * If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+         * Default value: `true`.
+         */
+        val captureFocusOnAction: Property<Boolean>?,
         /**
          * Merges cells in a column of the [grid](div-grid.md) element.
          */
@@ -310,6 +316,7 @@ data class GifImage internal constructor(
             result.tryPutProperty("aspect", aspect)
             result.tryPutProperty("background", background)
             result.tryPutProperty("border", border)
+            result.tryPutProperty("capture_focus_on_action", captureFocusOnAction)
             result.tryPutProperty("column_span", columnSpan)
             result.tryPutProperty("content_alignment_horizontal", contentAlignmentHorizontal)
             result.tryPutProperty("content_alignment_vertical", contentAlignmentVertical)
@@ -365,6 +372,7 @@ data class GifImage internal constructor(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -418,6 +426,7 @@ fun DivScope.gifImage(
     aspect: Aspect? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
     contentAlignmentVertical: AlignmentVertical? = null,
@@ -469,6 +478,7 @@ fun DivScope.gifImage(
         aspect = valueOrNull(aspect),
         background = valueOrNull(background),
         border = valueOrNull(border),
+        captureFocusOnAction = valueOrNull(captureFocusOnAction),
         columnSpan = valueOrNull(columnSpan),
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
         contentAlignmentVertical = valueOrNull(contentAlignmentVertical),
@@ -522,6 +532,7 @@ fun DivScope.gifImage(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -575,6 +586,7 @@ fun DivScope.gifImageProps(
     aspect: Aspect? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
     contentAlignmentVertical: AlignmentVertical? = null,
@@ -625,6 +637,7 @@ fun DivScope.gifImageProps(
     aspect = valueOrNull(aspect),
     background = valueOrNull(background),
     border = valueOrNull(border),
+    captureFocusOnAction = valueOrNull(captureFocusOnAction),
     columnSpan = valueOrNull(columnSpan),
     contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
     contentAlignmentVertical = valueOrNull(contentAlignmentVertical),
@@ -677,6 +690,7 @@ fun DivScope.gifImageProps(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -730,6 +744,7 @@ fun TemplateScope.gifImageRefs(
     aspect: ReferenceProperty<Aspect>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
     contentAlignmentVertical: ReferenceProperty<AlignmentVertical>? = null,
@@ -780,6 +795,7 @@ fun TemplateScope.gifImageRefs(
     aspect = aspect,
     background = background,
     border = border,
+    captureFocusOnAction = captureFocusOnAction,
     columnSpan = columnSpan,
     contentAlignmentHorizontal = contentAlignmentHorizontal,
     contentAlignmentVertical = contentAlignmentVertical,
@@ -832,6 +848,7 @@ fun TemplateScope.gifImageRefs(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -885,6 +902,7 @@ fun GifImage.override(
     aspect: Aspect? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
     contentAlignmentVertical: AlignmentVertical? = null,
@@ -936,6 +954,7 @@ fun GifImage.override(
         aspect = valueOrNull(aspect) ?: properties.aspect,
         background = valueOrNull(background) ?: properties.background,
         border = valueOrNull(border) ?: properties.border,
+        captureFocusOnAction = valueOrNull(captureFocusOnAction) ?: properties.captureFocusOnAction,
         columnSpan = valueOrNull(columnSpan) ?: properties.columnSpan,
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal) ?: properties.contentAlignmentHorizontal,
         contentAlignmentVertical = valueOrNull(contentAlignmentVertical) ?: properties.contentAlignmentVertical,
@@ -989,6 +1008,7 @@ fun GifImage.override(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -1042,6 +1062,7 @@ fun GifImage.defer(
     aspect: ReferenceProperty<Aspect>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
     contentAlignmentVertical: ReferenceProperty<AlignmentVertical>? = null,
@@ -1093,6 +1114,167 @@ fun GifImage.defer(
         aspect = aspect ?: properties.aspect,
         background = background ?: properties.background,
         border = border ?: properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
+        columnSpan = columnSpan ?: properties.columnSpan,
+        contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
+        contentAlignmentVertical = contentAlignmentVertical ?: properties.contentAlignmentVertical,
+        disappearActions = disappearActions ?: properties.disappearActions,
+        doubletapActions = doubletapActions ?: properties.doubletapActions,
+        extensions = extensions ?: properties.extensions,
+        focus = focus ?: properties.focus,
+        functions = functions ?: properties.functions,
+        gifUrl = gifUrl ?: properties.gifUrl,
+        height = height ?: properties.height,
+        hoverEndActions = hoverEndActions ?: properties.hoverEndActions,
+        hoverStartActions = hoverStartActions ?: properties.hoverStartActions,
+        id = id ?: properties.id,
+        layoutProvider = layoutProvider ?: properties.layoutProvider,
+        longtapActions = longtapActions ?: properties.longtapActions,
+        margins = margins ?: properties.margins,
+        paddings = paddings ?: properties.paddings,
+        placeholderColor = placeholderColor ?: properties.placeholderColor,
+        preloadRequired = preloadRequired ?: properties.preloadRequired,
+        pressEndActions = pressEndActions ?: properties.pressEndActions,
+        pressStartActions = pressStartActions ?: properties.pressStartActions,
+        preview = preview ?: properties.preview,
+        reuseId = reuseId ?: properties.reuseId,
+        rowSpan = rowSpan ?: properties.rowSpan,
+        scale = scale ?: properties.scale,
+        selectedActions = selectedActions ?: properties.selectedActions,
+        tooltips = tooltips ?: properties.tooltips,
+        transform = transform ?: properties.transform,
+        transitionChange = transitionChange ?: properties.transitionChange,
+        transitionIn = transitionIn ?: properties.transitionIn,
+        transitionOut = transitionOut ?: properties.transitionOut,
+        transitionTriggers = transitionTriggers ?: properties.transitionTriggers,
+        variableTriggers = variableTriggers ?: properties.variableTriggers,
+        variables = variables ?: properties.variables,
+        visibility = visibility ?: properties.visibility,
+        visibilityAction = visibilityAction ?: properties.visibilityAction,
+        visibilityActions = visibilityActions ?: properties.visibilityActions,
+        width = width ?: properties.width,
+    )
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param action One action when clicking on an element. Not used if the `actions` parameter is set.
+ * @param actionAnimation Click animation. The web only supports the following values: `fade`, `scale`, `native`, `no_animation` and `set`.
+ * @param actions Multiple actions when clicking on an element.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param contentAlignmentHorizontal Horizontal image alignment.
+ * @param contentAlignmentVertical Vertical image alignment.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param doubletapActions Action when double-clicking on an element.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param functions User functions.
+ * @param gifUrl Direct URL to a GIF image.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param hoverEndActions Actions performed after hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param hoverStartActions Actions performed when hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param longtapActions Action when long-clicking an element. Doesn't work on devices that don't support touch gestures.
+ * @param margins External margins from the element stroke.
+ * @param paddings Internal margins from the element stroke.
+ * @param placeholderColor Placeholder background before the image is loaded.
+ * @param preloadRequired Background image must be loaded before the display.
+ * @param pressEndActions Actions performed after clicking/tapping an element.
+ * @param pressStartActions Actions performed at the start of a click/tap on an element.
+ * @param preview Image preview encoded in `base64`. It will be shown instead of `placeholder_color` before the image is loaded. Format `data url`: `data:[;base64],<data>`
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param scale Image scaling:<li>`fit` places the entire image into the element (free space is filled with background);</li><li>`fill` scales the image to the element size and cuts off the excess.</li>
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun GifImage.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    action: Property<Action>? = null,
+    actionAnimation: Property<Animation>? = null,
+    actions: Property<List<Action>>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    aspect: Property<Aspect>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    captureFocusOnAction: Property<Boolean>? = null,
+    columnSpan: Property<Int>? = null,
+    contentAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    contentAlignmentVertical: Property<AlignmentVertical>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    doubletapActions: Property<List<Action>>? = null,
+    extensions: Property<List<Extension>>? = null,
+    focus: Property<Focus>? = null,
+    functions: Property<List<Function>>? = null,
+    gifUrl: Property<Url>? = null,
+    height: Property<Size>? = null,
+    hoverEndActions: Property<List<Action>>? = null,
+    hoverStartActions: Property<List<Action>>? = null,
+    id: Property<String>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    longtapActions: Property<List<Action>>? = null,
+    margins: Property<EdgeInsets>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    placeholderColor: Property<Color>? = null,
+    preloadRequired: Property<Boolean>? = null,
+    pressEndActions: Property<List<Action>>? = null,
+    pressStartActions: Property<List<Action>>? = null,
+    preview: Property<String>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    scale: Property<ImageScale>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): GifImage = GifImage(
+    GifImage.Properties(
+        accessibility = accessibility ?: properties.accessibility,
+        action = action ?: properties.action,
+        actionAnimation = actionAnimation ?: properties.actionAnimation,
+        actions = actions ?: properties.actions,
+        alignmentHorizontal = alignmentHorizontal ?: properties.alignmentHorizontal,
+        alignmentVertical = alignmentVertical ?: properties.alignmentVertical,
+        alpha = alpha ?: properties.alpha,
+        animators = animators ?: properties.animators,
+        aspect = aspect ?: properties.aspect,
+        background = background ?: properties.background,
+        border = border ?: properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
         columnSpan = columnSpan ?: properties.columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
         contentAlignmentVertical = contentAlignmentVertical ?: properties.contentAlignmentVertical,
@@ -1138,6 +1320,7 @@ fun GifImage.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -1156,6 +1339,7 @@ fun GifImage.evaluate(
     alignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     alignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
     alpha: ExpressionProperty<Double>? = null,
+    captureFocusOnAction: ExpressionProperty<Boolean>? = null,
     columnSpan: ExpressionProperty<Int>? = null,
     contentAlignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     contentAlignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
@@ -1180,6 +1364,7 @@ fun GifImage.evaluate(
         aspect = properties.aspect,
         background = properties.background,
         border = properties.border,
+        captureFocusOnAction = captureFocusOnAction ?: properties.captureFocusOnAction,
         columnSpan = columnSpan ?: properties.columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal ?: properties.contentAlignmentHorizontal,
         contentAlignmentVertical = contentAlignmentVertical ?: properties.contentAlignmentVertical,
@@ -1233,6 +1418,7 @@ fun GifImage.evaluate(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -1286,6 +1472,7 @@ fun Component<GifImage>.override(
     aspect: Aspect? = null,
     background: List<Background>? = null,
     border: Border? = null,
+    captureFocusOnAction: Boolean? = null,
     columnSpan: Int? = null,
     contentAlignmentHorizontal: AlignmentHorizontal? = null,
     contentAlignmentVertical: AlignmentVertical? = null,
@@ -1338,6 +1525,7 @@ fun Component<GifImage>.override(
         aspect = valueOrNull(aspect),
         background = valueOrNull(background),
         border = valueOrNull(border),
+        captureFocusOnAction = valueOrNull(captureFocusOnAction),
         columnSpan = valueOrNull(columnSpan),
         contentAlignmentHorizontal = valueOrNull(contentAlignmentHorizontal),
         contentAlignmentVertical = valueOrNull(contentAlignmentVertical),
@@ -1391,6 +1579,7 @@ fun Component<GifImage>.override(
  * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -1444,6 +1633,7 @@ fun Component<GifImage>.defer(
     aspect: ReferenceProperty<Aspect>? = null,
     background: ReferenceProperty<List<Background>>? = null,
     border: ReferenceProperty<Border>? = null,
+    captureFocusOnAction: ReferenceProperty<Boolean>? = null,
     columnSpan: ReferenceProperty<Int>? = null,
     contentAlignmentHorizontal: ReferenceProperty<AlignmentHorizontal>? = null,
     contentAlignmentVertical: ReferenceProperty<AlignmentVertical>? = null,
@@ -1496,6 +1686,7 @@ fun Component<GifImage>.defer(
         aspect = aspect,
         background = background,
         border = border,
+        captureFocusOnAction = captureFocusOnAction,
         columnSpan = columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal,
         contentAlignmentVertical = contentAlignmentVertical,
@@ -1541,6 +1732,7 @@ fun Component<GifImage>.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param contentAlignmentHorizontal Horizontal image alignment.
  * @param contentAlignmentVertical Vertical image alignment.
@@ -1559,6 +1751,7 @@ fun Component<GifImage>.evaluate(
     alignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     alignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
     alpha: ExpressionProperty<Double>? = null,
+    captureFocusOnAction: ExpressionProperty<Boolean>? = null,
     columnSpan: ExpressionProperty<Int>? = null,
     contentAlignmentHorizontal: ExpressionProperty<AlignmentHorizontal>? = null,
     contentAlignmentVertical: ExpressionProperty<AlignmentVertical>? = null,
@@ -1584,6 +1777,7 @@ fun Component<GifImage>.evaluate(
         aspect = null,
         background = null,
         border = null,
+        captureFocusOnAction = captureFocusOnAction,
         columnSpan = columnSpan,
         contentAlignmentHorizontal = contentAlignmentHorizontal,
         contentAlignmentVertical = contentAlignmentVertical,
@@ -1622,6 +1816,167 @@ fun Component<GifImage>.evaluate(
         visibilityAction = null,
         visibilityActions = null,
         width = null,
+    ).mergeWith(properties)
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param action One action when clicking on an element. Not used if the `actions` parameter is set.
+ * @param actionAnimation Click animation. The web only supports the following values: `fade`, `scale`, `native`, `no_animation` and `set`.
+ * @param actions Multiple actions when clicking on an element.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param aspect Fixed aspect ratio. The element's height is calculated based on the width, ignoring the `height` value.
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param captureFocusOnAction If the value is:<li>`true` - when the element action is activated, the focus will be moved to that element. That means that the accessibility focus will be moved and the virtual keyboard will be hidden, unless the target element implies its presence (e.g. `input`).</li><li>`false` - when you click on an element, the focus will remain on the currently focused element.</li>
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param contentAlignmentHorizontal Horizontal image alignment.
+ * @param contentAlignmentVertical Vertical image alignment.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param doubletapActions Action when double-clicking on an element.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param functions User functions.
+ * @param gifUrl Direct URL to a GIF image.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param hoverEndActions Actions performed after hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param hoverStartActions Actions performed when hovering over an element. Available on platforms that support pointing devices (such as a mouse or stylus).
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param longtapActions Action when long-clicking an element. Doesn't work on devices that don't support touch gestures.
+ * @param margins External margins from the element stroke.
+ * @param paddings Internal margins from the element stroke.
+ * @param placeholderColor Placeholder background before the image is loaded.
+ * @param preloadRequired Background image must be loaded before the display.
+ * @param pressEndActions Actions performed after clicking/tapping an element.
+ * @param pressStartActions Actions performed at the start of a click/tap on an element.
+ * @param preview Image preview encoded in `base64`. It will be shown instead of `placeholder_color` before the image is loaded. Format `data url`: `data:[;base64],<data>`
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param scale Image scaling:<li>`fit` places the entire image into the element (free space is filled with background);</li><li>`fill` scales the image to the element size and cuts off the excess.</li>
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun Component<GifImage>.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    action: Property<Action>? = null,
+    actionAnimation: Property<Animation>? = null,
+    actions: Property<List<Action>>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    aspect: Property<Aspect>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    captureFocusOnAction: Property<Boolean>? = null,
+    columnSpan: Property<Int>? = null,
+    contentAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    contentAlignmentVertical: Property<AlignmentVertical>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    doubletapActions: Property<List<Action>>? = null,
+    extensions: Property<List<Extension>>? = null,
+    focus: Property<Focus>? = null,
+    functions: Property<List<Function>>? = null,
+    gifUrl: Property<Url>? = null,
+    height: Property<Size>? = null,
+    hoverEndActions: Property<List<Action>>? = null,
+    hoverStartActions: Property<List<Action>>? = null,
+    id: Property<String>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    longtapActions: Property<List<Action>>? = null,
+    margins: Property<EdgeInsets>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    placeholderColor: Property<Color>? = null,
+    preloadRequired: Property<Boolean>? = null,
+    pressEndActions: Property<List<Action>>? = null,
+    pressStartActions: Property<List<Action>>? = null,
+    preview: Property<String>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    scale: Property<ImageScale>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): Component<GifImage> = Component(
+    template = template,
+    properties = GifImage.Properties(
+        accessibility = accessibility,
+        action = action,
+        actionAnimation = actionAnimation,
+        actions = actions,
+        alignmentHorizontal = alignmentHorizontal,
+        alignmentVertical = alignmentVertical,
+        alpha = alpha,
+        animators = animators,
+        aspect = aspect,
+        background = background,
+        border = border,
+        captureFocusOnAction = captureFocusOnAction,
+        columnSpan = columnSpan,
+        contentAlignmentHorizontal = contentAlignmentHorizontal,
+        contentAlignmentVertical = contentAlignmentVertical,
+        disappearActions = disappearActions,
+        doubletapActions = doubletapActions,
+        extensions = extensions,
+        focus = focus,
+        functions = functions,
+        gifUrl = gifUrl,
+        height = height,
+        hoverEndActions = hoverEndActions,
+        hoverStartActions = hoverStartActions,
+        id = id,
+        layoutProvider = layoutProvider,
+        longtapActions = longtapActions,
+        margins = margins,
+        paddings = paddings,
+        placeholderColor = placeholderColor,
+        preloadRequired = preloadRequired,
+        pressEndActions = pressEndActions,
+        pressStartActions = pressStartActions,
+        preview = preview,
+        reuseId = reuseId,
+        rowSpan = rowSpan,
+        scale = scale,
+        selectedActions = selectedActions,
+        tooltips = tooltips,
+        transform = transform,
+        transitionChange = transitionChange,
+        transitionIn = transitionIn,
+        transitionOut = transitionOut,
+        transitionTriggers = transitionTriggers,
+        variableTriggers = variableTriggers,
+        variables = variables,
+        visibility = visibility,
+        visibilityAction = visibilityAction,
+        visibilityActions = visibilityActions,
+        width = width,
     ).mergeWith(properties)
 )
 

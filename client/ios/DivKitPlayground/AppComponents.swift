@@ -2,6 +2,7 @@ import DivKit
 import Foundation
 @_spi(Legacy) import DivKitExtensions
 import DivKitMarkdownExtension
+import DivKitSVG
 import LayoutKit
 import VGSL
 
@@ -37,9 +38,11 @@ enum AppComponents {
         GestureExtensionHandler(),
         MarkdownExtensionHandler(),
         ShineExtensionHandler(),
+        InputAutocorrectionExtensionHandler(),
       ],
       flagsInfo: DivFlagsInfo(initializeTriggerOnSet: false),
       fontProvider: fontProvider,
+      imageHolderFactory: SVGImageHolderFactory(requestPerformer: requestPerformer),
       layoutDirection: layoutDirection,
       patchProvider: PlaygroundPatchProvider(requestPerformer: requestPerformer),
       reporter: reporter,
@@ -65,6 +68,7 @@ private func makeCachingPlayerFactory(requester: URLResourceRequesting) -> Playe
     name: "divkit.playground.VideoAssetCache",
     ioQueue: cacheQueue,
     maxCapacity: 10_485_760,
+    fileManager: FileManager(),
     reportError: nil
   )
   let requester = CachedURLResourceRequester(
@@ -74,3 +78,5 @@ private func makeCachingPlayerFactory(requester: URLResourceRequesting) -> Playe
   )
   return DefaultPlayerFactory(itemsProvider: requester)
 }
+
+extension FileManager: @retroactive @unchecked Sendable {}

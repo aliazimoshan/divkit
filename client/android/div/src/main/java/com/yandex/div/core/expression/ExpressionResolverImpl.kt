@@ -2,6 +2,7 @@ package com.yandex.div.core.expression
 
 import com.yandex.div.core.Disposable
 import com.yandex.div.core.ObserverList
+import com.yandex.div.core.expression.local.RuntimeStore
 import com.yandex.div.core.expression.variables.ConstantsProvider
 import com.yandex.div.core.expression.variables.VariableAndConstantController
 import com.yandex.div.core.expression.variables.VariableController
@@ -26,10 +27,14 @@ import com.yandex.div.json.typeMismatch
 import org.json.JSONObject
 
 internal class ExpressionResolverImpl(
-    private val variableController: VariableController,
-    private val evaluator: Evaluator,
+    /**
+     * Unique path by which resolver could be found at [RuntimeStore].
+     */
+    val path: String,
+    val runtimeStore: RuntimeStore,
+    val variableController: VariableController,
+    val evaluator: Evaluator,
     private val errorCollector: ErrorCollector,
-    private val onCreateCallback: OnCreateCallback
 ) : ExpressionResolver {
 
     private val evaluationsCache = mutableMapOf<String, Any>()
@@ -38,14 +43,6 @@ internal class ExpressionResolverImpl(
     private val expressionObservers = mutableMapOf<String, ObserverList<() -> Unit>>()
 
     var suppressMissingVariableException: Boolean = false
-
-    init {
-        onCreateCallback.onCreate(
-            this,
-            variableController,
-            evaluator.evaluationContext.functionProvider as FunctionProviderDecorator
-        )
-    }
 
     override fun <R, T : Any> get(
         expressionKey: String,
@@ -219,7 +216,7 @@ internal class ExpressionResolverImpl(
     }
 
     internal fun subscribeOnVariables() {
-        variableController.setOnAnyVariableChangeCallback { v ->
+        variableController.setOnAnyVariableChangeCallback(owner = this) { v ->
             val capturedExpressions = varToExpressions[v.name]?.toList()
             capturedExpressions?.forEach { expr: String ->
                 evaluationsCache.remove(expr)
@@ -230,9 +227,12 @@ internal class ExpressionResolverImpl(
         }
     }
 
-    operator fun plus(constants: ConstantsProvider): ExpressionResolverImpl {
+    internal fun withConstants(pathSegment: String,
+                               constants: ConstantsProvider): ExpressionResolverImpl {
         val variableAndConstantController = VariableAndConstantController(variableController, constants)
         return ExpressionResolverImpl(
+            path = this.path + "/" + pathSegment,
+            runtimeStore = this.runtimeStore,
             variableController = variableAndConstantController,
             evaluator = Evaluator(
                 evaluationContext = EvaluationContext(
@@ -243,7 +243,6 @@ internal class ExpressionResolverImpl(
                 )
             ),
             errorCollector = errorCollector,
-            onCreateCallback = onCreateCallback,
         )
     }
 
@@ -252,18 +251,5 @@ internal class ExpressionResolverImpl(
             errorCollector.logError(typeMismatch(index, element))
             null
         }
-    }
-
-    /**
-     * ExpressionResolverImpl may create new instance in 'plus' operator.
-     * To be able to registrate all created resolvers and their variables controllers
-     * as a new ExpressionRuntime we are using OnCreateCallback.
-     */
-    internal fun interface OnCreateCallback {
-        fun onCreate(
-            resolver: ExpressionResolverImpl,
-            variableController: VariableController,
-            functionProvider: FunctionProviderDecorator
-        )
     }
 }

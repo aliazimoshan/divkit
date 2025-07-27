@@ -54,6 +54,7 @@ data class Input internal constructor(
             fontFamily = additive.fontFamily ?: properties.fontFamily,
             fontSize = additive.fontSize ?: properties.fontSize,
             fontSizeUnit = additive.fontSizeUnit ?: properties.fontSizeUnit,
+            fontVariationSettings = additive.fontVariationSettings ?: properties.fontVariationSettings,
             fontWeight = additive.fontWeight ?: properties.fontWeight,
             fontWeightValue = additive.fontWeightValue ?: properties.fontWeightValue,
             functions = additive.functions ?: properties.functions,
@@ -120,7 +121,7 @@ data class Input internal constructor(
          */
         val animators: Property<List<Animator>>?,
         /**
-         * Text auto-capitalization type.
+         * Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
          * Default value: `auto`.
          */
         val autocapitalization: Property<Autocapitalization>?,
@@ -175,6 +176,10 @@ data class Input internal constructor(
          * Default value: `sp`.
          */
         val fontSizeUnit: Property<SizeUnit>?,
+        /**
+         * List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
+         */
+        val fontVariationSettings: Property<Map<String, Any>>?,
         /**
          * Style.
          * Default value: `regular`.
@@ -369,6 +374,7 @@ data class Input internal constructor(
             result.tryPutProperty("font_family", fontFamily)
             result.tryPutProperty("font_size", fontSize)
             result.tryPutProperty("font_size_unit", fontSizeUnit)
+            result.tryPutProperty("font_variation_settings", fontVariationSettings)
             result.tryPutProperty("font_weight", fontWeight)
             result.tryPutProperty("font_weight_value", fontWeightValue)
             result.tryPutProperty("functions", functions)
@@ -414,7 +420,7 @@ data class Input internal constructor(
     }
 
     /**
-     * Text auto-capitalization type.
+     * Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
      * 
      * Possible values: [auto], [none], [words], [sentences], [all_characters].
      */
@@ -481,7 +487,7 @@ data class Input internal constructor(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -494,6 +500,7 @@ data class Input internal constructor(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -556,6 +563,7 @@ fun DivScope.input(
     fontFamily: String? = null,
     fontSize: Int? = null,
     fontSizeUnit: SizeUnit? = null,
+    fontVariationSettings: Map<String, Any>? = null,
     fontWeight: FontWeight? = null,
     fontWeightValue: Int? = null,
     functions: List<Function>? = null,
@@ -616,6 +624,7 @@ fun DivScope.input(
         fontFamily = valueOrNull(fontFamily),
         fontSize = valueOrNull(fontSize),
         fontSizeUnit = valueOrNull(fontSizeUnit),
+        fontVariationSettings = valueOrNull(fontVariationSettings),
         fontWeight = valueOrNull(fontWeight),
         fontWeightValue = valueOrNull(fontWeightValue),
         functions = valueOrNull(functions),
@@ -665,7 +674,7 @@ fun DivScope.input(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -678,6 +687,7 @@ fun DivScope.input(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -740,6 +750,7 @@ fun DivScope.inputProps(
     fontFamily: String? = null,
     fontSize: Int? = null,
     fontSizeUnit: SizeUnit? = null,
+    fontVariationSettings: Map<String, Any>? = null,
     fontWeight: FontWeight? = null,
     fontWeightValue: Int? = null,
     functions: List<Function>? = null,
@@ -799,6 +810,7 @@ fun DivScope.inputProps(
     fontFamily = valueOrNull(fontFamily),
     fontSize = valueOrNull(fontSize),
     fontSizeUnit = valueOrNull(fontSizeUnit),
+    fontVariationSettings = valueOrNull(fontVariationSettings),
     fontWeight = valueOrNull(fontWeight),
     fontWeightValue = valueOrNull(fontWeightValue),
     functions = valueOrNull(functions),
@@ -847,7 +859,7 @@ fun DivScope.inputProps(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -860,6 +872,7 @@ fun DivScope.inputProps(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -922,6 +935,7 @@ fun TemplateScope.inputRefs(
     fontFamily: ReferenceProperty<String>? = null,
     fontSize: ReferenceProperty<Int>? = null,
     fontSizeUnit: ReferenceProperty<SizeUnit>? = null,
+    fontVariationSettings: ReferenceProperty<Map<String, Any>>? = null,
     fontWeight: ReferenceProperty<FontWeight>? = null,
     fontWeightValue: ReferenceProperty<Int>? = null,
     functions: ReferenceProperty<List<Function>>? = null,
@@ -981,6 +995,7 @@ fun TemplateScope.inputRefs(
     fontFamily = fontFamily,
     fontSize = fontSize,
     fontSizeUnit = fontSizeUnit,
+    fontVariationSettings = fontVariationSettings,
     fontWeight = fontWeight,
     fontWeightValue = fontWeightValue,
     functions = functions,
@@ -1029,7 +1044,7 @@ fun TemplateScope.inputRefs(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -1042,6 +1057,7 @@ fun TemplateScope.inputRefs(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -1104,6 +1120,7 @@ fun Input.override(
     fontFamily: String? = null,
     fontSize: Int? = null,
     fontSizeUnit: SizeUnit? = null,
+    fontVariationSettings: Map<String, Any>? = null,
     fontWeight: FontWeight? = null,
     fontWeightValue: Int? = null,
     functions: List<Function>? = null,
@@ -1164,6 +1181,7 @@ fun Input.override(
         fontFamily = valueOrNull(fontFamily) ?: properties.fontFamily,
         fontSize = valueOrNull(fontSize) ?: properties.fontSize,
         fontSizeUnit = valueOrNull(fontSizeUnit) ?: properties.fontSizeUnit,
+        fontVariationSettings = valueOrNull(fontVariationSettings) ?: properties.fontVariationSettings,
         fontWeight = valueOrNull(fontWeight) ?: properties.fontWeight,
         fontWeightValue = valueOrNull(fontWeightValue) ?: properties.fontWeightValue,
         functions = valueOrNull(functions) ?: properties.functions,
@@ -1213,7 +1231,7 @@ fun Input.override(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -1226,6 +1244,7 @@ fun Input.override(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -1288,6 +1307,7 @@ fun Input.defer(
     fontFamily: ReferenceProperty<String>? = null,
     fontSize: ReferenceProperty<Int>? = null,
     fontSizeUnit: ReferenceProperty<SizeUnit>? = null,
+    fontVariationSettings: ReferenceProperty<Map<String, Any>>? = null,
     fontWeight: ReferenceProperty<FontWeight>? = null,
     fontWeightValue: ReferenceProperty<Int>? = null,
     functions: ReferenceProperty<List<Function>>? = null,
@@ -1348,6 +1368,194 @@ fun Input.defer(
         fontFamily = fontFamily ?: properties.fontFamily,
         fontSize = fontSize ?: properties.fontSize,
         fontSizeUnit = fontSizeUnit ?: properties.fontSizeUnit,
+        fontVariationSettings = fontVariationSettings ?: properties.fontVariationSettings,
+        fontWeight = fontWeight ?: properties.fontWeight,
+        fontWeightValue = fontWeightValue ?: properties.fontWeightValue,
+        functions = functions ?: properties.functions,
+        height = height ?: properties.height,
+        highlightColor = highlightColor ?: properties.highlightColor,
+        hintColor = hintColor ?: properties.hintColor,
+        hintText = hintText ?: properties.hintText,
+        id = id ?: properties.id,
+        isEnabled = isEnabled ?: properties.isEnabled,
+        keyboardType = keyboardType ?: properties.keyboardType,
+        layoutProvider = layoutProvider ?: properties.layoutProvider,
+        letterSpacing = letterSpacing ?: properties.letterSpacing,
+        lineHeight = lineHeight ?: properties.lineHeight,
+        margins = margins ?: properties.margins,
+        mask = mask ?: properties.mask,
+        maxLength = maxLength ?: properties.maxLength,
+        maxVisibleLines = maxVisibleLines ?: properties.maxVisibleLines,
+        nativeInterface = nativeInterface ?: properties.nativeInterface,
+        paddings = paddings ?: properties.paddings,
+        reuseId = reuseId ?: properties.reuseId,
+        rowSpan = rowSpan ?: properties.rowSpan,
+        selectAllOnFocus = selectAllOnFocus ?: properties.selectAllOnFocus,
+        selectedActions = selectedActions ?: properties.selectedActions,
+        textAlignmentHorizontal = textAlignmentHorizontal ?: properties.textAlignmentHorizontal,
+        textAlignmentVertical = textAlignmentVertical ?: properties.textAlignmentVertical,
+        textColor = textColor ?: properties.textColor,
+        textVariable = textVariable ?: properties.textVariable,
+        tooltips = tooltips ?: properties.tooltips,
+        transform = transform ?: properties.transform,
+        transitionChange = transitionChange ?: properties.transitionChange,
+        transitionIn = transitionIn ?: properties.transitionIn,
+        transitionOut = transitionOut ?: properties.transitionOut,
+        transitionTriggers = transitionTriggers ?: properties.transitionTriggers,
+        validators = validators ?: properties.validators,
+        variableTriggers = variableTriggers ?: properties.variableTriggers,
+        variables = variables ?: properties.variables,
+        visibility = visibility ?: properties.visibility,
+        visibilityAction = visibilityAction ?: properties.visibilityAction,
+        visibilityActions = visibilityActions ?: properties.visibilityActions,
+        width = width ?: properties.width,
+    )
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param enterKeyActions Actions when pressing the 'Enter' key. Actions (if any) override the default behavior.
+ * @param enterKeyType 'Enter' key type.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param filters Filter that prevents users from entering text that doesn't satisfy the specified conditions.
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
+ * @param fontSize Font size.
+ * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
+ * @param fontWeight Style.
+ * @param fontWeightValue Style. Numeric value.
+ * @param functions User functions.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param highlightColor Text highlight color. If the value isn't set, the color set in the client will be used instead.
+ * @param hintColor Text color.
+ * @param hintText Tooltip text.
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param isEnabled Enables or disables text editing.
+ * @param keyboardType Keyboard type.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param letterSpacing Spacing between characters.
+ * @param lineHeight Line spacing of the text. Units specified in `font_size_unit`.
+ * @param margins External margins from the element stroke.
+ * @param mask Mask for entering text based on the specified template.
+ * @param maxLength Maximum number of characters that can be entered in the input field.
+ * @param maxVisibleLines Maximum number of lines to be displayed in the input field.
+ * @param nativeInterface Text input line used in the native interface.
+ * @param paddings Internal margins from the element stroke.
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param selectAllOnFocus Highlighting input text when focused.
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param textAlignmentHorizontal Horizontal text alignment.
+ * @param textAlignmentVertical Vertical text alignment.
+ * @param textColor Text color.
+ * @param textVariable Name of text storage variable.
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param validators Validator that checks that the field value meets the specified conditions.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun Input.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    autocapitalization: Property<Input.Autocapitalization>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    columnSpan: Property<Int>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    enterKeyActions: Property<List<Action>>? = null,
+    enterKeyType: Property<Input.EnterKeyType>? = null,
+    extensions: Property<List<Extension>>? = null,
+    filters: Property<List<InputFilter>>? = null,
+    focus: Property<Focus>? = null,
+    fontFamily: Property<String>? = null,
+    fontSize: Property<Int>? = null,
+    fontSizeUnit: Property<SizeUnit>? = null,
+    fontVariationSettings: Property<Map<String, Any>>? = null,
+    fontWeight: Property<FontWeight>? = null,
+    fontWeightValue: Property<Int>? = null,
+    functions: Property<List<Function>>? = null,
+    height: Property<Size>? = null,
+    highlightColor: Property<Color>? = null,
+    hintColor: Property<Color>? = null,
+    hintText: Property<String>? = null,
+    id: Property<String>? = null,
+    isEnabled: Property<Boolean>? = null,
+    keyboardType: Property<Input.KeyboardType>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    letterSpacing: Property<Double>? = null,
+    lineHeight: Property<Int>? = null,
+    margins: Property<EdgeInsets>? = null,
+    mask: Property<InputMask>? = null,
+    maxLength: Property<Int>? = null,
+    maxVisibleLines: Property<Int>? = null,
+    nativeInterface: Property<Input.NativeInterface>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    selectAllOnFocus: Property<Boolean>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    textAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    textAlignmentVertical: Property<AlignmentVertical>? = null,
+    textColor: Property<Color>? = null,
+    textVariable: Property<String>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    validators: Property<List<InputValidator>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): Input = Input(
+    Input.Properties(
+        accessibility = accessibility ?: properties.accessibility,
+        alignmentHorizontal = alignmentHorizontal ?: properties.alignmentHorizontal,
+        alignmentVertical = alignmentVertical ?: properties.alignmentVertical,
+        alpha = alpha ?: properties.alpha,
+        animators = animators ?: properties.animators,
+        autocapitalization = autocapitalization ?: properties.autocapitalization,
+        background = background ?: properties.background,
+        border = border ?: properties.border,
+        columnSpan = columnSpan ?: properties.columnSpan,
+        disappearActions = disappearActions ?: properties.disappearActions,
+        enterKeyActions = enterKeyActions ?: properties.enterKeyActions,
+        enterKeyType = enterKeyType ?: properties.enterKeyType,
+        extensions = extensions ?: properties.extensions,
+        filters = filters ?: properties.filters,
+        focus = focus ?: properties.focus,
+        fontFamily = fontFamily ?: properties.fontFamily,
+        fontSize = fontSize ?: properties.fontSize,
+        fontSizeUnit = fontSizeUnit ?: properties.fontSizeUnit,
+        fontVariationSettings = fontVariationSettings ?: properties.fontVariationSettings,
         fontWeight = fontWeight ?: properties.fontWeight,
         fontWeightValue = fontWeightValue ?: properties.fontWeightValue,
         functions = functions ?: properties.functions,
@@ -1395,7 +1603,7 @@ fun Input.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param enterKeyType 'Enter' key type.
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
@@ -1470,6 +1678,7 @@ fun Input.evaluate(
         fontFamily = fontFamily ?: properties.fontFamily,
         fontSize = fontSize ?: properties.fontSize,
         fontSizeUnit = fontSizeUnit ?: properties.fontSizeUnit,
+        fontVariationSettings = properties.fontVariationSettings,
         fontWeight = fontWeight ?: properties.fontWeight,
         fontWeightValue = fontWeightValue ?: properties.fontWeightValue,
         functions = properties.functions,
@@ -1519,7 +1728,7 @@ fun Input.evaluate(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -1532,6 +1741,7 @@ fun Input.evaluate(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -1594,6 +1804,7 @@ fun Component<Input>.override(
     fontFamily: String? = null,
     fontSize: Int? = null,
     fontSizeUnit: SizeUnit? = null,
+    fontVariationSettings: Map<String, Any>? = null,
     fontWeight: FontWeight? = null,
     fontWeightValue: Int? = null,
     functions: List<Function>? = null,
@@ -1655,6 +1866,7 @@ fun Component<Input>.override(
         fontFamily = valueOrNull(fontFamily),
         fontSize = valueOrNull(fontSize),
         fontSizeUnit = valueOrNull(fontSizeUnit),
+        fontVariationSettings = valueOrNull(fontVariationSettings),
         fontWeight = valueOrNull(fontWeight),
         fontWeightValue = valueOrNull(fontWeightValue),
         functions = valueOrNull(functions),
@@ -1704,7 +1916,7 @@ fun Component<Input>.override(
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
  * @param animators Declaration of animators that change variable values over time.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param background Element background. It can contain multiple layers.
  * @param border Element stroke.
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
@@ -1717,6 +1929,7 @@ fun Component<Input>.override(
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
  * @param fontSize Font size.
  * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
  * @param fontWeight Style.
  * @param fontWeightValue Style. Numeric value.
  * @param functions User functions.
@@ -1779,6 +1992,7 @@ fun Component<Input>.defer(
     fontFamily: ReferenceProperty<String>? = null,
     fontSize: ReferenceProperty<Int>? = null,
     fontSizeUnit: ReferenceProperty<SizeUnit>? = null,
+    fontVariationSettings: ReferenceProperty<Map<String, Any>>? = null,
     fontWeight: ReferenceProperty<FontWeight>? = null,
     fontWeightValue: ReferenceProperty<Int>? = null,
     functions: ReferenceProperty<List<Function>>? = null,
@@ -1840,6 +2054,7 @@ fun Component<Input>.defer(
         fontFamily = fontFamily,
         fontSize = fontSize,
         fontSizeUnit = fontSizeUnit,
+        fontVariationSettings = fontVariationSettings,
         fontWeight = fontWeight,
         fontWeightValue = fontWeightValue,
         functions = functions,
@@ -1887,7 +2102,7 @@ fun Component<Input>.defer(
  * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
  * @param alignmentVertical Vertical alignment of an element inside the parent element.
  * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
- * @param autocapitalization Text auto-capitalization type.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
  * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
  * @param enterKeyType 'Enter' key type.
  * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
@@ -1963,6 +2178,7 @@ fun Component<Input>.evaluate(
         fontFamily = fontFamily,
         fontSize = fontSize,
         fontSizeUnit = fontSizeUnit,
+        fontVariationSettings = null,
         fontWeight = fontWeight,
         fontWeightValue = fontWeightValue,
         functions = null,
@@ -2003,6 +2219,194 @@ fun Component<Input>.evaluate(
         visibilityAction = null,
         visibilityActions = null,
         width = null,
+    ).mergeWith(properties)
+)
+
+/**
+ * @param accessibility Accessibility settings.
+ * @param alignmentHorizontal Horizontal alignment of an element inside the parent element.
+ * @param alignmentVertical Vertical alignment of an element inside the parent element.
+ * @param alpha Sets transparency of the entire element: `0` — completely transparent, `1` — opaque.
+ * @param animators Declaration of animators that change variable values over time.
+ * @param autocapitalization Text auto-capitalization type. <li>By default: `auto` - default behavior of the platform;</li><li>`none' - automatic capitalization is not applied;</li><li>`words` - capitalization of each word;</li><li>`sentences` - capitalization at the beginning of a sentence;</li><li>`all_characters' - capitalization of each character.</li>
+ * @param background Element background. It can contain multiple layers.
+ * @param border Element stroke.
+ * @param columnSpan Merges cells in a column of the [grid](div-grid.md) element.
+ * @param disappearActions Actions when an element disappears from the screen.
+ * @param enterKeyActions Actions when pressing the 'Enter' key. Actions (if any) override the default behavior.
+ * @param enterKeyType 'Enter' key type.
+ * @param extensions Extensions for additional processing of an element. The list of extensions is given in  [DivExtension](../../extensions).
+ * @param filters Filter that prevents users from entering text that doesn't satisfy the specified conditions.
+ * @param focus Parameters when focusing on an element or losing focus.
+ * @param fontFamily Font family:<li>`text` — a standard text font;</li><li>`display` — a family of fonts with a large font size.</li>
+ * @param fontSize Font size.
+ * @param fontSizeUnit Unit of measurement:<li>`px` — a physical pixel.</li><li>`dp` — a logical pixel that doesn't depend on screen density.</li><li>`sp` — a logical pixel that depends on the font size on a device. Specify height in `sp`. Only available on Android.</li>
+ * @param fontVariationSettings List of TrueType/OpenType font features. The object is constructed from pairs of axis tag and style values. The axis tag must contain four ASCII characters.
+ * @param fontWeight Style.
+ * @param fontWeightValue Style. Numeric value.
+ * @param functions User functions.
+ * @param height Element height. For Android: if there is text in this or in a child element, specify height in `sp` to scale the element together with the text. To learn more about units of size measurement, see [Layout inside the card](../../layout).
+ * @param highlightColor Text highlight color. If the value isn't set, the color set in the client will be used instead.
+ * @param hintColor Text color.
+ * @param hintText Tooltip text.
+ * @param id Element ID. It must be unique within the root element. It is used as `accessibilityIdentifier` on iOS.
+ * @param isEnabled Enables or disables text editing.
+ * @param keyboardType Keyboard type.
+ * @param layoutProvider Provides data on the actual size of the element.
+ * @param letterSpacing Spacing between characters.
+ * @param lineHeight Line spacing of the text. Units specified in `font_size_unit`.
+ * @param margins External margins from the element stroke.
+ * @param mask Mask for entering text based on the specified template.
+ * @param maxLength Maximum number of characters that can be entered in the input field.
+ * @param maxVisibleLines Maximum number of lines to be displayed in the input field.
+ * @param nativeInterface Text input line used in the native interface.
+ * @param paddings Internal margins from the element stroke.
+ * @param reuseId ID for the div object structure. Used to optimize block reuse. See [block reuse](../../reuse/reuse.md).
+ * @param rowSpan Merges cells in a string of the [grid](div-grid.md) element.
+ * @param selectAllOnFocus Highlighting input text when focused.
+ * @param selectedActions List of [actions](div-action.md) to be executed when selecting an element in [pager](div-pager.md).
+ * @param textAlignmentHorizontal Horizontal text alignment.
+ * @param textAlignmentVertical Vertical text alignment.
+ * @param textColor Text color.
+ * @param textVariable Name of text storage variable.
+ * @param tooltips Tooltips linked to an element. A tooltip can be shown by `div-action://show_tooltip?id=`, hidden by `div-action://hide_tooltip?id=` where `id` — tooltip id.
+ * @param transform Applies the passed transformation to the element. Content that doesn't fit into the original view area is cut off.
+ * @param transitionChange Change animation. It is played when the position or size of an element changes in the new layout.
+ * @param transitionIn Appearance animation. It is played when an element with a new ID appears. To learn more about the concept of transitions, see [Animated transitions](../../interaction#animation/transition-animation).
+ * @param transitionOut Disappearance animation. It is played when an element disappears in the new layout.
+ * @param transitionTriggers Animation starting triggers. Default value: `[state_change, visibility_change]`.
+ * @param validators Validator that checks that the field value meets the specified conditions.
+ * @param variableTriggers Triggers for changing variables within an element.
+ * @param variables Declaration of variables that can be used within an element. Variables declared in this array can only be used within the element and its child elements.
+ * @param visibility Element visibility.
+ * @param visibilityAction Tracking visibility of a single element. Not used if the `visibility_actions` parameter is set.
+ * @param visibilityActions Actions when an element appears on the screen.
+ * @param width Element width.
+ */
+@Generated
+fun Component<Input>.modify(
+    `use named arguments`: Guard = Guard.instance,
+    accessibility: Property<Accessibility>? = null,
+    alignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    alignmentVertical: Property<AlignmentVertical>? = null,
+    alpha: Property<Double>? = null,
+    animators: Property<List<Animator>>? = null,
+    autocapitalization: Property<Input.Autocapitalization>? = null,
+    background: Property<List<Background>>? = null,
+    border: Property<Border>? = null,
+    columnSpan: Property<Int>? = null,
+    disappearActions: Property<List<DisappearAction>>? = null,
+    enterKeyActions: Property<List<Action>>? = null,
+    enterKeyType: Property<Input.EnterKeyType>? = null,
+    extensions: Property<List<Extension>>? = null,
+    filters: Property<List<InputFilter>>? = null,
+    focus: Property<Focus>? = null,
+    fontFamily: Property<String>? = null,
+    fontSize: Property<Int>? = null,
+    fontSizeUnit: Property<SizeUnit>? = null,
+    fontVariationSettings: Property<Map<String, Any>>? = null,
+    fontWeight: Property<FontWeight>? = null,
+    fontWeightValue: Property<Int>? = null,
+    functions: Property<List<Function>>? = null,
+    height: Property<Size>? = null,
+    highlightColor: Property<Color>? = null,
+    hintColor: Property<Color>? = null,
+    hintText: Property<String>? = null,
+    id: Property<String>? = null,
+    isEnabled: Property<Boolean>? = null,
+    keyboardType: Property<Input.KeyboardType>? = null,
+    layoutProvider: Property<LayoutProvider>? = null,
+    letterSpacing: Property<Double>? = null,
+    lineHeight: Property<Int>? = null,
+    margins: Property<EdgeInsets>? = null,
+    mask: Property<InputMask>? = null,
+    maxLength: Property<Int>? = null,
+    maxVisibleLines: Property<Int>? = null,
+    nativeInterface: Property<Input.NativeInterface>? = null,
+    paddings: Property<EdgeInsets>? = null,
+    reuseId: Property<String>? = null,
+    rowSpan: Property<Int>? = null,
+    selectAllOnFocus: Property<Boolean>? = null,
+    selectedActions: Property<List<Action>>? = null,
+    textAlignmentHorizontal: Property<AlignmentHorizontal>? = null,
+    textAlignmentVertical: Property<AlignmentVertical>? = null,
+    textColor: Property<Color>? = null,
+    textVariable: Property<String>? = null,
+    tooltips: Property<List<Tooltip>>? = null,
+    transform: Property<Transform>? = null,
+    transitionChange: Property<ChangeTransition>? = null,
+    transitionIn: Property<AppearanceTransition>? = null,
+    transitionOut: Property<AppearanceTransition>? = null,
+    transitionTriggers: Property<List<ArrayElement<TransitionTrigger>>>? = null,
+    validators: Property<List<InputValidator>>? = null,
+    variableTriggers: Property<List<Trigger>>? = null,
+    variables: Property<List<Variable>>? = null,
+    visibility: Property<Visibility>? = null,
+    visibilityAction: Property<VisibilityAction>? = null,
+    visibilityActions: Property<List<VisibilityAction>>? = null,
+    width: Property<Size>? = null,
+): Component<Input> = Component(
+    template = template,
+    properties = Input.Properties(
+        accessibility = accessibility,
+        alignmentHorizontal = alignmentHorizontal,
+        alignmentVertical = alignmentVertical,
+        alpha = alpha,
+        animators = animators,
+        autocapitalization = autocapitalization,
+        background = background,
+        border = border,
+        columnSpan = columnSpan,
+        disappearActions = disappearActions,
+        enterKeyActions = enterKeyActions,
+        enterKeyType = enterKeyType,
+        extensions = extensions,
+        filters = filters,
+        focus = focus,
+        fontFamily = fontFamily,
+        fontSize = fontSize,
+        fontSizeUnit = fontSizeUnit,
+        fontVariationSettings = fontVariationSettings,
+        fontWeight = fontWeight,
+        fontWeightValue = fontWeightValue,
+        functions = functions,
+        height = height,
+        highlightColor = highlightColor,
+        hintColor = hintColor,
+        hintText = hintText,
+        id = id,
+        isEnabled = isEnabled,
+        keyboardType = keyboardType,
+        layoutProvider = layoutProvider,
+        letterSpacing = letterSpacing,
+        lineHeight = lineHeight,
+        margins = margins,
+        mask = mask,
+        maxLength = maxLength,
+        maxVisibleLines = maxVisibleLines,
+        nativeInterface = nativeInterface,
+        paddings = paddings,
+        reuseId = reuseId,
+        rowSpan = rowSpan,
+        selectAllOnFocus = selectAllOnFocus,
+        selectedActions = selectedActions,
+        textAlignmentHorizontal = textAlignmentHorizontal,
+        textAlignmentVertical = textAlignmentVertical,
+        textColor = textColor,
+        textVariable = textVariable,
+        tooltips = tooltips,
+        transform = transform,
+        transitionChange = transitionChange,
+        transitionIn = transitionIn,
+        transitionOut = transitionOut,
+        transitionTriggers = transitionTriggers,
+        validators = validators,
+        variableTriggers = variableTriggers,
+        variables = variables,
+        visibility = visibility,
+        visibilityAction = visibilityAction,
+        visibilityActions = visibilityActions,
+        width = width,
     ).mergeWith(properties)
 )
 
@@ -2079,6 +2483,19 @@ fun Input.NativeInterface.override(
 fun Input.NativeInterface.defer(
     `use named arguments`: Guard = Guard.instance,
     color: ReferenceProperty<Color>? = null,
+): Input.NativeInterface = Input.NativeInterface(
+    Input.NativeInterface.Properties(
+        color = color ?: properties.color,
+    )
+)
+
+/**
+ * @param color Text input line color.
+ */
+@Generated
+fun Input.NativeInterface.modify(
+    `use named arguments`: Guard = Guard.instance,
+    color: Property<Color>? = null,
 ): Input.NativeInterface = Input.NativeInterface(
     Input.NativeInterface.Properties(
         color = color ?: properties.color,

@@ -47,7 +47,7 @@ data class ColorVariable internal constructor(
          */
         val name: Property<String>?,
         /**
-         * Value.
+         * Value. Supports expressions for variable initialization.
          */
         val value: Property<Color>?,
     ) {
@@ -63,7 +63,7 @@ data class ColorVariable internal constructor(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.colorVariable(
@@ -79,7 +79,7 @@ fun DivScope.colorVariable(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun DivScope.colorVariableProps(
@@ -93,7 +93,7 @@ fun DivScope.colorVariableProps(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun TemplateScope.colorVariableRefs(
@@ -107,7 +107,7 @@ fun TemplateScope.colorVariableRefs(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun ColorVariable.override(
@@ -123,7 +123,7 @@ fun ColorVariable.override(
 
 /**
  * @param name Variable name.
- * @param value Value.
+ * @param value Value. Supports expressions for variable initialization.
  */
 @Generated
 fun ColorVariable.defer(
@@ -133,6 +133,36 @@ fun ColorVariable.defer(
 ): ColorVariable = ColorVariable(
     ColorVariable.Properties(
         name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param name Variable name.
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun ColorVariable.modify(
+    `use named arguments`: Guard = Guard.instance,
+    name: Property<String>? = null,
+    value: Property<Color>? = null,
+): ColorVariable = ColorVariable(
+    ColorVariable.Properties(
+        name = name ?: properties.name,
+        value = value ?: properties.value,
+    )
+)
+
+/**
+ * @param value Value. Supports expressions for variable initialization.
+ */
+@Generated
+fun ColorVariable.evaluate(
+    `use named arguments`: Guard = Guard.instance,
+    value: ExpressionProperty<Color>? = null,
+): ColorVariable = ColorVariable(
+    ColorVariable.Properties(
+        name = properties.name,
         value = value ?: properties.value,
     )
 )

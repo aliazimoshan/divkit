@@ -2,17 +2,20 @@ package com.yandex.div.core.expression.local
 
 import com.yandex.div.core.annotations.Mockable
 import com.yandex.div.core.dagger.DivScope
+import com.yandex.div.core.expression.ExpressionResolverImpl
 import com.yandex.div.core.expression.ExpressionsRuntime
+import com.yandex.div.core.state.DivPathUtils.getId
 import com.yandex.div.core.state.DivStatePath
 import com.yandex.div.core.state.TabsStateCache
 import com.yandex.div.core.state.TemporaryDivStateCache
 import com.yandex.div.core.util.toIntSafely
 import com.yandex.div.core.view2.Div2View
 import com.yandex.div.core.view2.divs.getChildPathUnit
-import com.yandex.div.internal.Assert
+import com.yandex.div.internal.core.build
 import com.yandex.div.json.expressions.ExpressionResolver
 import com.yandex.div.state.DivStateCache
 import com.yandex.div2.Div
+import com.yandex.div2.DivCollectionItemBuilder
 import com.yandex.div2.DivState
 import com.yandex.div2.DivTabs
 import javax.inject.Inject
@@ -45,7 +48,7 @@ internal class DivRuntimeVisitor @Inject constructor(
         visit(
             div = rootDiv,
             divView = divView,
-            path = rootPath.path.toMutableList(),
+            path = rootPath.fullPath,
             states = rootPath.getStatesFlat(),
             parentRuntime = rootRuntime,
         )
@@ -58,15 +61,7 @@ internal class DivRuntimeVisitor @Inject constructor(
         expressionResolver: ExpressionResolver,
     ) {
         val runtime = divView.runtimeStore?.getRuntimeWithOrNull(expressionResolver) ?: return
-        runtime.onAttachedToWindow(divView)
-
-        visitStates(
-            div = div,
-            divView = divView,
-            path = path.path.toMutableList(),
-            states = path.getStatesFlat(),
-            parentRuntime = runtime,
-        )
+        visitStates(div, divView, path.fullPath, path.getStatesFlat(), runtime)
     }
 
     fun createAndAttachRuntimesToTabs(
@@ -76,32 +71,27 @@ internal class DivRuntimeVisitor @Inject constructor(
         expressionResolver: ExpressionResolver,
     ) {
         val runtime = divView.runtimeStore?.getRuntimeWithOrNull(expressionResolver) ?: return
-        runtime.onAttachedToWindow(divView)
-
-        visitTabs(
-            div = div,
-            divView = divView,
-            path = path.path.toMutableList(),
-            states = path.getStatesFlat(),
-            parentRuntime = runtime
-        )
+        visitTabs(div, divView, path.fullPath, path.getStatesFlat(), runtime)
     }
 
     private fun visit(
         div: Div,
         divView: Div2View,
-        path: MutableList<String>,
+        path: String,
         states: MutableList<String>,
         parentRuntime: ExpressionsRuntime,
     ) {
         when (div) {
-            is Div.Container -> visitContainer(div, divView, div.value.items, path, states, parentRuntime)
-            is Div.Grid -> visitContainer(div, divView, div.value.items, path, states, parentRuntime)
-            is Div.Gallery -> visitContainer(div, divView, div.value.items, path, states, parentRuntime)
-            is Div.Pager -> visitContainer(div, divView, div.value.items, path, states, parentRuntime)
+            is Div.Container ->
+                visitContainer(div, divView, div.value.items, div.value.itemBuilder, path, states, parentRuntime)
+            is Div.Grid -> visitContainer(div, divView, div.value.items, null, path, states, parentRuntime)
+            is Div.Gallery ->
+                visitContainer(div, divView, div.value.items, div.value.itemBuilder, path, states, parentRuntime)
+            is Div.Pager ->
+                visitContainer(div, divView, div.value.items, div.value.itemBuilder, path, states, parentRuntime)
 
-            is Div.State -> visitStates(div.value, divView, path, states, parentRuntime)
-            is Div.Tabs -> visitTabs(div.value, divView, path, states, parentRuntime)
+            is Div.State -> visitState(div, divView, path, states, parentRuntime)
+            is Div.Tabs -> visitTabs(div, divView, path, states, parentRuntime)
 
             is Div.Custom -> defaultVisit(div, divView, path, parentRuntime)
             is Div.GifImage -> defaultVisit(div, divView, path, parentRuntime)
@@ -120,53 +110,61 @@ internal class DivRuntimeVisitor @Inject constructor(
     private fun defaultVisit(
         div: Div,
         divView: Div2View,
-        path: MutableList<String>,
-        parentRuntime: ExpressionsRuntime?
-    ): ExpressionsRuntime? {
-        if (!div.needLocalRuntime) return parentRuntime
-
-        val stringPath = path.joinToString("/")
-        divView.runtimeStore?.getOrCreateRuntime(
-            path = stringPath,
-            div = div,
-            parentRuntime = parentRuntime,
-        )?.let {
+        path: String,
+        parentRuntime: ExpressionsRuntime
+    ): ExpressionsRuntime {
+        return parentRuntime.runtimeStore.getOrCreateRuntime(path, div, parentRuntime.expressionResolver).also {
             it.onAttachedToWindow(divView)
-            return it
         }
-
-        Assert.fail("ExpressionRuntimeVisitor cannot create runtime for path = $stringPath")
-        return null
     }
 
     private fun visitContainer(
         div: Div,
         divView: Div2View,
         items: List<Div>?,
-        path: MutableList<String>,
+        itemBuilder: DivCollectionItemBuilder?,
+        path: String,
         states: MutableList<String>,
         parentRuntime: ExpressionsRuntime,
     ) {
-        defaultVisit(div, divView, path, parentRuntime).also { runtime ->
-            if (runtime == null) return@also
+        val runtime = defaultVisit(div, divView, path, parentRuntime)
 
-            items?.forEachIndexed { index, div ->
-                if (div !is Div.State) {
-                    path.add(div.value().getChildPathUnit(index))
-                    visit(div, divView, path, states, runtime)
-                    path.removeLastOrNull()
-                } else {
-                    visit(div, divView, path, states, runtime)
-                }
-            }
+        itemBuilder?.let {
+            it.visit(divView, path, states, runtime)
+            return
+        }
+
+        items?.forEachIndexed { index, item ->
+            visit(item, divView, path.appendChild(item, index), states, runtime)
         }
     }
+
+    private fun DivCollectionItemBuilder.visit(
+        divView: Div2View,
+        path: String,
+        states: MutableList<String>,
+        runtime: ExpressionsRuntime,
+    ) {
+        build(divView, runtime.expressionResolver).forEachIndexed { index, item ->
+            val childPath = path.appendChild(item.div, index)
+            val childRuntime = runtime.runtimeStore.resolveRuntimeWith(
+                divView,
+                childPath,
+                item.div,
+                item.expressionResolver,
+                runtime.expressionResolver
+            )
+            visit(item.div, divView, childPath, states, childRuntime ?: runtime)
+        }
+    }
+
+    private fun String.appendChild(div: Div, index: Int) = appendChild(div.value().getChildPathUnit(index))
 
     private fun getActiveStateId(
         div: DivState,
         divView: Div2View,
         states: MutableList<String>,
-        parentRuntime: ExpressionsRuntime,
+        resolver: ExpressionResolverImpl,
     ): String? {
         val statePath = states.joinToString("/")
         val cardId = divView.divTag.id
@@ -174,69 +172,85 @@ internal class DivRuntimeVisitor @Inject constructor(
         return temporaryStateCache.getState(cardId, statePath)
             ?: divStateCache.getState(cardId, statePath)
             ?: div.stateIdVariable?.let {
-                parentRuntime.variableController.getMutableVariable(it)?.getValue().toString()
+                resolver.variableController.getMutableVariable(it)?.getValue().toString()
             }
-            ?: parentRuntime.let { div.defaultStateId?.evaluate(it.expressionResolver) }
+            ?: div.defaultStateId?.evaluate(resolver)
             ?: div.states.firstOrNull()?.stateId
+    }
+
+    private fun visitState(
+        div: Div.State,
+        divView: Div2View,
+        path: String,
+        states: MutableList<String>,
+        parentRuntime: ExpressionsRuntime,
+    ) {
+        val runtime = defaultVisit(div, divView, path, parentRuntime)
+        visitStates(div.value, divView, path, states, runtime)
     }
 
     private fun visitStates(
         div: DivState,
         divView: Div2View,
-        path: MutableList<String>,
+        path: String,
+        states: MutableList<String>,
+        runtime: ExpressionsRuntime,
+    ) {
+        states.add(div.getId())
+        val activeStateId = getActiveStateId(div, divView, states, runtime.expressionResolver)
+        div.states.forEach {
+            val childDiv = it.div ?: return@forEach
+            val childPath = path.appendChild(it.stateId)
+            visitChild(childDiv, divView, childPath, states, runtime, it.stateId == activeStateId)
+        }
+        states.removeLastOrNull()
+    }
+
+    private fun visitTabs(
+        div: Div.Tabs,
+        divView: Div2View,
+        path: String,
         states: MutableList<String>,
         parentRuntime: ExpressionsRuntime,
     ) {
-        val id = div.id ?: div.divId ?: return
-        path.add(id)
-        states.add(id)
-
-        val activeStateId = getActiveStateId(div, divView, states, parentRuntime)
-        div.states.forEach {
-            it.div?.let { childDiv ->
-                path.add(it.stateId)
-
-                if (it.stateId == activeStateId) {
-                    visit(childDiv, divView, path, states, parentRuntime)
-                } else {
-                    divView.runtimeStore?.tree?.invokeRecursively(
-                        parentRuntime, path.joinToString("/")
-                    ) { node -> node.runtime.clearBinding() }
-                }
-
-                path.removeLastOrNull()
-            }
-        }
-        path.removeLastOrNull()
-        states.removeLastOrNull()
+        val runtime = defaultVisit(div, divView, path, parentRuntime)
+        visitTabs(div.value, divView, path, states, runtime)
     }
 
     private fun visitTabs(
         div: DivTabs,
         divView: Div2View,
-        path: MutableList<String>,
+        path: String,
         states: MutableList<String>,
-        parentRuntime: ExpressionsRuntime,
-    ): ExpressionsRuntime? {
-        val activeTab = tabsCache.getSelectedTab(divView.dataTag.id, path.joinToString("/"))
-            ?: div.selectedTab.evaluate(parentRuntime.expressionResolver).toIntSafely()
+        runtime: ExpressionsRuntime,
+    ) {
+        val activeTab = tabsCache.getSelectedTab(divView.dataTag.id, path)
+            ?: div.selectedTab.evaluate(runtime.expressionResolver).toIntSafely()
 
         div.items.forEachIndexed { index, tab ->
-            val id = tab.div.value().getChildPathUnit(index)
-            path.add(id)
+            visitChild(tab.div, divView, path.appendChild(tab.div, index), states, runtime, activeTab == index)
+        }
+    }
 
-            if (activeTab == index) {
-                visit(tab.div, divView, path, states, parentRuntime)
-            } else {
-                divView.runtimeStore?.tree?.invokeRecursively(
-                    parentRuntime, path.joinToString("/")
-                ) { node -> node.runtime.clearBinding() }
-            }
-
-            path.removeLastOrNull()
+    private fun visitChild(
+        div: Div,
+        divView: Div2View,
+        path: String,
+        states: MutableList<String>,
+        parentRuntime: ExpressionsRuntime,
+        isActive: Boolean,
+    ) {
+        if (isActive) {
+            visit(div, divView, path, states, parentRuntime)
+            return
         }
 
-        return null
+        val runtime = parentRuntime.runtimeStore.getOrCreateRuntime(path, div, parentRuntime.expressionResolver)
+        runtime.runtimeStore.tree.invokeRecursively(runtime, path) { node ->
+            node.runtime.clearBinding(divView)
+        }
     }
+
+    private fun String.appendChild(id: String) = "$this/$id"
 }
 

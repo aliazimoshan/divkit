@@ -89,11 +89,7 @@
             "font_size_unit": {
               "$ref": "div-size-unit.json",
               "default_value": "sp",
-              "$description": "translations.json#/div_tabs_tab_title_style_font_size_unit",
-              "platforms": [
-                "android",
-                "ios"
-              ]
+              "$description": "translations.json#/div_tabs_tab_title_style_font_size_unit"
             },
             "paddings": {
               "$ref": "div-edge-insets.json",
@@ -127,6 +123,16 @@
             "inactive_font_weight": {
               "$ref": "div-font-weight.json",
               "$description": "translations.json#/div_tabs_tab_title_style_inactive_font_weight"
+            },
+            "active_font_variation_settings": {
+              "type": "dict",
+              "$description": "translations.json#/div_tabs_tab_title_style_active_font_variation_settings",
+              "platforms": []
+            },
+            "inactive_font_variation_settings": {
+              "type": "dict",
+              "$description": "translations.json#/div_tabs_tab_title_style_inactive_font_variation_settings",
+              "platforms": []
             },
             "font_family": {
               "type": "string",
@@ -170,7 +176,8 @@
               "$description": "translations.json#/div_tabs_tab_title_style_animation_type",
               "platforms": [
                 "android",
-                "ios"
+                "ios",
+                "web"
               ]
             },
             "animation_duration": {
@@ -186,6 +193,7 @@
           "$description": "translations.json#/div_tabs_tab_title_delimiter_delimiter_style",
           "platforms": [
             "android",
+            "ios",
             "web"
           ]
         },
@@ -233,7 +241,10 @@
           "platforms": [
             "android",
             "web"
-          ]
+          ],
+          "unsupported_platforms": {
+            "ios": "There is no direct implementation, breaks the current behaviour, no plans for support."
+          }
         }
       }
     }

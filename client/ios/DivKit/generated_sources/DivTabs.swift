@@ -45,7 +45,7 @@ public final class DivTabs: DivBase, Sendable {
     }
   }
 
-  public final class TabTitleStyle: Sendable {
+  public final class TabTitleStyle: @unchecked Sendable {
     @frozen
     public enum AnimationType: String, CaseIterable, Sendable {
       case slide = "slide"
@@ -54,6 +54,7 @@ public final class DivTabs: DivBase, Sendable {
     }
 
     public let activeBackgroundColor: Expression<Color> // default value: #FFFFDC60
+    public let activeFontVariationSettings: Expression<[String: Any]>?
     public let activeFontWeight: Expression<DivFontWeight>?
     public let activeTextColor: Expression<Color> // default value: #CC000000
     public let animationDuration: Expression<Int> // constraint: number >= 0; default value: 300
@@ -65,6 +66,7 @@ public final class DivTabs: DivBase, Sendable {
     public let fontSizeUnit: Expression<DivSizeUnit> // default value: sp
     public let fontWeight: Expression<DivFontWeight> // default value: regular
     public let inactiveBackgroundColor: Expression<Color>?
+    public let inactiveFontVariationSettings: Expression<[String: Any]>?
     public let inactiveFontWeight: Expression<DivFontWeight>?
     public let inactiveTextColor: Expression<Color> // default value: #80000000
     public let itemSpacing: Expression<Int> // constraint: number >= 0; default value: 0
@@ -74,6 +76,10 @@ public final class DivTabs: DivBase, Sendable {
 
     public func resolveActiveBackgroundColor(_ resolver: ExpressionResolver) -> Color {
       resolver.resolveColor(activeBackgroundColor) ?? Color.colorWithARGBHexCode(0xFFFFDC60)
+    }
+
+    public func resolveActiveFontVariationSettings(_ resolver: ExpressionResolver) -> [String: Any]? {
+      resolver.resolveDict(activeFontVariationSettings)
     }
 
     public func resolveActiveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight? {
@@ -116,6 +122,10 @@ public final class DivTabs: DivBase, Sendable {
       resolver.resolveColor(inactiveBackgroundColor)
     }
 
+    public func resolveInactiveFontVariationSettings(_ resolver: ExpressionResolver) -> [String: Any]? {
+      resolver.resolveDict(inactiveFontVariationSettings)
+    }
+
     public func resolveInactiveFontWeight(_ resolver: ExpressionResolver) -> DivFontWeight? {
       resolver.resolveEnum(inactiveFontWeight)
     }
@@ -153,6 +163,7 @@ public final class DivTabs: DivBase, Sendable {
 
     init(
       activeBackgroundColor: Expression<Color>? = nil,
+      activeFontVariationSettings: Expression<[String: Any]>? = nil,
       activeFontWeight: Expression<DivFontWeight>? = nil,
       activeTextColor: Expression<Color>? = nil,
       animationDuration: Expression<Int>? = nil,
@@ -164,6 +175,7 @@ public final class DivTabs: DivBase, Sendable {
       fontSizeUnit: Expression<DivSizeUnit>? = nil,
       fontWeight: Expression<DivFontWeight>? = nil,
       inactiveBackgroundColor: Expression<Color>? = nil,
+      inactiveFontVariationSettings: Expression<[String: Any]>? = nil,
       inactiveFontWeight: Expression<DivFontWeight>? = nil,
       inactiveTextColor: Expression<Color>? = nil,
       itemSpacing: Expression<Int>? = nil,
@@ -172,6 +184,7 @@ public final class DivTabs: DivBase, Sendable {
       paddings: DivEdgeInsets? = nil
     ) {
       self.activeBackgroundColor = activeBackgroundColor ?? .value(Color.colorWithARGBHexCode(0xFFFFDC60))
+      self.activeFontVariationSettings = activeFontVariationSettings
       self.activeFontWeight = activeFontWeight
       self.activeTextColor = activeTextColor ?? .value(Color.colorWithARGBHexCode(0xCC000000))
       self.animationDuration = animationDuration ?? .value(300)
@@ -183,6 +196,7 @@ public final class DivTabs: DivBase, Sendable {
       self.fontSizeUnit = fontSizeUnit ?? .value(.sp)
       self.fontWeight = fontWeight ?? .value(.regular)
       self.inactiveBackgroundColor = inactiveBackgroundColor
+      self.inactiveFontVariationSettings = inactiveFontVariationSettings
       self.inactiveFontWeight = inactiveFontWeight
       self.inactiveTextColor = inactiveTextColor ?? .value(Color.colorWithARGBHexCode(0x80000000))
       self.itemSpacing = itemSpacing ?? .value(0)
@@ -561,36 +575,7 @@ extension DivTabs: Serializable {
 }
 
 #if DEBUG
-extension DivTabs.Item: Equatable {
-  public static func ==(lhs: DivTabs.Item, rhs: DivTabs.Item) -> Bool {
-    guard
-      lhs.div == rhs.div,
-      lhs.title == rhs.title,
-      lhs.titleClickAction == rhs.titleClickAction
-    else {
-      return false
-    }
-    return true
-  }
-}
-#endif
-
-#if DEBUG
-extension DivTabs.TabTitleDelimiter: Equatable {
-  public static func ==(lhs: DivTabs.TabTitleDelimiter, rhs: DivTabs.TabTitleDelimiter) -> Bool {
-    guard
-      lhs.height == rhs.height,
-      lhs.imageUrl == rhs.imageUrl,
-      lhs.width == rhs.width
-    else {
-      return false
-    }
-    return true
-  }
-}
-#endif
-
-#if DEBUG
+// WARNING: this == is incomplete because of [String: Any] in class fields
 extension DivTabs.TabTitleStyle: Equatable {
   public static func ==(lhs: DivTabs.TabTitleStyle, rhs: DivTabs.TabTitleStyle) -> Bool {
     guard
@@ -640,6 +625,36 @@ extension DivTabs.TabTitleStyle: Equatable {
 }
 #endif
 
+#if DEBUG
+extension DivTabs.Item: Equatable {
+  public static func ==(lhs: DivTabs.Item, rhs: DivTabs.Item) -> Bool {
+    guard
+      lhs.div == rhs.div,
+      lhs.title == rhs.title,
+      lhs.titleClickAction == rhs.titleClickAction
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
+#if DEBUG
+extension DivTabs.TabTitleDelimiter: Equatable {
+  public static func ==(lhs: DivTabs.TabTitleDelimiter, rhs: DivTabs.TabTitleDelimiter) -> Bool {
+    guard
+      lhs.height == rhs.height,
+      lhs.imageUrl == rhs.imageUrl,
+      lhs.width == rhs.width
+    else {
+      return false
+    }
+    return true
+  }
+}
+#endif
+
 extension DivTabs.Item: Serializable {
   public func toDictionary() -> [String: ValidSerializationValue] {
     var result: [String: ValidSerializationValue] = [:]
@@ -664,6 +679,7 @@ extension DivTabs.TabTitleStyle: Serializable {
   public func toDictionary() -> [String: ValidSerializationValue] {
     var result: [String: ValidSerializationValue] = [:]
     result["active_background_color"] = activeBackgroundColor.toValidSerializationValue()
+    result["active_font_variation_settings"] = activeFontVariationSettings?.toValidSerializationValue()
     result["active_font_weight"] = activeFontWeight?.toValidSerializationValue()
     result["active_text_color"] = activeTextColor.toValidSerializationValue()
     result["animation_duration"] = animationDuration.toValidSerializationValue()
@@ -675,6 +691,7 @@ extension DivTabs.TabTitleStyle: Serializable {
     result["font_size_unit"] = fontSizeUnit.toValidSerializationValue()
     result["font_weight"] = fontWeight.toValidSerializationValue()
     result["inactive_background_color"] = inactiveBackgroundColor?.toValidSerializationValue()
+    result["inactive_font_variation_settings"] = inactiveFontVariationSettings?.toValidSerializationValue()
     result["inactive_font_weight"] = inactiveFontWeight?.toValidSerializationValue()
     result["inactive_text_color"] = inactiveTextColor.toValidSerializationValue()
     result["item_spacing"] = itemSpacing.toValidSerializationValue()

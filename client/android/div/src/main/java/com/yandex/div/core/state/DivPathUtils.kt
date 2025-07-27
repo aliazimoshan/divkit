@@ -93,7 +93,9 @@ internal object DivPathUtils {
             }
         }
 
-        val divByPath = state.div.findDivState(path, resolver) as? Div.State ?: return null // Ignore if no such state
+        val divByPath = viewByPath?.div
+            ?: state.div.findDivState(path, resolver) as? Div.State
+            ?: return null // Ignore if no such state
 
         return Pair(viewByPath, divByPath)
     }
@@ -119,10 +121,10 @@ internal object DivPathUtils {
                     ?: value.states.findRecursively(divId, resolver) { it.div }
             }
             is Div.Tabs -> value.items.findRecursively(divId, resolver) { it.div }
-            is Div.Container -> value.buildItems(resolver).findRecursively(divId)
+            is Div.Container -> value.buildItems(divView = null, resolver = resolver).findRecursively(divId)
             is Div.Grid -> value.nonNullItems.findRecursively(divId, resolver)
-            is Div.Gallery -> value.buildItems(resolver).findRecursively(divId)
-            is Div.Pager -> value.buildItems(resolver).findRecursively(divId)
+            is Div.Gallery -> value.buildItems(divView = null, resolver = resolver).findRecursively(divId)
+            is Div.Pager -> value.buildItems(divView = null, resolver = resolver).findRecursively(divId)
             is Div.Custom -> value.items?.findRecursively(divId, resolver)
             is Div.Text -> null
             is Div.Image -> null
@@ -152,4 +154,4 @@ internal object DivPathUtils {
     }
 }
 
-internal class StateConflictException constructor(message: String, cause: Throwable? = null) : Exception(message, cause)
+internal class StateConflictException(message: String, cause: Throwable? = null) : Exception(message, cause)

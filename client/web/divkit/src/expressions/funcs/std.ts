@@ -13,23 +13,16 @@ import type {
 import type { VariableType, VariableValue } from '../variable';
 import { registerFunc, registerMethod } from './funcs';
 import { ARRAY, BOOLEAN, COLOR, DICT, INTEGER, NUMBER, STRING, URL } from '../const';
-import { transformColorValue, valToString } from '../utils';
+import { checkUrl, transformColorValue, valToString } from '../utils';
 import { MAX_INT, MIN_INT, toBigInt } from '../bigint';
 
 function toString(
     _ctx: EvalContext,
     arg: IntegerValue | NumberValue | BooleanValue | ColorValue | UrlValue | StringValue | ArrayValue | DictValue
 ): EvalValue {
-    if (arg.type === ARRAY || arg.type === DICT) {
-        return {
-            type: STRING,
-            value: JSON.stringify(arg.value)
-        };
-    }
-
     return {
         type: STRING,
-        value: valToString(arg)
+        value: valToString(arg, true)
     };
 }
 
@@ -118,6 +111,8 @@ function toColor(_ctx: EvalContext, arg: StringValue): EvalValue {
 }
 
 function toUrl(_ctx: EvalContext, arg: StringValue): EvalValue {
+    checkUrl(arg.value);
+
     return {
         type: URL,
         value: arg.value
@@ -163,6 +158,8 @@ function getValueForced(
 
     if (type === 'color') {
         value = transformColorValue(value as string);
+    } else if (type === 'url') {
+        checkUrl(value);
     }
 
     return {

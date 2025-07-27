@@ -1,3 +1,334 @@
+## 32.3.0
+
+# Android Client:
+* Fixed input actions not working for single line inputs.
+* Fixed that the keyboard type would sometimes not change.
+* Fixed triggers in elements built by item-builder.
+* Fixed variables observing in elements built by `item-builder`.
+* Prevent keyboard from resetting state after rebind.
+
+# iOS Client:
+* Adding the target `DivKitSVG` to support SVG images.
+* Fix space-evenly with gone items.
+* Report warning "Touchable view is too small" only when both view's dimensions are non-zero.
+* Support `tab_title_delimiter` for `div_tabs`.
+* Supported hover and press actions.
+
+# Web Client:
+* Fixed a issue with incorrect priority of `url` over `typed` in `actions` in rare cases.
+
+
+## 32.2.0
+
+# Android Client:
+* Transition animation fix so it clips rounted corners of an image.
+
+# iOS Client:
+* Fixed incorrect height resolution for containers with aspect.
+* Supported `div-slider` properties.
+* Supported `font_variation_settings` in `div-text`, `div-input`, `div-slider`, `div-select` and `div-tabs`.
+* Supported `is_checked` property for `div-accessibility`.
+
+# Web Client:
+* Fixed a bug with an `animator` that could be accessed from a sibling component (the `animator` should be found only from the element itself or a child).
+
+
+## 32.1.0
+
+# Android Client:
+* Crash by using blur = 0 и corner_radius = 0 fixed.
+* Fixed an issue when triggers may not work in for multiple div views.
+* Supported `font_variation_settings` property in `text` and text ranges, `input`, `select` and `slider` thumbs text.
+
+# iOS Client:
+* Fix scrolling `div-pager` with `infinite_scroll` and `set_next_item` action on last item selected.
+* Size provider size now does not take into account margins of child views.
+* Supported `wrap_content` for images.
+
+
+## 32.0.0
+
+# Android Client:
+* Breaking change. The `value` of a `variable` can now take expressions. The result of this expression will be used as the initial value of the variable.
+* Added the ability to load local SVG files for Android.
+* Crash in DivTransitionHandler#beginDelayedTransitions fixed.
+* Don't reset cursor position after input rebind.
+* Keyboard now closes on missclick.
+* Support enter_key_actions for multiline input.
+
+# iOS Client:
+* Corrected gallery/pager twitching.
+* Fix submit action sending outer variables.
+* Fixed ignoring of `is_enabled` parameter in div-actions.
+* Fixed issue with calling onFocus actions on inputs when focus was called programmatically.
+* URLs with special characters are now handled automatically, no additional encoding is required.
+* Update `return_key_type` dynamically.
+* You can now use the "#" symbol in div-action urls to set color variables.
+
+# Web Client:
+* Breaking change. The `input` component will now apply `focus` styles to each focus, regardless of whether it is a keyboard or not.
+* Breaking change. The `url` value should now be a valid URL, as it already was on Android/iOS.
+* Breaking change. The `value` of a `variable` can now take expressions. The result of this expression will be used as the initial value of the variable.
+* Breaking change. The order of evaluation of expressions in actions has been changed so that multiple actions in the same array behave as expected.
+* Breaking change. The scrolling logic and behavior of the `pager` component have been changed.
+* Breaking change: The `boolean` variable now contains a boolean value, rather than the number 0/1. This means that any `subscribe` methods will output a boolean value instead of a number.
+* Added support for the `atan2` function.
+* Added support for the `infinite_scroll` property in the `pager`.
+* Added the ability to scroll the `pager` using the mouse. This behavior can be disabled using the `pagerMouseDragEnabled` configuration property.
+* The incorrect size of the `page` with the "percentage" markup has been fixed.
+
+# Kotlin JSON Builder:
+* Added template constructor with name builder based on template card.
+
+
+## 31.14.0
+
+# Android Client:
+* Fixed an issue when triggers may not work in for multiple div views.
+* Support of tan, acos, atan, atan2 functions.
+* Tap_outside_actions - property in tooltips implemented.
+* ViewCopiesKt: IllegalArgumentException: width and height must be > 0 fix.
+* We used to check if there is a soft hyphen in the first 10 chars of a text, now we check if it's present in the text.
+
+# iOS Client:
+* Shadow rendering has been adjusted to match other platforms.
+
+# Web Client:
+* Fixed an error with the `integer` variables in the `submit` action (the bigint variable could not be converted to a string).
+* Fixed and issue with the `start` and `end` positions of the background.
+* Fixed the behavior of the `pager` with elements that have `visibility` = `gone`.
+
+
+## 31.13.0
+
+# Android Client:
+* Fixed images drawing in `pager`.
+* Support expressions in `set_variable` action for `dict` variables.
+
+# iOS Client:
+* Added the ability to set collection variables (array and dictionary) from URL.
+* Change wrong image name prefix for asset url.
+* Fixed views popping to the foreground when performing animation in overlap containers.
+* Support expressions in `set_variable` action for `dict` variables.
+
+# Web Client:
+* Fixed an erroneous situation where an action with a `scope_id` was launched and no such scope was found, the action will now fail.
+* Fixed the logic of the size of the `image` with `aspect` and `wrap_content`.
+* Fixed the overflow logic of the `tabs` component with the height of `match_parent` and `fixed`.
+* The default conversion to string for the values `dict` and `array` has been changed to match Android/iOS.
+
+
+## 31.12.0
+
+# Android Client:
+* Added `cos` and `asin` functions.
+* Fix for image vertical alignment after animation.
+* Fixed `indicator` doesn't bind to `pager` with no `id`.
+* Removed overrides of`dispatchDraw()`. Border clipping is performed by `draw()` calls.
+* Supported `start` and `end` horizontal alignment for image background.
+
+# iOS Client:
+* Added `cot` function.
+* Changed non-modal `DivToolip` presentation.
+* Displays a warning if the animation cannot be shown because the element does not have an id.
+* Fixed the transition_out animation when switching back to the default state.
+* Font cache support implemented. Enabled by default. Can be disabled via `DivFlagsInfo.fontCacheEnabled`.
+
+# Web Client:
+* Added `cot` function.
+* Added support for the `header` value of `accessibility.type`.
+* Added support for the `high_priority_preview_show` in `image`.
+* Added support in some form for the `state_description` and `hint` properties in `accessibility`.
+* Disabled support for expressions in the `type` property for the values `width` and `height` (support was a mistake, this change will correspond to the current behavior of Android/iOS).
+* Fixed `tooltips` with templates.
+* Fixed an issue with the incorrect custom `height` of the `tooltips`.
+* Fixed the priority of `text_radient` over `text_color` in `text`.
+* The `pager_id` in `indicator` and the `id` in `pager` are now optional.
+* The accessibility of modal `tooltips` has been updated: now modal tooltips will loop focus inside the component when opening, and also return focus to the previously focused component after closing.
+* The error about `pagers` with the same `id` now issueas a warning instead of error. Please note that somebody may try to scroll them using an action, and this action will lead to unexpected behaviour.
+* The lookup logic for the `indicator` and `pager` has been changed, so `indicator` will find the nearest `pager`.
+
+
+## 31.11.0
+
+# Android Client:
+* Added support for `capture_focus_on_action` property.
+* Fix leaks and StackOverflows by stopping generation of expression resolvers outside RuntimeStore.
+* Supported expressions in lottie extension params.
+
+# iOS Client:
+* Added support for `color_map` property in `div-radial-gradient`.
+* Fix transition_change animation.
+* Fixed performance degradation for images with tint filter in text.
+* Supported search for the nearest pager if `pager_id` is not specified in `div-indicator`.
+
+# Web Client:
+* Added support for the `accessibility` `mode` = `exclude`. Interactive components are prohibited in it.
+* Added support for the `capture_focus_on_action` property.
+* `input` / `select` / `switch` is now prohibited inside components with actions (as is `select`, as well as any other interactive components with actions).
+
+
+## 31.10.0
+
+# Android Client:
+* Fixed preloading in case when tree includes `item-builder`s or local variables.
+* Supported `truncate` property in `text`.
+* `Indicator` now attaches to the nearest `pager` if no `pager_id` is specified.
+
+# iOS Client:
+* Added `InputAutocorrectionExtensionHandler`.
+* Added support for `capture_focus_on_action` property.
+* Added support for `clip_to_bounds` property in `div-state`.
+* Added support for `truncate` property for `div-text`.
+* Fix transition_change animation.
+* Fixed pager scroll actions interruption with visibility_actions.
+
+# Web Client:
+* Added support for the `color_map` in `radial_gradient`.
+* Added support for the `scroll_axis_alignment` in `pager`.
+* Fixed an issue with an incorrect default state in `pager` when `default_item` is provided.
+* The case when the `videoPlayerProvider` does not return anything is better handled.
+* The elements in the `pager` now use the `paddings` values when snapping the scroll.
+
+
+## 31.9.0
+
+# Android Client:
+* Fix animator on text gradient.
+
+# iOS Client:
+* Added Voice Over focus when focusing on `DivInput`.
+* Added support for `mode` with value "transactional" and `on_failed_actions` properties in `div-patch`.
+* Hide keyboard on tap outside.
+* Replace deprecated `EdgeInsets.horizontalInsets`/`EdgeInsets.verticalInsets` API usages with `EdgeInsets.horizontal`/`EdgeInsets.vertical`.
+* Visual animation no longer requires specifying an element ID.
+
+# Web Client:
+* Added support for `functions` in the `card` (div data). Previously, they were supported only in components.
+* Added support for the `animation_type` and `animation_duration` in `tabs`.
+* Fixed a bug with the importance of properties in action, now `typed` is more important than `url`.
+* Fixed an error message when a local function was found, but the arguments were incorrect.
+* The logic of the "nested actions" warning has been updated, nested `<button>` will no longer be rendered.
+
+
+## 31.8.1
+
+# iOS Client:
+* Fix pager infinite scrolling + scroll_axis_alignment start and paddings.
+
+
+## 31.8.0
+
+# Android Client:
+* Fixed an issue where `pager` padding was not applied properly.
+* Fixed local video files playback.
+* Fixed multiple UI update on variable change.
+* Open DivVariableController.captureAllVariables.
+
+# iOS Client:
+* Added public `applyPatch` function in `DivView` to allow applying patches from clients.
+* Added public func `getVariableValue` in `DivVariableStorage` to get `DivVariableValue` from the storage.
+* Fixed a bug with visibility actions not working when resizing the DivView.
+* Supported `animated` property for `scroll_by` action.
+* Updated `parentPath` property logic.
+
+# Web Client:
+* Added support for `background_accessibility_description` for the `tooltip`. If specified, the backdrop (background) of the `tooltip` is converted to a button with the specified text.
+* Added support for the `mask` in `text`.
+* Added the ability to provide a custom implementation of the video player using the `videoPlayerProvider` property.
+* Fixed a bug that caused the `indicator` elements to be non-clickable on the `desktop` platform.
+* Fixed a bug where the `video` component was not available for mouse/touch events (context menu, etc.).
+* Fixed an error with blinking the height of the `indicator` when changing the elements of the `pager`.
+* Fixed the `cloud` background of the `text` in Firefox (for the background of the entire text only).
+* Fixed the issue with the `pager` hanging if `default_item` was specified.
+* Fixed typings for the package.
+* The `indicator` has been updated, which will be hidden if there is one element or less in the `pager`.
+* The tooltip accessibility has been updated: it now has the appropriate ARIA role and closes when the `Escape` key is pressed.
+
+
+## 31.7.0
+
+# Android Client:
+* Added a way for shine animation to have onPause/onResume lifecycle from client through `pauseShineObservable`.
+* Do not hide keyboard by clicks on divs.
+* Fixed access to local variables in `state`.
+* Fixed access to variables in items built by `item_builder`.
+* Fixed video player cache.
+* Implemented independent tracking of `visibility_actions` and `disappear_actions`.
+* Supported elements comparing by`reuse_id` to optimize `item_builder` data updating.
+* Updated Gradle to 8.13 and Android Gradle Plugin to 8.8.2.
+
+# iOS Client:
+* Fixed `DefaultTooltipManager.reset()` to make it close showing tooltips.
+* Input with mask updates text color when color scheme changes.
+* Separated visibility counter storage for `visibility_actions` and `disappear_actions`. Fixed `log_limit` common `id` in both `visibility_actions` and `disappear_actions`. Added warning for common `id` in `visibility_actions` or `disappear_actions`.
+* Supported `animation_in`, `animation_out` properties for `div-tooltip`.
+* Supported `password` `keyboard_type`.
+
+# Web Client:
+* Added support for the `phone` `input` mask.
+* Added support for the `ranges` in `slider`.
+* Added support for the `scroll_to` and `scroll_by` actions.
+
+
+## 31.6.0
+
+# Android Client:
+* Supported `filters` property in `input`.
+* Added `Div2Context.closeTooltips()` method.
+* Made `item_builder` have a higher priority than `items`, just like other platforms.
+* Fixed scroll position restoring in `gallery` when first item is visible or in rtl-configuration.
+* Fixed `shine` gradient angle. Angle goes counterclockwise and rotates the gradient relative to the horizontal line.
+* Fixed gallery scroll in `paging` mode.
+
+# iOS Client:
+* `input` autocorrection value depends on `input_type`.
+* Fixed arrays parsing in typed actions.
+* Fixed calculation of sizes in `layout_provider`.
+
+# Web Client:
+* Added `animated` parameter to `set_current_item`, `set_next_item`, `set_previous_item`, `scroll_forward`, `scroll_backward`, `scroll_to_position`, `scroll_to_end`, `scroll_to_start` actions.
+* Added support for parsing `array` and `dict` from a string (including both the `div-action://set_variable` and the `variable.set('value')` programming api). The format is json.
+* Added support for the `tap_outside_actions` and `close_by_tap_outside` in `tooltip`.
+* Fixed `switch` in rtl layout.
+* Fixed an error with an incorrect number of actions and `log_limit` (`visibility_actions` / `disappear_actions`).
+
+
+## 31.5.0
+
+# Android Client:
+* Added PreloadFilter interface for the DivPreloader, designed to allows you to control which content needs to be preloaded, regardless of the preloadRequired value for the element.
+* Added resume/pause for shine extension while gone.
+* Added support for the `submit` action.
+* Fixed `container` width calculating for text content with enabled `tighten_width`.
+* Fixed content alignment in `container` in rtl-configuration.
+* Fixed error handling at optional expression list parsing.
+* Fixed gallery snapping perfomed after fling gesture.
+* Fixed linear gradient size calculation.
+* Prevent patch from modifying items in containers so item_builder could continue working after patch.
+* Supported `Div2View.setVariable(name, value)` for array variables.
+
+# iOS Client:
+* Fixed transition animation when view size changes.
+* The size of resizable elements with a given weight is now calculated without taking margins into account. This means that if you make two or more elements in a container with the same weight, their size will be the same even if one or more of them have margins set.
+* Updated `div-tooltip` accessibility.
+
+# Web Client:
+* Added a warning for the `transition_id` / `transition_out` / `transition_change` properties without the required `id` property when changing state.
+* Added configuration flag `pagerChildrenClipEnabled`. It can be useful in cases with shadow elements of a `pager`.
+* Added support for the `color_map` property in the linear gradient.
+* Added support for the `cross_axis_alignment` in `pager`.
+* Added support for the `dashed` stroke style.
+* Added support for the `non_modal` mode in `tooltip`.
+* Added support for the `submit` action.
+* Added support for the `wrap_content` `layout_mode` in `pager`.
+* Fixed an issue with the tapable content inside `tabs`.
+* Fixed the default value of `column_count` for the `grid` component. Now it's required, as written in the schema.
+* Fixed the recreation of neighboring components when using the patch.
+* Fixed the styles of `menu_items`.
+* Fixed virtual keyboard in `input` with `keyboard_type` = `number`.
+
+
 ## 31.4.0
 
 # Android Client:

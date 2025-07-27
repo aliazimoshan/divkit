@@ -15,6 +15,8 @@ public final class ImageBlock: ImageBaseBlock {
   public let appearanceAnimation: TransitioningAnimation?
   public let blurUsingMetal: Bool?
   public let tintUsingMetal: Bool?
+  public let path: UIElementPath?
+  public let state: ImageBaseBlockState
 
   public init(
     imageHolder: ImageHolder,
@@ -28,7 +30,8 @@ public final class ImageBlock: ImageBaseBlock {
     accessibilityElement: AccessibilityElement? = nil,
     appearanceAnimation: TransitioningAnimation? = nil,
     blurUsingMetal: Bool? = nil,
-    tintUsingMetal: Bool? = nil
+    tintUsingMetal: Bool? = nil,
+    path: UIElementPath? = nil
   ) {
     self.imageHolder = imageHolder
     self.widthTrait = widthTrait
@@ -42,6 +45,12 @@ public final class ImageBlock: ImageBaseBlock {
     self.appearanceAnimation = appearanceAnimation
     self.blurUsingMetal = blurUsingMetal
     self.tintUsingMetal = tintUsingMetal
+    self.path = path
+    self.state = ImageBaseBlockState(
+      widthTrait: widthTrait,
+      height: height,
+      imageHolder: imageHolder
+    )
   }
 
   public convenience init(
@@ -56,7 +65,8 @@ public final class ImageBlock: ImageBaseBlock {
     accessibilityElement: AccessibilityElement? = nil,
     appearanceAnimation: TransitioningAnimation? = nil,
     blurUsingMetal: Bool? = nil,
-    tintUsingMetal: Bool? = nil
+    tintUsingMetal: Bool? = nil,
+    path: UIElementPath? = nil
   ) {
     self.init(
       imageHolder: imageHolder,
@@ -70,7 +80,8 @@ public final class ImageBlock: ImageBaseBlock {
       accessibilityElement: accessibilityElement,
       appearanceAnimation: appearanceAnimation,
       blurUsingMetal: blurUsingMetal,
-      tintUsingMetal: tintUsingMetal
+      tintUsingMetal: tintUsingMetal,
+      path: path
     )
   }
 
@@ -85,7 +96,8 @@ public final class ImageBlock: ImageBaseBlock {
     accessibilityElement: AccessibilityElement? = nil,
     appearanceAnimation: TransitioningAnimation? = nil,
     blurUsingMetal: Bool? = nil,
-    tintUsingMetal: Bool? = nil
+    tintUsingMetal: Bool? = nil,
+    path: UIElementPath? = nil
   ) {
     self.init(
       imageHolder: imageHolder,
@@ -99,7 +111,8 @@ public final class ImageBlock: ImageBaseBlock {
       accessibilityElement: accessibilityElement,
       appearanceAnimation: appearanceAnimation,
       blurUsingMetal: blurUsingMetal,
-      tintUsingMetal: tintUsingMetal
+      tintUsingMetal: tintUsingMetal,
+      path: path
     )
   }
 
@@ -120,8 +133,9 @@ public func ==(lhs: ImageBlock, rhs: ImageBlock) -> Bool {
     lhs.tintColor == rhs.tintColor &&
     lhs.accessibilityElement == rhs.accessibilityElement &&
     lhs.appearanceAnimation == rhs.appearanceAnimation &&
-    lhs.filter == rhs.filter
+    lhs.filter == rhs.filter &&
+    lhs.path == rhs.path &&
+    lhs.state == rhs.state
 }
 
 extension ImageBlock: LayoutCachingDefaultImpl {}
-extension ImageBlock: ElementStateUpdatingDefaultImpl {}

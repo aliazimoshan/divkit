@@ -8,16 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerViewAccessibilityDelegate
 import androidx.viewpager2.widget.ViewPager2
 import com.yandex.div.R
 import com.yandex.div.core.annotations.Mockable
-import com.yandex.div.core.view2.divs.drawChildrenShadows
+import com.yandex.div.core.view2.divs.drawShadow
 import com.yandex.div.core.view2.divs.pager.PagerSelectedActionsDispatcher
 import com.yandex.div.core.widget.ViewPager2Wrapper
 import com.yandex.div.internal.widget.OnInterceptTouchEventListener
 import com.yandex.div.internal.widget.OnInterceptTouchEventListenerHost
-import com.yandex.div2.DivPager
+import com.yandex.div2.Div
 
 @Mockable
 internal class DivPagerView @JvmOverloads constructor(
@@ -25,7 +26,7 @@ internal class DivPagerView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ViewPager2Wrapper(context, attrs, defStyleAttr),
-    DivHolderView<DivPager> by DivHolderViewMixin(),
+    DivHolderView<Div.Pager> by DivHolderViewMixin(),
     OnInterceptTouchEventListenerHost {
 
     internal var changePageCallbackForState: ViewPager2.OnPageChangeCallback? = null
@@ -118,9 +119,11 @@ internal class DivPagerView @JvmOverloads constructor(
         drawBorderClipped(canvas) { super.draw(it) }
     }
 
-    override fun dispatchDraw(canvas: Canvas) {
-        drawChildrenShadows(canvas)
-        dispatchDrawBorderClipped(canvas) { super.dispatchDraw(it) }
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        if (child != null && child.isVisible) {
+            child.drawShadow(canvas)
+        }
+        return super.drawChild(canvas, child, drawingTime)
     }
 
     fun addChangePageCallbackForIndicators(callback: ViewPager2.OnPageChangeCallback) {
